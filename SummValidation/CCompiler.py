@@ -11,7 +11,7 @@ class CCompiler():
                          '-Wno-implicit-function-declaration',
                          '-Wno-int-conversion',
                          '-no-pie', '-Wno-unused-variable',
-                         '-fno-builtin']
+                         '-fno-builtin', '-Wno-return-type']
 
         if self.arch == 'x86':
             self.gcc_args.append('-m32')
