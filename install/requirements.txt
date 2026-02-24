@@ -1,0 +1,2 @@
+angr==9.2.6
+pycparser==2.21
