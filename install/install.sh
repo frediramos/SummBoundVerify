@@ -47,7 +47,8 @@ BIN_FOLDER="/usr/local/bin"
 BIN_NAME="summbv"
 
 ./check-prerequisites.sh
-./install-requirements.sh $REQ_FILE
+./install-m32.sh
+./install-python-requirements.sh $REQ_FILE
 ./create-symlink.sh "${FILE}" "${BIN_FOLDER}" "${BIN_NAME}"
 
 echo -e "${GREEN}✔ SummBoundVerify installed successfully!${RESET}"
