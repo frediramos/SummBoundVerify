@@ -27,7 +27,7 @@ def get_fnames(binary):
 
     # nm binary | grep \ T \
     command_nm = ['nm', binary]
-    command_grep = ['grep', '\ T\ ']
+    command_grep = ['grep', '\\ T\\ ']
 
     p1 = sp.Popen(command_nm, stdout=sp.PIPE)
     p2 = sp.Popen(command_grep, stdin=p1.stdout, stdout=sp.PIPE)
@@ -42,7 +42,7 @@ def get_fnames(binary):
 
     # objdump -d binary | grep \ plt \
     command_objdump = ['objdump', '-d', binary]
-    command_grep = ['grep', '@plt\>']
+    command_grep = ['grep', '@plt\\>']
 
     p3 = sp.Popen(command_objdump, stdout=sp.PIPE)
     p4 = sp.Popen(command_grep, stdin=p3.stdout, stdout=sp.PIPE)

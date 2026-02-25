@@ -1,3 +1,5 @@
+import claripy
+
 from angr import SimProcedure
 
 # Constraints
@@ -21,7 +23,7 @@ class _NOT_(CSummary):
         cnstr_id = self.state.solver.eval(cnstr)
         cnstr = CNSTR_MAP[cnstr_id]
 
-        result = self.state.solver.Not(cnstr)
+        result = claripy.Not(cnstr)
         CNSTR_MAP.append(result)
         return return_value
 
@@ -160,7 +162,7 @@ class _ITE_VAR_(CSummary):
         restr = self.state.solver.eval(restr)
         restr_if = CNSTR_MAP[restr]
 
-        result = self.state.solver.If(restr_if, sym1, sym2)
+        result = claripy.If(restr_if, sym1, sym2)
         result = result.sign_extend(self.state.arch.bits - result.size())
 
         try:

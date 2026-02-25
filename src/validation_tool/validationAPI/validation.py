@@ -1,5 +1,7 @@
-import json
 import os
+import json
+import claripy
+
 from angr import SimProcedure
 
 from claripy.backends.backend_z3 import BackendZ3
@@ -145,7 +147,7 @@ class get_cnstr(SimProcedure):
 
         # Lift memory contents for functions with side-effects
         mem_restrs = self.get_memory()
-        mem_restrs = self.state.solver.And(*mem_restrs)
+        mem_restrs = claripy.And(*mem_restrs)
 
         c = self.state.solver.constraints
 
@@ -165,7 +167,7 @@ class get_cnstr(SimProcedure):
             c.append(ret == var)
 
         c.append(mem_restrs)
-        c = self.state.solver.And(*c)
+        c = claripy.And(*c)
 
         converted = backend_z3.convert(c)
         RESTR_MAP.append(converted)
@@ -217,7 +219,11 @@ class halt_all(SimProcedure):
         '''
 
         self.successors.add_successor(
-            state, addr, self.state.solver.true, 'Ijk_Ret')
+            state,
+            addr,
+            claripy.true(),
+            'Ijk_Ret'
+        )
 
     def all_done(self):
 
