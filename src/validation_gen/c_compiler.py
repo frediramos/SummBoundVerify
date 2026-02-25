@@ -1,8 +1,9 @@
 import subprocess as sp
 
+
 class CCompiler():
     def __init__(self, arch, inputfile, outputfile, libs):
-        
+
         self.arch = arch
         self.inputfile = inputfile
         self.outputfile = self.binary_name(outputfile)
@@ -18,14 +19,13 @@ class CCompiler():
 
         if not libs:
             libs = []
-        self.libs = libs 
+        self.libs = libs
 
     def binary_name(self, file):
         if file[-2:] == '.c':
             return file[:-2]
         return file
 
-    
     def compile(self):
         gcc_cmd = [
             'gcc',
@@ -35,12 +35,12 @@ class CCompiler():
             *self.libs
         ]
 
-        print(' '.join(gcc_cmd))  
+        print(' '.join(gcc_cmd))
 
         t = sp.Popen(gcc_cmd, stdout=sp.PIPE, stderr=sp.PIPE)
         stdout, stderr = t.communicate()
         out = stdout.decode()
         err = stderr.decode()
 
-        print(out,end='')
-        print(err,end='')
+        print(out, end='')
+        print(err, end='')
