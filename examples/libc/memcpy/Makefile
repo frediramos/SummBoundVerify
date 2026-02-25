@@ -1,5 +1,9 @@
 SHELL:=/bin/bash
 
+GREEN=\033[0;32m
+RED=\033[0;31m
+RESET=\033[0m
+
 TEST = $(shell basename $(CURDIR))_validation.c
 EXEC = $(shell basename $(CURDIR))_validation.test
 SUMM = $(shell basename $(CURDIR)).c
@@ -24,20 +28,20 @@ test:
 	@diff -Bb $(TEST) $(EXPECTED_TEST);\
 	if [ $$? -eq 0 ]; \
 	then \
-		echo -e "\nTest Passed!"; \
+		echo -e "$(GREEN)\nTest Passed!$(RESET)"; \
 	else \
-		echo -e "\nTest Failed!"; \
+		echo -e "$(RED)\nTest Failed!$(RESET)"; \
 	fi
 
 test-run:
 
-	summbv -config $(CONFIG) -o $(TEST) -memory -run
+	summbv -config $(CONFIG) -o $(TEST) -memory -run > /dev/null 2>&1
 	@diff -Bb  <(sed '3q;d' $(EXPECTED_RSLT)) <(sed '3q;d' $(RESULT));\
 	if [ $$? -eq 0 ]; \
 	then \
-		echo -e "\nTest Passed!"; \
+		echo -e "$(GREEN)\nTest Passed!$(RESET)"; \
 	else \
-		echo -e "\nTest Failed!"; \
+		echo -e "$(RED)\nTest Failed!$(RESET)"; \
 	fi
 
 clean:
