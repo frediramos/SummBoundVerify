@@ -28,8 +28,8 @@ def run_validation_gen(args: Namespace):
     outputfile = args.o
 
     if not concrete_function and not target_summary:
-        sys.exit(
-            'ERROR: At least the code for a concrete function or summary MUST be provided')
+        msg = "ERROR: At least the code for a concrete function or summary MUST be provided"
+        sys.exit(msg)
 
     if not concrete_function and not funcname:
         msg = ("ERROR: No concrete function code or name provided\n"
@@ -48,7 +48,7 @@ def run_validation_gen(args: Namespace):
         arraysize=args.arraysize,
         nullbytes=args.nullbytes,
         maxnum=args.maxvalue,
-        jmaxnames=args.maxnames,
+        maxnames=args.maxnames,
         default=args.defaultvalues,
         concrete_arrays=args.concretearray,
         memory=args.memory,
