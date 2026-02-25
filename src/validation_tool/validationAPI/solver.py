@@ -1,4 +1,5 @@
 import sys
+import claripy
 
 from angr import SimProcedure
 from collections import OrderedDict
@@ -75,7 +76,7 @@ class CSummary(SimProcedure):
         self.state.solver.add(cnstr)
 
     def is_certain(self, cnstr):
-        neg_cnstr = self.state.solver.Not(cnstr)
+        neg_cnstr = claripy.Not(cnstr)
         return not self.state.solver.satisfiable(extra_constraints=(neg_cnstr,))
 
     def is_sat(self, cnstr):
