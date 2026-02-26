@@ -6,7 +6,10 @@
 
 set -eo pipefail
 
-source "colors.sh"
+# Get directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "${SCRIPT_DIR}/utils/colors.sh"
 
 # Show help
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
@@ -40,15 +43,13 @@ else
     echo -e "${GREEN}✔ Using virtualenv: $VIRTUAL_ENV${RESET}"
 fi
 
-
-REQ_FILE="requirements.txt"
 FILE="../src/main.py"
 BIN_FOLDER="/usr/local/bin"
 BIN_NAME="summbv"
 
-./check-prerequisites.sh
-./install-m32.sh
-./install-python-requirements.sh $REQ_FILE
-./create-symlink.sh "${FILE}" "${BIN_FOLDER}" "${BIN_NAME}"
+./utils/check-prerequisites.sh
+./installers/m32.sh
+./installers/python-requirements.sh
+./utils/create-symlink.sh "${FILE}" "${BIN_FOLDER}" "${BIN_NAME}"
 
 echo -e "${GREEN}✔ SummBoundVerify installed successfully!${RESET}"

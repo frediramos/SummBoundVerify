@@ -4,7 +4,10 @@
 # Uninstall SummBoundVerify
 # ------------------------------------------------------------------------------
 
-source "colors.sh"
+# Get directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "${SCRIPT_DIR}/utils/colors.sh"
 
 # Show help
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then

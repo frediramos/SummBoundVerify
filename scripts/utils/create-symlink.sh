@@ -6,7 +6,10 @@
 
 set -euo pipefail  # exit on errors, unset variables are errors, fail on pipe errors
 
-source colors.sh
+# Get directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "${SCRIPT_DIR}/colors.sh"
 
 # Default values
 DEFAULT_SRC="../src/main.py"

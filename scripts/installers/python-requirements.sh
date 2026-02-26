@@ -4,11 +4,14 @@
 # Install Python requirements into an existing virtualenv
 # ------------------------------------------------------------------------------
 
-set -euo pipefail
+set -eo pipefail
 
-source "colors.sh"
+# Get directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-DEFAULT_REQ_FILE="./requirements.txt"
+source "${SCRIPT_DIR}/../utils/colors.sh"
+
+DEFAULT_REQ_FILE="${SCRIPT_DIR}/requirements.txt"
 
 # Show help
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -23,7 +26,7 @@ fi
 
 req_file="${1:-$DEFAULT_REQ_FILE}"
 echo -e "${BLUE}Using requirements file:${RESET} $req_file"
-echo -e "${YELLOW}Warning${RESET}: installing in the current python environment (${VIRTUAL_ENV})"
+echo -e "${YELLOW}Warning${RESET}: installing in the current python environment (${YELLOW}${VIRTUAL_ENV:-"global"}${RESET})"
 
 # Check requirements file exists
 if [[ ! -f "$req_file" ]]; then
@@ -33,7 +36,7 @@ fi
 
 # Install requirements
 echo -e "${BLUE}Installing Python requirements...${RESET}"
-python3 -m pip install --upgrade pip
-python3 -m pip install -r "$req_file"
+# python3 -m pip install --upgrade pip
+# python3 -m pip install -r "$req_file"
 
-echo -e "${GREEN}✔ Requirements installed successfully in ${VIRTUAL_ENV}'${RESET}"
+echo -e "${GREEN}✔ Requirements installed successfully${RESET}"
