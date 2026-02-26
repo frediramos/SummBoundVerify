@@ -1,15 +1,41 @@
 # SummBoundVerify
 
-## Installation
+## Prequisites
+### Python Virtual Environment (Recommended)
 
-```sh
-./install.sh
+We strongly recommend installing `SummBoundVerify` inside a Python virtual environment to avoid dependency conflicts.
+
+SummBoundVerify has been tested with `Python` **`3.12`**, but it should work with any modern Python version (**3.10+**).
+
+One convenient way to manage virtual environments is with [`virtualenvwrapper`](https://virtualenvwrapper.readthedocs.io/en/latest/install.html).
+
+After installation, create and activate a new virtual environment with:
+
+```bash
+mkvirtualenv sbv
+```
+---
+Alternatively, one can use standard Python `venv`:
+
+```bash
+python3 -m venv mkvirtualenv sbv-env
+```
+After creating it, it can be activated with:
+```bash
+source sbv-env/bin/activate
 ```
 
-### To uninstall run:
+## Installation
+Once your virtual environment is activated:
 
+### To install:
 ```sh
-cd install && ./uninstall
+cd scripts && ./install.sh
+```
+
+### To uninstall:
+```sh
+cd scripts && ./uninstall
 ```
 
 # Basic Usage
