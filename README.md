@@ -1,6 +1,19 @@
-# SummBoundVerify
+<p align="center"> <h1 align="center"> SummBoundVerify </h1> </p> 
+<p align="center"><strong>* Validate Symbolic Summaries (for C  ) *</strong></p>
 
-## Prequisites
+<p align="center">
+  <a href="#bare-metal-installation">Installation</a> •
+  <a href="#docker-container">Docker</a> •
+  <a href="#usage">Docs</a> •
+  <a href="#license">License</a>
+</p>
+
+<br>
+<br>
+
+
+# Bare Metal Installation
+
 ### Python Virtual Environment (Recommended)
 
 We strongly recommend installing `SummBoundVerify` inside a Python virtual environment to avoid dependency conflicts.
@@ -30,15 +43,26 @@ Once your virtual environment is activated:
 
 ### To install:
 ```sh
-cd scripts && ./install.sh
+./install.sh
 ```
 
 ### To uninstall:
 ```sh
 cd scripts && ./uninstall
 ```
+## Docker Container
+We also provide a self-contained Docker environment for running the tool without installing any dependencies locally.
 
-# Basic Usage
+To build the image and start a temporary container with the tool pre-installed, run:
+
+```sh
+./docker-run [path]
+The `path` argument defaults to the current directory if not provided.
+```
+
+<br>
+
+# Usage
 To obtain a full description of our test generation tool one can use the flag `-h`
 ```sh
 summbv -h
@@ -217,3 +241,10 @@ concretearray {1:['2']}  // --concretearray {1:['2']}
 ```
 
 generates a test such that **two** random indexes of an array as the **first** function argument are concrete.
+
+
+# License
+
+This project is licensed under the [GPL-3.0 License] -- see [LICENSE] for details.
+
+[LICENSE]: ./LICENSE
