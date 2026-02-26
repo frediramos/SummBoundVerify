@@ -1,5 +1,5 @@
 <p align="center"> <h1 align="center"> SummBoundVerify </h1> </p> 
-<p align="center"><strong>* Validate Symbolic Summaries (for C  ) *</strong></p>
+<p align="center"><strong>* Validate Symbolic Summaries (for C) *</strong></p>
 
 <p align="center">
   <a href="#bare-metal-installation">Installation</a> •
@@ -12,7 +12,7 @@
 <br>
 
 
-# Bare Metal Installation
+## Bare Metal Installation
 
 ### Python Virtual Environment (Recommended)
 
@@ -62,7 +62,7 @@ The `path` argument defaults to the current directory if not provided.
 
 <br>
 
-# Usage
+# Documentation
 To obtain a full description of our test generation tool one can use the flag `-h`
 ```sh
 summbv -h
@@ -137,7 +137,7 @@ summbv -summ summ_memcpy.c -func concrete_memcpy.c -maxvalue=5 -memory
 ```
 This flag marks the relevant memory addresses in the summary's execution so that they are also be evaluated.
 
-# Configuration Files
+## Configuration Files
 
 In alternative to the command line interface, one can also pass a configuration file using the ``-config`` flag. For instance, considering the configuration file (``config.txt``): 
 
@@ -157,7 +157,7 @@ is equivalent to:
 summbv -summ summ_strlen.c -func concrete_strlen.c --arraysize 3 5 7 -compile
 ```
 
-## All Config file options
+### All Config file options
 
 The options allowed in the configuration file mirror some flag options offered in the command line interface:
 
@@ -176,7 +176,7 @@ lib lib.c                 // --lib            (Path to external files required f
 compile x86               // --compile        (Compile the generated test)
 ```
 
-# Special Configurations
+## Special Configurations
 
 ## Array Size 
 
