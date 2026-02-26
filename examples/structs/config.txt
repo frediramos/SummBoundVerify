@@ -1,4 +1,4 @@
-summ_file summary.c
-func_file concrete.c
-max_num 5
-compile_arch x86
+summ summary.c
+func concrete.c
+maxvalue 5
+compile x86
