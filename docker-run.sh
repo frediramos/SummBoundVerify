@@ -17,6 +17,7 @@ fi
 # -----------------------------
 # Config
 # -----------------------------
+ARCH="linux/amd64"
 HOSTNAME="sbv"
 IMAGE_NAME="sbv-image"
 CONTAINER_VOLUME="/root/dev"
@@ -32,7 +33,7 @@ fi
 # -----------------------------
 if ! docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
     echo "Docker image '$IMAGE_NAME' not found. Building..."
-    docker build -t "$IMAGE_NAME" .
+    docker build --platform "$ARCH" -t "$IMAGE_NAME" .
 else
     echo "Using existing image: '$IMAGE_NAME'"
 fi
@@ -42,6 +43,7 @@ fi
 # -----------------------------
 echo "Starting container..."
 docker run -it --rm \
+    --platform "$ARCH" \
     --hostname "$HOSTNAME" \
     -v "$HOST_VOLUME":"$CONTAINER_VOLUME" \
     -w "$CONTAINER_VOLUME" \
