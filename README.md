@@ -4,7 +4,8 @@
 <p align="center">
   <a href="#bare-metal-installation">Installation</a> •
   <a href="#docker-container">Docker</a> •
-  <a href="#usage">Docs</a> •
+  <a href="#examples">Examples</a> •
+  <a href="#documentation">Docs</a> •
   <a href="#license">License</a>
 </p>
 
@@ -39,17 +40,28 @@ source sbv-env/bin/activate
 ```
 
 ## Installation
-Once your virtual environment is activated:
+Before installing, make sure your Python virtual environment is activated.
 
 ### To install:
+Run the installation script from the project root:
 ```sh
 ./install.sh
 ```
+This will install the tool and set up the required dependencies in the active environment.
 
 ### To uninstall:
+To remove the installed components:
 ```sh
 cd scripts && ./uninstall
 ```
+### Verify the Installation
+You can verify that everything is working correctly by running the `strlen` example test:
+```sh
+cd examples/libc/strlen && make test
+```
+
+The output should include: `Test Passed!`
+
 ## Docker Container
 We also provide a self-contained Docker environment for running the tool without installing any dependencies locally.
 
@@ -57,9 +69,204 @@ To build the image and start a temporary container with the tool pre-installed, 
 
 ```sh
 ./docker-run [path]
+```
 The `path` argument defaults to the current directory if not provided.
+
+<br>
+
+# Examples 
+One can find illustrative examples of how to use the tool in the `examples/libc` directory.
+
+To run these examples inside the Docker container, execute:
+```sh
+./docker-run examples/libc
+```
+This will start the container with the `examples/libc` directory mounted and ready to use.
+
+
+## `strlen`
+This example demonstrates how to validate a simple summary from the C standard library function:
+```c
+size_t strlen(char * s)
 ```
 
+To generate and compile a validation test, use:
+
+```sh
+cd strlen && make
+```
+
+### Relevant files
+
+- `config.txt` - The test configuration;
+- `strlen.c` — The summary under test;
+- `concrete.c` — The concrete implementation against which the summary is validated.
+
+### Command
+The `make` target wraps the following tool invocation:
+
+```sh
+summbv \
+    --arraysize 3 \ 
+    -func concrete.c \
+    --summname strlen \
+    --lib strlen.c \
+    --compile x86
+``` 
+
+### Breakdown
+
+- `arraysize 3` — bounds the size of symbolic arrays to 3;
+- `func concrete.c` — specifies the concrete implementation file;
+- `summname strlen` — selects the summary (function) name to be called;
+- `lib strlen.c` — provides the summary file;
+- `compile x86` — compiles the generated validation harness for the x86 target.
+
+<br>
+
+`summbv` automatically generates a validation testing harness, in C, that checks whether the summary in `strlen.c` is an *under-* or an *over-approximation* of the corresponding concrete implementation.
+
+The validation test is given in the file: `strlen_validation.c`.
+
+### **Run**
+
+To symbolically execute the previously generated test use:
+
+```sh
+make run
+```
+
+The `make run` target behaves like `make`, but additionally executes the generated validation test.
+
+Concretely, it invokes the same command as before, with the extra `-run` flag:
+
+```sh
+summbv 
+    --arraysize 3 \ 
+    -func concrete.c \
+    --summname strlen \
+    --lib strlen.c \
+    --compile x86 \
+    -run
+``` 
+
+### Output
+
+In addition to the standard terminal output, the command produces a JSON file containing the validation results. For example:
+
+```json
+{
+  "strlen_validation.test_1": {
+    "result": "Exact",
+    "counterexamples": {}
+  }
+}
+```
+
+### Field Description
+
+`"result"` : `"Exact"` — the summary is both under- and over-approximating thus precisely matches the concrete implementation for the explored input space.
+
+`"counterexamples"` — contains counterexample inputs if discrepancies are found (empty in this case).
+
+## `memcpy`
+This example demonstrates how to validate a summary with memory side effects. In particular, the `memcpy` function:
+
+```c
+void* memcpy(void *dest, void *src, size_t n)
+```
+
+To generate and compile a validation test, again, use:
+
+```sh
+cd memcpy && make
+```
+
+### Command
+In this example, the `make` target wraps the following command:
+
+```sh
+summbv \
+    -memory
+    --func concrete.c \
+    --summ memcpy.c \
+    --maxvalue 5 \
+    --compile x86
+```
+
+### Breakdown
+- `memory` - Tells the tool that the memory pointed to by `dest` and `src` is to be considered for evaluation;
+- `maxvalue 5` — bounds the maximum value for symbolic scalar inputs to `5`.
+
+The generated validation test is available in:
+
+```sh
+memcpy_validation.c
+```
+
+### Run
+
+To symbolically execute the generated validation test, also use:
+
+```sh
+make run
+```
+
+### Output 
+
+The JSON file containing the validation results shows:
+
+```json
+{
+  "memcpy_validation.test_1": {
+    "result": "Under-approximation",
+    "counterexamples": {
+      "Over-approximation": {
+        "dest": {
+          "dest_0": 0,
+          "dest_1": 0,
+          "dest_2": 0,
+          "dest_3": 0,
+          "dest_4": "Not in model"
+        },
+        "src": {
+          "src_0": "a",
+          "src_1": "b",
+          "src_2": "c",
+          "src_3": "d",
+          "src_4": "Not in model"
+        },
+        "n": 2,
+        "ret": 2147417906,
+        "memory": {
+          "dest": {
+            "mem_dest_0": "a",
+            "mem_dest_1": "b",
+            "mem_dest_2": 0,
+            "mem_dest_3": 0,
+            "mem_dest_4": 0
+          },
+          "src": {
+            "mem_src_0": "a",
+            "mem_src_1": "b",
+            "mem_src_2": "c",
+            "mem_src_3": "d",
+            "mem_src_4": 0
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+The output indicates:
+
+- `"result": "Under-approximation"` — the summary does **not** fully capture the behaviour of the concrete implementation.
+- `"counterexamples"` — provides a concrete input demonstrating the mismatch.
+- The `"Over-approximation"` block details the scenario where the summary admits behaviour not matched by the concrete implementation, including symbolic inputs and memory state.
+
+<br>
 <br>
 
 # Documentation
@@ -68,12 +275,12 @@ To obtain a full description of our test generation tool one can use the flag `-
 summbv -h
 ```
 
-## Generate a simple test for ``strlen`` 
+## Generate a simple validation test 
 
-Given a concrete function for ``strlen`` and a corresponding summary (files ``summ_strlen.c`` and ``concrete_strlen.c``) one can generate a simple validation test using:
+Given a concrete function for ``strlen`` and a corresponding summary (files ``strlen.c`` and ``concrete.c``) one can generate a simple validation test using:
 
 ```sh
-summbv -summ summ_strlen.c -func concrete_strlen.c
+summbv -summ strlen.c -func concreten.c
 ```
 
 By default, this will generate a file called `test.c` containing the symbolic test where `strlen` is called with a symbolic string of **size 5**. Additionally, instead of the default value **5**, the length of the symbolic string used as input argument can be specified using the `--arraysize` flag:
