@@ -331,7 +331,7 @@ summbv -summ summ_strlen.c -func concrete_strlen.c -compile --lib lib1.c lib2.c
 For some ``libc`` functions, using fully symbolic arguments can lead to unbound loops in the concrete functions. To constrain numeric values one can use the ``--maxvalue`` flag. For instance considering a test for the ``memcpy(void *dest, const void *src, size_t len)`` function, the command:
 
 ```sh
-summbv -summ summ_memcpy.c -func concrete_memcpy.c -maxvalue=5
+summbv -summ summ_memcpy.c -func concrete_memcpy.c --maxvalue=5
 ```
 
 will generate a test where the ``len`` argument is constrained to be lower or equal than ``5``.
@@ -340,7 +340,7 @@ will generate a test where the ``len`` argument is constrained to be lower or eq
 By default the summary validation tool only takes into account the generated paths and corresponding return values. Hence, in order to evaluate a summary for a function with memory side effects such ``memcpy``, one can use the ``-memory`` flag:
 
 ```sh
-summbv -summ summ_memcpy.c -func concrete_memcpy.c -maxvalue=5 -memory
+summbv -summ summ_memcpy.c -func concrete_memcpy.c --maxvalue=5 -memory
 ```
 This flag marks the relevant memory addresses in the summary's execution so that they are also be evaluated.
 
