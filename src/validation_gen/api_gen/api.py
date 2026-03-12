@@ -23,6 +23,7 @@ validation_api = {
     'sym_var_array':            'symbolic sym_var_array(char* name, size_t index, size_t size) {return 0;}\n',
     'mem_addr':                 'void mem_addr(char* name, void* addr, size_t length) {return;}\n',
     '_ULE_':                    'cnstr_t _ULE_(symbolic var1, symbolic var2) {return 0;}\n',
+    'is_sat':                   'int is_sat(cnstr_t cnstr) {return 0;}\n',
     'assume':                   'void assume(cnstr_t cnstr) {return;}\n'
 }
 
@@ -30,7 +31,7 @@ standard_api = {
     'maximize':         'long maximize(symbolic sym_var){return 0;}\n',
     'sym_var':          'symbolic sym_var(size_t size) {return 0;}\n',
     'is_symbolic':      'int is_symbolic(symbolic sym_var) {return 0;} \n',
-    'is_sat':           'int is_sat(cnstr_t cnstr); \n',
+    'is_sat':           'int is_sat(cnstr_t cnstr) {return 0;}\n',
     'assume':           'void assume(cnstr_t cnstr) {return;}\n',
     'is_certain':       'int is_certain(cnstr_t cnstr){return 0;}\n',
     '_assert':          'void _assert(int expr){return;}\n',
