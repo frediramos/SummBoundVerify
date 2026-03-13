@@ -145,12 +145,6 @@ cnstr_t _ITE_VAR_(cnstr_t cond, symbolic var1, symbolic var2, size_t len, size_t
 
 # Validation Primitives
 
-    # halt_all,
-    # print_counterexamples,
-]
-
-
-
 ```c
 state_t save_current_state();
 ```
