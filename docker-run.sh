@@ -47,6 +47,7 @@ BUILD_CMD=(docker build --platform "$ARCH" -t "$IMAGE_NAME" .)
 if $REBUILD; then
     echo "Rebuilding Docker image '$IMAGE_NAME'..."
     "${BUILD_CMD[@]}"
+    docker image prune -f > /dev/null
 
 elif ! docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
     echo "Docker image '$IMAGE_NAME' not found. Building..."
