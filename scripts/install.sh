@@ -43,13 +43,9 @@ else
     echo -e "${GREEN}✔ Using virtualenv: $VIRTUAL_ENV${RESET}"
 fi
 
-FILE="../src/main.py"
-BIN_FOLDER="/usr/local/bin"
-BIN_NAME="summbv"
+./utils/prerequisites.sh
 
-./utils/check-prerequisites.sh
 ./installers/m32.sh
-./installers/python-requirements.sh
-./utils/create-symlink.sh "${FILE}" "${BIN_FOLDER}" "${BIN_NAME}"
+./installers/package.sh
 
 echo -e "${GREEN}✔ SummBoundVerify installed successfully!${RESET}"

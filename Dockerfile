@@ -20,20 +20,19 @@ RUN apt-get update && \
 ENV LANG=en_US.UTF-8
 ENV PYTHONIOENCODING=utf-8
 
-# Create virtual environment
+# Virtual environment
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy SumSynth files
-COPY . /root/summboundverify
+# Set workdir and copy files
 WORKDIR /root/summboundverify
 
-# Install Python modules
-RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install -r scripts/installers/requirements.txt
+COPY . .
 
-# Make summbv availabe globally
-RUN ln -sf /root/summboundverify/src/main.py /usr/local/bin/summbv
+# Upgrade pip + install package
+RUN pip install --upgrade pip && \
+    pip install .
+
 
 # Configure bash prompt
 RUN echo 'export PS1="\u@\h:\w# "' >> /root/.bashrc
@@ -41,5 +40,4 @@ RUN echo 'export PS1="\u@\h:\w# "' >> /root/.bashrc
 # Set the working directory to start from
 WORKDIR /root/dev
 
-# Start bash
 CMD ["/bin/bash"]
