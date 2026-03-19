@@ -1,12 +1,7 @@
 #!/bin/bash
 
-# Resolve this script's directory
-DIR="$(
-  cd "$(dirname "${BASH_SOURCE[0]}")" \
-  && pwd
-)"
-
 # Default settings
+DIR=summboundverify
 AGGRESSIVE=false
 VERBOSE=false
 
@@ -41,4 +36,4 @@ if [ "$VERBOSE" = true ]; then
 fi
 
 # Run autopep8
-$CMD "."
+$CMD $DIR

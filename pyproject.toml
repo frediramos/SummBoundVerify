@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+summboundverify = ["fake_libc/**/*", "resources/API.md"]
+
+[project]
+name = "summboundverify"
+version = "0.1.0"
+description = "Validate symbolic summaries for C using angr"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+
+dependencies = ["angr==9.2.203", "autopep8>=2.3.2", "pycparser~=3.0"]
+
+[project.scripts]
+summbv = "summboundverify.main:main"
