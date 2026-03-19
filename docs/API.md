@@ -1,1 +1,1 @@
-src/summboundverify/resources/API.md
+../src/summboundverify/resources/API.md
