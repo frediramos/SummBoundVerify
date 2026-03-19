@@ -4,8 +4,8 @@ import sys
 import traceback
 from argparse import Namespace
 
-from cli import parse_input_args
-from validation_gen import ValidationGenerator, CCompiler
+from summboundverify.cli import parse_input_args
+from summboundverify.validation_gen import ValidationGenerator, CCompiler
 
 
 def compile_validation_test(arch, file: str, libs):
@@ -65,7 +65,7 @@ def run_validation_gen(args: Namespace):
 
 def run_angr(binary: str, args: Namespace):
 
-    from validation_tool import angrEngine
+    from summboundverify.validation_tool import angrEngine
 
     engine = angrEngine(
         binary,
@@ -107,4 +107,3 @@ def main():
         print(e)
         return 1
     return 0
-
