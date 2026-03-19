@@ -74,7 +74,7 @@ all_api = {
     'is_symbolic':              'int is_symbolic(symbolic sym_var) {return 0;} \n',
     'assume':                   'void assume(cnstr_t cnstr) {return;}\n',
     'is_certain':               'int is_certain(cnstr_t cnstr){return 0;}\n',
-    'is_sat':                   'int is_sat(cnstr_t cnstr); \n',
+    'is_sat':                   'int is_sat(cnstr_t cnstr) {return 0;}\n',
     '_assert':                  'void _assert(int expr){return;}\n',
     'push_pc':                  'void push_pc(){return;}\n',
     'pop_pc':                   'void pop_pc(){return;}\n',

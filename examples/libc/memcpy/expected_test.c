@@ -13,6 +13,7 @@ typedef unsigned int result_t;
 
 cnstr_t _ULE_(symbolic var1, symbolic var2) {return 0;}
 cnstr_t get_cnstr(symbolic var, size_t size) {return 0;}
+int is_sat(cnstr_t cnstr) {return 0;}
 result_t check_implications(char* constraint1, char* constraint2) {return 0;}
 state_t save_current_state() {return 0;}
 symbolic sym_var_array(char* name, size_t index, size_t size) {return 0;}
