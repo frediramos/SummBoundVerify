@@ -46,6 +46,17 @@ output[0-9_]*.c
 # Ast
 ast.txt
 
-#Python
+## Python
+
+# Bytecode
 __pycache__/
 *.pyc
+
+# Packaging
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
