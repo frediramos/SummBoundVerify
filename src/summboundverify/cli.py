@@ -1,8 +1,8 @@
 import ast
 import argparse
 
-from options import Options, OptionTypes
-from config_file import parse_config_file
+from .options import Options, OptionTypes
+from .config import parse_config_file
 
 
 def parse_cmdline_args(input=None):

@@ -2,7 +2,7 @@ import re
 import ast
 import sys
 
-from options import Options, OptionTypes
+from .options import Options, OptionTypes
 
 
 def _get_simple(line: str):
