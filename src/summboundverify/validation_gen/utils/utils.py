@@ -1,19 +1,27 @@
-from os.path import dirname, realpath
+import pycparser
+
+from os.path import dirname, isdir
 from os.path import join as join_path
 
 from pycparser import parse_file
 from pycparser.c_ast import *
 
 SIZE_MACRO = 'SIZE'
+FUEL_MACRO = 'FUEL'
 MAX_MACRO = 'MAX_NUM'
 ARRAY_SIZE_MACRO = 'ARRAY_SIZE'
 POINTER_SIZE_MACRO = 'POINTER_SIZE'
-FUEL_MACRO = 'FUEL'
-FAKE_LIBC = join_path(dirname(realpath(__file__)), '..',
-                      '..', 'Fake_libc', 'fake_libc_include')
 
 
-def parseFile(file, fakelib=FAKE_LIBC):
+def fake_libc_path():
+    path = join_path(dirname(__file__), "fake_libc_include")
+    if not isdir(path):
+        raise RuntimeError("Could not locate pycparser fake_libc_include")
+    return path
+
+
+def parseFile(file):
+    fakelib = fake_libc_path()
     ast = parse_file(file, use_cpp=True,
                      cpp_path='gcc',
                      cpp_args=['-E', f'-I{fakelib}'])

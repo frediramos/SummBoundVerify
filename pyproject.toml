@@ -4,12 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-summboundverify = ["fake_libc/**/*", "resources/API.md"]
+summboundverify = [
+    "resources/API.md",
+    "validation_gen/utils/fake_libc_include/**/*",
+]
 
 [project]
 name = "summboundverify"

@@ -18,9 +18,9 @@ class ValidationGenerator(CGenerator):
                  pointersize=5, fuel=5,
                  memory=False,
                  cncrt_name=None, summ_name=None, no_api=False,
-                 fakelib=None):
+                 ):
 
-        super().__init__(outputfile, concrete_file, summary_file, fakelib)
+        super().__init__(outputfile, concrete_file, summary_file)
 
         self.arraysize = arraysize
         self.nullbytes = nullbytes

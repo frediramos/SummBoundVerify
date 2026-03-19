@@ -4,7 +4,7 @@ import traceback
 
 
 class CGenerator:
-    def __init__(self, outputfile, concrete_file, summary_file, fakelib=None):
+    def __init__(self, outputfile, concrete_file, summary_file):
 
         self.summary_file = summary_file
         self.concrete_file = concrete_file
