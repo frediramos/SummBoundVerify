@@ -106,4 +106,5 @@ def main():
         print(traceback.format_exc())
         print(e)
         return 1
+
     return 0
