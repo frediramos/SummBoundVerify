@@ -23,7 +23,7 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 
-dependencies = ["angr==9.2.203", "autopep8>=2.3.2", "pycparser~=3.0"]
+dependencies = ["angr[unicorn]==9.2.203", "autopep8>=2.3.2", "pycparser~=3.0"]
 
 [project.scripts]
 summbv = "summboundverify.main:main"
