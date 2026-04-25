@@ -150,7 +150,7 @@ class _ITE_(CSummary):
         restr_then = CNSTR_MAP[restr_then_id]
         restr_else = CNSTR_MAP[restr_else_id]
 
-        result = self.state.solver.If(restr_if, restr_then, restr_else)
+        result = claripy.If(restr_if, restr_then, restr_else)
 
         CNSTR_MAP.append(result)
         return return_value
