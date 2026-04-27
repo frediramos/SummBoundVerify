@@ -452,6 +452,6 @@ generates a test such that **two** random indexes of an array as the **first** f
 
 # License
 
-This project is licensed under the [GPL-3.0 License] -- see [LICENSE] for details.
+This project is licensed under the Apache 2.0 License -- see [LICENSE] for details.
 
 [LICENSE]: ./LICENSE
