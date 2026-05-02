@@ -25,12 +25,6 @@ symbolic sym_var_named(char* name, size_t size);
 
 
 ```c
-symbolic sym_var_named(char* name, size_t size);
-```
-- Returns a new symbolic variable identified by `name` and denoting a value with `size` bits.
-
-
-```c
 symbolic sym_var_array(char* name, size_t index, size_t size);
 ```
 - Returns a new symbolic variable, identified by an array `name`
