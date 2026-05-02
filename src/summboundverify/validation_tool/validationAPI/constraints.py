@@ -38,7 +38,7 @@ class _OR_(CSummary):
         cnstr_id2 = self.state.solver.eval(cnstr2)
         cnstr2 = CNSTR_MAP[cnstr_id2]
 
-        result = self.state.solver.Or(cnstr1, cnstr2)
+        result = claripy.Or(cnstr1, cnstr2)
         CNSTR_MAP.append(result)
         return return_value
 
@@ -53,7 +53,7 @@ class _AND_(CSummary):
         cnstr_id2 = self.state.solver.eval(cnstr2)
         cnstr2 = CNSTR_MAP[cnstr_id2]
 
-        result = self.state.solver.And(cnstr1, cnstr2)
+        result = claripy.And(cnstr1, cnstr2)
         CNSTR_MAP.append(result)
         return return_value
 
