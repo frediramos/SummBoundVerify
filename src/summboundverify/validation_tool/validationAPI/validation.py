@@ -2,12 +2,14 @@ import os
 import json
 import claripy
 
+from typing import Any, Dict
+from collections import OrderedDict
+from dataclasses import dataclass, field
+
 from angr import SimProcedure
 
 from claripy.backends.backend_z3 import BackendZ3
 from z3 import simplify, Or, Not, Solver, sat, Exists
-
-from collections import OrderedDict
 
 from ..utils import get_states
 
@@ -15,59 +17,66 @@ from .solver import SYM_VARS
 from .utils import *
 
 
-# Reached halt_all
-REACHED_NULL = False
-REACHED_HALT = False
+@dataclass
+class ExecutionVariables:
 
-# Restrictions
-# ------------------------------------------------------
-RESTR_MAP = []
-RESTR_COUNTER = 0
+    # Reached halt_all
+    REACHED_NULL: bool = False
+    REACHED_HALT: bool = False
 
-# Input Variables
-# ------------------------------------------------------
-INPUT_VARS = []
+    # Restrictions
+    # ------------------------------------------------------
+    RESTR_MAP: list = field(default_factory=list)
+    RESTR_COUNTER: int = 0
 
-# Return variable
-# ------------------------------------------------------
-RET = None
+    # Input Variables
+    # ------------------------------------------------------
+    INPUT_VARS: list = field(default_factory=list)
 
-# Symbolic states
-# ------------------------------------------------------
-SYM_STATES = {}
-STATE_ID = 1
+    # Return variable
+    # ------------------------------------------------------
+    RET: Any = None
 
-# Stored Restrictions
-STORED_RESTR = {}
-# ------------------------------------------------------
+    # Symbolic states
+    # ------------------------------------------------------
+    SYM_STATES: dict = field(default_factory=dict)
+    STATE_ID: int = 1
 
-# Memory
-# ------------------------------------------------------
-# Segments of memory tagged to be evaluated
-# List of tuples: (name, start_addr, nbytes)
-MEMORY_TRIPLES = []
-MEMORY_SYM_VARS = OrderedDict()
+    # Stored Restrictions
+    STORED_RESTR: dict = field(default_factory=dict)
+    # ------------------------------------------------------
+
+    # Memory
+    # ------------------------------------------------------
+    # Segments of memory tagged to be evaluated
+    # List of tuples: (name, start_addr, nbytes)
+    MEMORY_TRIPLES: list = field(default_factory=list)
+    MEMORY_SYM_VARS: OrderedDict = field(default_factory=OrderedDict)
+
+    # Validation results
+    # ------------------------------------------------------
+    # Results of the implications
+    # These are supplied to print_counterexamples
+    RESULTS: list = field(default_factory=list)
+    RESULTS_COUNTER: int = 0
+
+    # Logging
+    # ------------------------------------------------------
+    TEST_COUNT: int = 0
+    JSON_LOG: dict = field(default_factory=dict)
+
+    # Path stats
+    # ------------------------------------------------------
+    SUMM_PATHS: int = 0
+    CNCR_PATHS: int = 0
 
 
-# Validation results
-# ------------------------------------------------------
-# Results of the implications
-# These are supplied to print_counterexamples
-RESULTS = []
-RESULTS_COUNTER = 0
-
-# Logging
-# ------------------------------------------------------
-TEST_COUNT = 0
-JSON_LOG = {}
-
-# Path stats
-# ------------------------------------------------------
-SUMM_PATHS = 0
-CNCR_PATHS = 0
+VARS = ExecutionVariables()
 
 
-'''Validation Primitives'''
+def init():
+    global VARS
+    VARS = ExecutionVariables()
 
 
 class save_current_state(SimProcedure):
@@ -79,16 +88,14 @@ class save_current_state(SimProcedure):
         return input_vars
 
     def run(self):
-        global STATE_ID
-        global INPUT_VARS
 
-        INPUT_VARS = self.get_input_vars()
+        VARS.INPUT_VARS = self.get_input_vars()
 
         new_state = self.state.copy()
 
-        SYM_STATES[STATE_ID] = new_state
-        ret = STATE_ID
-        STATE_ID += 1
+        VARS.SYM_STATES[VARS.STATE_ID] = new_state
+        ret = VARS.STATE_ID
+        VARS.STATE_ID += 1
 
         self.ret(ret)
 
@@ -119,27 +126,25 @@ class get_cnstr(SimProcedure):
     def get_memory(self):
         restrs = []
 
-        for triple in MEMORY_TRIPLES:
+        for triple in VARS.MEMORY_TRIPLES:
             name, addr, nbytes = triple
             memory_name = "mem_{}".format(name)
 
             vars, restr = self.memory_restrictions_aux(
                 addr, nbytes, memory_name)
 
-            MEMORY_SYM_VARS[name] = vars
+            VARS.MEMORY_SYM_VARS[name] = vars
             restrs += restr
 
         return restrs
 
     def run(self, var_addr, length):
-        global RESTR_COUNTER
-        global RET
 
         backend_z3 = BackendZ3()
 
         # Increment RESTR_COUNTER
-        return_value = RESTR_COUNTER
-        RESTR_COUNTER += 1
+        return_value = VARS.RESTR_COUNTER
+        VARS.RESTR_COUNTER += 1
 
         length = self.state.solver.eval(length)
         assert length % 8 == 0, \
@@ -163,14 +168,14 @@ class get_cnstr(SimProcedure):
             # 	var = self.state.solver.BVV(var, self.state.arch.bits)
 
             ret = self.state.solver.BVS("Ret", length, explicit_name=True)
-            RET = ret
+            VARS.RET = ret
             c.append(ret == var)
 
         c.append(mem_restrs)
         c = claripy.And(*c)
 
         converted = backend_z3.convert(c)
-        RESTR_MAP.append(converted)
+        VARS.RESTR_MAP.append(converted)
 
         self.ret(return_value)
 
@@ -180,17 +185,18 @@ class store_cnstr(SimProcedure):
     def run(self, name_addr, restr_id):
 
         restr_id = self.state.solver.eval(restr_id)
+        assert isinstance(restr_id, int)
         assert (restr_id >= 0)
 
-        restr = RESTR_MAP[restr_id]
+        restr = VARS.RESTR_MAP[restr_id]
 
         name = get_name(self.state, name_addr)
 
         # Store Restrcition in dict
-        if name not in STORED_RESTR.keys():
-            STORED_RESTR[name] = []
+        if name not in VARS.STORED_RESTR.keys():
+            VARS.STORED_RESTR[name] = []
 
-        STORED_RESTR[name].append(restr)
+        VARS.STORED_RESTR[name].append(restr)
 
         self.ret()
 
@@ -206,7 +212,7 @@ class halt_all(SimProcedure):
         Get return address of the current sym state
         '''
 
-        ret = self.cc.teardown_callsite(
+        ret = self.cc.teardown_callsite(  # type: ignore
             self.state, None, prototype=self.prototype)
 
         return ret
@@ -218,7 +224,7 @@ class halt_all(SimProcedure):
         @addr: Instruction pointer to start from
         '''
 
-        self.successors.add_successor(
+        self.successors.add_successor(  # type: ignore
             state,
             addr,
             claripy.true(),
@@ -241,32 +247,28 @@ class halt_all(SimProcedure):
         return False
 
     def run(self, state_id):
-        global REACHED_HALT
-        global REACHED_NULL
-        global CNCR_PATHS
-
         state_id = self.state.solver.eval(state_id)
         state_id = to_signed_int(state_id)
 
         # Receives NULL
         if state_id == 0:
-            if self.all_done() and not REACHED_NULL:
-                REACHED_NULL = True
+            if self.all_done() and not VARS.REACHED_NULL:
+                VARS.REACHED_NULL = True
                 self.ret()
             else:
                 self.exit(0)  # Simply exit otherwise
 
         # Receives a normal state
         else:
-            if self.all_done() and not REACHED_HALT:
-                REACHED_HALT = True
-                state = SYM_STATES[state_id]
+            if self.all_done() and not VARS.REACHED_HALT:
+                VARS.REACHED_HALT = True
+                state = VARS.SYM_STATES[state_id]
                 ret_addr = self.get_ret_addr()
                 self.activate_state(state, ret_addr)
 
             self.exit(0)
 
-        CNCR_PATHS = len(get_states(self.sm))
+        VARS.CNCR_PATHS = len(get_states(self.sm))
 
 
 class mem_addr(SimProcedure):
@@ -277,7 +279,7 @@ class mem_addr(SimProcedure):
         name = get_name(self.state, name_addr)
 
         triple = (name, mem_addr, size)
-        MEMORY_TRIPLES.append(triple)
+        VARS.MEMORY_TRIPLES.append(triple)
 
         self.ret()
 
@@ -290,7 +292,8 @@ class check_implications(SimProcedure):
         by the summary being tested
         '''
 
-        new_vars = list(set(self.state.solver.all_variables) - set(INPUT_VARS))
+        new_vars = list(set(self.state.solver.all_variables) -
+                        set(VARS.INPUT_VARS))
 
         # Convert to Z3 and remove 'ret' sym var
         backend_z3 = BackendZ3()
@@ -343,7 +346,6 @@ class check_implications(SimProcedure):
         return ret
 
     def run(self, key1, key2):
-        global RESULTS_COUNTER
 
         key1 = get_name(self.state, key1)
         key2 = get_name(self.state, key2)
@@ -358,15 +360,15 @@ class check_implications(SimProcedure):
             summ = key1
             cncrt = key2
 
-        summ = simplify(Or(STORED_RESTR[summ]))
-        cncrt = simplify(Or(STORED_RESTR[cncrt]))
+        summ = simplify(Or(VARS.STORED_RESTR[summ]))
+        cncrt = simplify(Or(VARS.STORED_RESTR[cncrt]))
 
         result = self.check(summ, cncrt)
 
         # Increment RESULTS_COUNTER
-        return_value = RESULTS_COUNTER
-        RESULTS_COUNTER += 1
-        RESULTS.append(result)
+        return_value = VARS.RESULTS_COUNTER
+        VARS.RESULTS_COUNTER += 1
+        VARS.RESULTS.append(result)
 
         self.ret(return_value)
 
@@ -389,29 +391,31 @@ class print_counterexamples(SimProcedure):
         '''HACK: clear memory pairs, sym vars, and input_vars
         in between test executions
         '''
-        global REACHED_NULL
-        global REACHED_HALT
 
-        MEMORY_TRIPLES.clear()
+        VARS.MEMORY_TRIPLES.clear()
         SYM_VARS.clear()
-        INPUT_VARS.clear()
-        REACHED_NULL = False
-        REACHED_HALT = True
+        VARS.INPUT_VARS.clear()
+        VARS.REACHED_NULL = False
+        VARS.REACHED_HALT = True
 
     def log_json(self, result, models, path):
-        global TEST_COUNT
-        global JSON_LOG
 
-        TEST_COUNT += 1
+        VARS.TEST_COUNT += 1
 
         file = open(path, 'w')
-        log = {
+        log: Dict[str, Any] = {
             'result': f'{result.simple_result()}',
         }
 
         ignore = [str(i) for i in result.vars]
-        pm = Pretty_Model(SYM_VARS, MEMORY_SYM_VARS, RET,
-                          ignore, convert_chars=self.convert_ascii)
+
+        pm = Pretty_Model(
+            SYM_VARS,
+            VARS.MEMORY_SYM_VARS,
+            VARS.RET,
+            ignore,
+            convert_chars=self.convert_ascii
+        )
 
         if result == 'unknown':
             missing, wrong = models
@@ -442,15 +446,16 @@ class print_counterexamples(SimProcedure):
         else:
             log['counterexamples'] = {}
 
-        testid = f'{self.binary_name}_{TEST_COUNT}'
-        JSON_LOG[testid] = log
-        json_object = json.dumps(JSON_LOG, indent=2)
+        testid = f'{self.binary_name}_{VARS.TEST_COUNT}'
+        VARS.JSON_LOG[testid] = log
+        json_object = json.dumps(VARS.JSON_LOG, indent=2)
         file.write(json_object)
 
     def run(self, result_id):
         result_id = self.state.solver.eval(result_id)
+        assert isinstance(result_id, int)
 
-        result = RESULTS[result_id]
+        result = VARS.RESULTS[result_id]
         models = result.models()
 
         log = (f'===================== Result ===================== \n\n'
@@ -483,8 +488,7 @@ class print_counterexamples(SimProcedure):
         self.reset()
         self.ret()
 
-        global SUMM_PATHS
-        SUMM_PATHS = len(get_states(self.sm))
+        VARS.SUMM_PATHS = len(get_states(self.sm))
 
 
 summaries = [

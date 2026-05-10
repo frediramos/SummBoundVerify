@@ -2,10 +2,18 @@ import claripy
 
 from angr import SimProcedure
 
+
 # Constraints
 # ------------------------------------------------------
 CNSTR_COUNTER = 0
 CNSTR_MAP = []
+
+
+def init():
+    global CNSTR_COUNTER
+    global CNSTR_MAP
+    CNSTR_COUNTER = 0
+    CNSTR_MAP.clear()
 
 
 class CSummary(SimProcedure):
