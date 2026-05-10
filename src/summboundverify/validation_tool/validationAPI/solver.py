@@ -202,6 +202,11 @@ class pop_pc(CSummary):
 SYM_VARS = OrderedDict()
 
 
+def init():
+    global SYM_VARS
+    SYM_VARS.clear()
+
+
 class sym_var_named(SimProcedure):
 
     def run(self, name_addr, length):

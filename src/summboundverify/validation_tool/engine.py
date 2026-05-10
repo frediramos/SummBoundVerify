@@ -8,13 +8,15 @@ import json
 import sys
 import os
 
-from angr import Project, SimState, SimulationManager, SimProcedure, SimHeapPTMalloc
+from angr import Project, SimState, SimulationManager, SimHeapPTMalloc
 from angr import options, BP_AFTER
 
+from .validationAPI import init_api
 from .validationAPI import validation as Validation_API
 from .validationAPI.constraints import summaries as constraints
 from .validationAPI.solver import summaries as solver
 from .validationAPI.validation import summaries as validation
+from .validationAPI.validation import VARS as VALIDATION_VARS
 
 from .utils import truncate, write2file, get_fnames, get_states
 from .macros import SYM_VAR
@@ -159,10 +161,10 @@ class angrEngine():
             assert time_spent is not None
             out_stats['Time'] = time_spent
 
-        if Validation_API.SUMM_PATHS:
+        if VALIDATION_VARS.SUMM_PATHS:
             out_stats['N_Paths'] = {
-                "summary": Validation_API.SUMM_PATHS,
-                "concrete": Validation_API.CNCR_PATHS,
+                "summary": VALIDATION_VARS.SUMM_PATHS,
+                "concrete": VALIDATION_VARS.CNCR_PATHS,
             }
         else:
             out_stats['N_Paths'] = len(get_states(sm))
@@ -196,6 +198,8 @@ class angrEngine():
             sys.exit(1)
 
     def run(self):
+        # Init validation API
+        init_api()
 
         if self.debug:
             logging.getLogger('angr').setLevel('INFO')
