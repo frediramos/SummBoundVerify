@@ -139,7 +139,7 @@ cnstr_t _ITE_VAR_(cnstr_t cond, symbolic var1, symbolic var2, size_t len, size_t
 - **Note:** This function is mean for variables only.
 
 
-# Validation Primitives
+## Validation Primitives
 
 ```c
 state_t save_current_state();
