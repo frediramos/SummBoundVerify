@@ -24,10 +24,10 @@ class ExecutionVariables:
     REACHED_NULL: bool = False
     REACHED_HALT: bool = False
 
-    # Restrictions
+    # Constraints
     # ------------------------------------------------------
-    RESTR_MAP: list = field(default_factory=list)
-    RESTR_COUNTER: int = 0
+    CNSTR_MAP: list = field(default_factory=list)
+    CNSTR_COUNTER: int = 0
 
     # Input Variables
     # ------------------------------------------------------
@@ -42,8 +42,8 @@ class ExecutionVariables:
     SYM_STATES: dict = field(default_factory=dict)
     STATE_ID: int = 1
 
-    # Stored Restrictions
-    STORED_RESTR: dict = field(default_factory=dict)
+    # Stored Constraints
+    STORED_CNSTR: dict = field(default_factory=dict)
     # ------------------------------------------------------
 
     # Memory
@@ -110,8 +110,8 @@ class get_cnstr(SimProcedure):
         value = int.from_bytes(bytes_, byteorder='big', signed=True)
         return value
 
-    def memory_restrictions_aux(self, addr, nbytes, prefix):
-        restrs = []
+    def memory_Constraints_aux(self, addr, nbytes, prefix):
+        cnstrs = []
         sym_vars = []
         for i in range(nbytes):
 
@@ -119,40 +119,40 @@ class get_cnstr(SimProcedure):
             sym_var = self.state.solver.BVS(name, 8, explicit_name=True)
 
             sym_vars.append(sym_var)
-            restrs.append(sym_var == self.state.memory.load(addr + i, 1))
+            cnstrs.append(sym_var == self.state.memory.load(addr + i, 1))
 
-        return (sym_vars, restrs)
+        return (sym_vars, cnstrs)
 
     def get_memory(self):
-        restrs = []
+        cnstrs = []
 
         for triple in VARS.MEMORY_TRIPLES:
             name, addr, nbytes = triple
             memory_name = "mem_{}".format(name)
 
-            vars, restr = self.memory_restrictions_aux(
+            vars, cnstr = self.memory_Constraints_aux(
                 addr, nbytes, memory_name)
 
             VARS.MEMORY_SYM_VARS[name] = vars
-            restrs += restr
+            cnstrs += cnstr
 
-        return restrs
+        return cnstrs
 
     def run(self, var_addr, length):
 
         backend_z3 = BackendZ3()
 
-        # Increment RESTR_COUNTER
-        return_value = VARS.RESTR_COUNTER
-        VARS.RESTR_COUNTER += 1
+        # Increment CNSTR_COUNTER
+        return_value = VARS.CNSTR_COUNTER
+        VARS.CNSTR_COUNTER += 1
 
         length = self.state.solver.eval(length)
         assert length % 8 == 0, \
             "[!] Size in bits must be divisible by 8!"
 
         # Lift memory contents for functions with side-effects
-        mem_restrs = self.get_memory()
-        mem_restrs = claripy.And(*mem_restrs)
+        mem_cnstrs = self.get_memory()
+        mem_cnstrs = claripy.And(*mem_cnstrs)
 
         c = self.state.solver.constraints
 
@@ -171,32 +171,32 @@ class get_cnstr(SimProcedure):
             VARS.RET = ret
             c.append(ret == var)
 
-        c.append(mem_restrs)
+        c.append(mem_cnstrs)
         c = claripy.And(*c)
 
         converted = backend_z3.convert(c)
-        VARS.RESTR_MAP.append(converted)
+        VARS.CNSTR_MAP.append(converted)
 
         self.ret(return_value)
 
 
 class store_cnstr(SimProcedure):
 
-    def run(self, name_addr, restr_id):
+    def run(self, name_addr, cnstr_id):
 
-        restr_id = self.state.solver.eval(restr_id)
-        assert isinstance(restr_id, int)
-        assert (restr_id >= 0)
+        cnstr_id = self.state.solver.eval(cnstr_id)
+        assert isinstance(cnstr_id, int)
+        assert (cnstr_id >= 0)
 
-        restr = VARS.RESTR_MAP[restr_id]
+        cnstr = VARS.CNSTR_MAP[cnstr_id]
 
         name = get_name(self.state, name_addr)
 
-        # Store Restrcition in dict
-        if name not in VARS.STORED_RESTR.keys():
-            VARS.STORED_RESTR[name] = []
+        # Store cnstrcition in dict
+        if name not in VARS.STORED_CNSTR.keys():
+            VARS.STORED_CNSTR[name] = []
 
-        VARS.STORED_RESTR[name].append(restr)
+        VARS.STORED_CNSTR[name].append(cnstr)
 
         self.ret()
 
@@ -360,8 +360,8 @@ class check_implications(SimProcedure):
             summ = key1
             cncrt = key2
 
-        summ = simplify(Or(VARS.STORED_RESTR[summ]))
-        cncrt = simplify(Or(VARS.STORED_RESTR[cncrt]))
+        summ = simplify(Or(VARS.STORED_CNSTR[summ]))
+        cncrt = simplify(Or(VARS.STORED_CNSTR[cncrt]))
 
         result = self.check(summ, cncrt)
 
