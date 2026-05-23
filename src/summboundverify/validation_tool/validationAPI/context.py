@@ -1,5 +1,6 @@
-from typing import Any
+from angr import SimProcedure
 
+from typing import Any
 from collections import OrderedDict
 from dataclasses import dataclass, field
 
