@@ -1,5 +1,3 @@
-from angr import SimProcedure
-
 from typing import Any
 from collections import OrderedDict
 from dataclasses import dataclass, field
@@ -60,3 +58,4 @@ class ValidationCTX:
     # Path stats
     # ------------------------------------------------------
     SUMM_PATHS: int = 0
+    CNCR_PATHS: int = 0

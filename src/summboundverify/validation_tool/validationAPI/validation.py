@@ -3,104 +3,47 @@ import json
 import claripy
 
 from typing import Any, Dict
-from collections import OrderedDict
-from dataclasses import dataclass, field
+
 
 from angr import SimProcedure
 
 from claripy.backends.backend_z3 import BackendZ3
-from z3 import simplify, Or, Not, Solver, sat, Exists
+from z3 import Solver, Exists, Or, Not, simplify, sat
 
-from ..utils import get_states
+from summboundverify.validation_tool.utils import get_states
 
-from .solver import SYM_VARS
+from .summary import CSummary
+from .context import ValidationCTX
+
 from .utils import *
 
 
-@dataclass
-class ExecutionVariables:
-
-    # Reached halt_all
-    REACHED_NULL: bool = False
-    REACHED_HALT: bool = False
-
-    # Constraints
-    # ------------------------------------------------------
-    CNSTR_MAP: list = field(default_factory=list)
-    CNSTR_COUNTER: int = 0
-
-    # Input Variables
-    # ------------------------------------------------------
-    INPUT_VARS: list = field(default_factory=list)
-
-    # Return variable
-    # ------------------------------------------------------
-    RET: Any = None
-
-    # Symbolic states
-    # ------------------------------------------------------
-    SYM_STATES: dict = field(default_factory=dict)
-    STATE_ID: int = 1
-
-    # Stored Constraints
-    STORED_CNSTR: dict = field(default_factory=dict)
-    # ------------------------------------------------------
-
-    # Memory
-    # ------------------------------------------------------
-    # Segments of memory tagged to be evaluated
-    # List of tuples: (name, start_addr, nbytes)
-    MEMORY_TRIPLES: list = field(default_factory=list)
-    MEMORY_SYM_VARS: OrderedDict = field(default_factory=OrderedDict)
-
-    # Validation results
-    # ------------------------------------------------------
-    # Results of the implications
-    # These are supplied to print_counterexamples
-    RESULTS: list = field(default_factory=list)
-    RESULTS_COUNTER: int = 0
-
-    # Logging
-    # ------------------------------------------------------
-    TEST_COUNT: int = 0
-    JSON_LOG: dict = field(default_factory=dict)
-
-    # Path stats
-    # ------------------------------------------------------
-    SUMM_PATHS: int = 0
-    CNCR_PATHS: int = 0
-
-
-VARS = ExecutionVariables()
-
-
-def init():
-    global VARS
-    VARS = ExecutionVariables()
-
-
-class save_current_state(SimProcedure):
+class save_current_state(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
 
     def get_input_vars(self):
         input_vars = []
-        for var in SYM_VARS.keys():
-            input_vars += SYM_VARS[var]
+        for var in self.ctx.SYM_VARS.keys():
+            input_vars += self.ctx.SYM_VARS[var]
         return input_vars
 
     def run(self):
 
-        VARS.INPUT_VARS = self.get_input_vars()
+        self.ctx.INPUT_VARS = self.get_input_vars()
 
         new_state = self.state.copy()
 
-        VARS.SYM_STATES[VARS.STATE_ID] = new_state
-        ret = VARS.STATE_ID
-        VARS.STATE_ID += 1
+        self.ctx.SYM_STATES[self.ctx.STATE_ID] = new_state
+        ret = self.ctx.STATE_ID
+        self.ctx.STATE_ID += 1
 
         self.ret(ret)
 
 
-class get_cnstr(SimProcedure):
+class get_cnstr(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
 
     def value_fromBV(self, bv):
         '''
@@ -126,14 +69,14 @@ class get_cnstr(SimProcedure):
     def get_memory(self):
         cnstrs = []
 
-        for triple in VARS.MEMORY_TRIPLES:
+        for triple in self.ctx.MEMORY_TRIPLES:
             name, addr, nbytes = triple
             memory_name = "mem_{}".format(name)
 
             vars, cnstr = self.memory_Constraints_aux(
                 addr, nbytes, memory_name)
 
-            VARS.MEMORY_SYM_VARS[name] = vars
+            self.ctx.MEMORY_SYM_VARS[name] = vars
             cnstrs += cnstr
 
         return cnstrs
@@ -143,8 +86,8 @@ class get_cnstr(SimProcedure):
         backend_z3 = BackendZ3()
 
         # Increment CNSTR_COUNTER
-        return_value = VARS.CNSTR_COUNTER
-        VARS.CNSTR_COUNTER += 1
+        return_value = self.ctx.CNSTR_COUNTER
+        self.ctx.CNSTR_COUNTER += 1
 
         length = self.state.solver.eval(length)
         assert length % 8 == 0, \
@@ -168,19 +111,21 @@ class get_cnstr(SimProcedure):
             # 	var = self.state.solver.BVV(var, self.state.arch.bits)
 
             ret = self.state.solver.BVS("Ret", length, explicit_name=True)
-            VARS.RET = ret
+            self.ctx.RET = ret
             c.append(ret == var)
 
         c.append(mem_cnstrs)
         c = claripy.And(*c)
 
         converted = backend_z3.convert(c)
-        VARS.CNSTR_MAP.append(converted)
+        self.ctx.CNSTR_MAP.append(converted)
 
         self.ret(return_value)
 
 
-class store_cnstr(SimProcedure):
+class store_cnstr(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
 
     def run(self, name_addr, cnstr_id):
 
@@ -188,24 +133,24 @@ class store_cnstr(SimProcedure):
         assert isinstance(cnstr_id, int)
         assert (cnstr_id >= 0)
 
-        cnstr = VARS.CNSTR_MAP[cnstr_id]
+        cnstr = self.ctx.CNSTR_MAP[cnstr_id]
 
         name = get_name(self.state, name_addr)
 
         # Store cnstrcition in dict
-        if name not in VARS.STORED_CNSTR.keys():
-            VARS.STORED_CNSTR[name] = []
+        if name not in self.ctx.STORED_CNSTR.keys():
+            self.ctx.STORED_CNSTR[name] = []
 
-        VARS.STORED_CNSTR[name].append(cnstr)
+        self.ctx.STORED_CNSTR[name].append(cnstr)
 
         self.ret()
 
 
-class halt_all(SimProcedure):
+class halt_all(CSummary):
 
-    def __init__(self, sm):
+    def __init__(self, ctx: ValidationCTX, sm):
         self.sm = sm
-        super().__init__()
+        super().__init__(ctx)
 
     def get_ret_addr(self):
         '''
@@ -252,26 +197,28 @@ class halt_all(SimProcedure):
 
         # Receives NULL
         if state_id == 0:
-            if self.all_done() and not VARS.REACHED_NULL:
-                VARS.REACHED_NULL = True
+            if self.all_done() and not self.ctx.REACHED_NULL:
+                self.ctx.REACHED_NULL = True
                 self.ret()
             else:
                 self.exit(0)  # Simply exit otherwise
 
         # Receives a normal state
         else:
-            if self.all_done() and not VARS.REACHED_HALT:
-                VARS.REACHED_HALT = True
-                state = VARS.SYM_STATES[state_id]
+            if self.all_done() and not self.ctx.REACHED_HALT:
+                self.ctx.REACHED_HALT = True
+                state = self.ctx.SYM_STATES[state_id]
                 ret_addr = self.get_ret_addr()
                 self.activate_state(state, ret_addr)
 
             self.exit(0)
 
-        VARS.CNCR_PATHS = len(get_states(self.sm))
+        self.ctx.CNCR_PATHS = len(get_states(self.sm))
 
 
-class mem_addr(SimProcedure):
+class mem_addr(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
 
     def run(self, name_addr, mem_addr, size):
 
@@ -279,12 +226,14 @@ class mem_addr(SimProcedure):
         name = get_name(self.state, name_addr)
 
         triple = (name, mem_addr, size)
-        VARS.MEMORY_TRIPLES.append(triple)
+        self.ctx.MEMORY_TRIPLES.append(triple)
 
         self.ret()
 
 
-class check_implications(SimProcedure):
+class check_implications(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
 
     def summary_generated(self):
         '''
@@ -293,7 +242,7 @@ class check_implications(SimProcedure):
         '''
 
         new_vars = list(set(self.state.solver.all_variables) -
-                        set(VARS.INPUT_VARS))
+                        set(self.ctx.INPUT_VARS))
 
         # Convert to Z3 and remove 'ret' sym var
         backend_z3 = BackendZ3()
@@ -360,47 +309,51 @@ class check_implications(SimProcedure):
             summ = key1
             cncrt = key2
 
-        summ = simplify(Or(VARS.STORED_CNSTR[summ]))
-        cncrt = simplify(Or(VARS.STORED_CNSTR[cncrt]))
+        summ = simplify(Or(self.ctx.STORED_CNSTR[summ]))
+        cncrt = simplify(Or(self.ctx.STORED_CNSTR[cncrt]))
 
         result = self.check(summ, cncrt)
 
         # Increment RESULTS_COUNTER
-        return_value = VARS.RESULTS_COUNTER
-        VARS.RESULTS_COUNTER += 1
-        VARS.RESULTS.append(result)
+        return_value = self.ctx.RESULTS_COUNTER
+        self.ctx.RESULTS_COUNTER += 1
+        self.ctx.RESULTS.append(result)
 
         self.ret(return_value)
 
 
-class print_counterexamples(SimProcedure):
+class print_counterexamples(CSummary):
 
-    def __init__(self, sm,
-                 binary_name: str,
-                 results_dir: str,
-                 convert_ascii=False):
+    def __init__(
+        self,
+        ctx: ValidationCTX,
+        sm,
+        binary_name: str,
+        results_dir: str,
+        convert_ascii=False
+    ):
+
+        super().__init__(ctx)
 
         self.sm = sm
         self.binary_name = binary_name
         self.results_dir = results_dir
         self.convert_ascii = convert_ascii
 
-        super().__init__()
-
     def reset(self):
         '''HACK: clear memory pairs, sym vars, and input_vars
         in between test executions
         '''
 
-        VARS.MEMORY_TRIPLES.clear()
-        SYM_VARS.clear()
-        VARS.INPUT_VARS.clear()
-        VARS.REACHED_NULL = False
-        VARS.REACHED_HALT = True
+        self.ctx.MEMORY_TRIPLES.clear()
+        self.ctx.SYM_VARS.clear()
+        self.ctx.INPUT_VARS.clear()
+        self.ctx.REACHED_NULL = False
+        self.ctx.REACHED_HALT = True
 
     def log_json(self, result, models, path):
 
-        VARS.TEST_COUNT += 1
+        self.ctx.TEST_COUNT += 1
 
         file = open(path, 'w')
         log: Dict[str, Any] = {
@@ -410,9 +363,9 @@ class print_counterexamples(SimProcedure):
         ignore = [str(i) for i in result.vars]
 
         pm = Pretty_Model(
-            SYM_VARS,
-            VARS.MEMORY_SYM_VARS,
-            VARS.RET,
+            self.ctx.SYM_VARS,
+            self.ctx.MEMORY_SYM_VARS,
+            self.ctx.RET,
             ignore,
             convert_chars=self.convert_ascii
         )
@@ -446,16 +399,16 @@ class print_counterexamples(SimProcedure):
         else:
             log['counterexamples'] = {}
 
-        testid = f'{self.binary_name}_{VARS.TEST_COUNT}'
-        VARS.JSON_LOG[testid] = log
-        json_object = json.dumps(VARS.JSON_LOG, indent=2)
+        testid = f'{self.binary_name}_{self.ctx.TEST_COUNT}'
+        self.ctx.JSON_LOG[testid] = log
+        json_object = json.dumps(self.ctx.JSON_LOG, indent=2)
         file.write(json_object)
 
     def run(self, result_id):
         result_id = self.state.solver.eval(result_id)
         assert isinstance(result_id, int)
 
-        result = VARS.RESULTS[result_id]
+        result = self.ctx.RESULTS[result_id]
         models = result.models()
 
         log = (f'===================== Result ===================== \n\n'
@@ -488,7 +441,7 @@ class print_counterexamples(SimProcedure):
         self.reset()
         self.ret()
 
-        VARS.SUMM_PATHS = len(get_states(self.sm))
+        self.ctx.SUMM_PATHS = len(get_states(self.sm))
 
 
 summaries = [

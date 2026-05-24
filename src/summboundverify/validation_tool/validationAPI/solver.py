@@ -1,5 +1,3 @@
-from angr import SimProcedure
-from collections import OrderedDict
 from claripy.ast.bv import BV as BitVector
 
 from .summary import CSummary
