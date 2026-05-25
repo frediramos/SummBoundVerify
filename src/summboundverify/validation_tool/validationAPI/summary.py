@@ -1,4 +1,3 @@
-import sys
 import claripy
 from angr import SimProcedure
 
@@ -8,6 +7,16 @@ from . context import ValidationCTX
 
 class UnsatException(Exception):
     pass
+
+
+class InvalidSymbolicVariableSize(Exception):
+
+    def __init__(self, length):
+        message = (
+            f"Cannot create a symbolic variable with size: {length}"
+            "Size in bits must be divisible by 8"
+        )
+        super().__init__(message)
 
 
 class CSummary(SimProcedure):
@@ -21,11 +30,6 @@ class CSummary(SimProcedure):
         self.ctx.CNSTR_COUNTER += 1
         return current
 
-    def stop_exec(self, msg: str):
-        error = '[!] Execution Terminated [!] +' \
-            f'Reason: {msg}'
-        sys.exit(error)
-
     # Symbolic State
     # -----------------------------------------------------------------------------------
 
@@ -34,9 +38,7 @@ class CSummary(SimProcedure):
 
     def sym_var(self, length):
         if length % 8 != 0:
-            msg = f'Failed \'{self.sym_var.__name__}\' with size: {length} | ' + \
-                'Size in bits must be divisible by 8'
-            self.stop_exec(msg)
+            raise InvalidSymbolicVariableSize(length)
 
         sym_var = self.state.solver.BVS(SYM_VAR, length)
         sym_var = sym_var.zero_extend(self.state.arch.bits - length)
@@ -73,7 +75,7 @@ class CSummary(SimProcedure):
 
     def push_pc(self):
         c = self.state.solver._solver.constraints
-        
+
         if 'pc_stack' not in self.state.globals.keys():  # type: ignore
             self.state.globals['pc_stack'] = []  # type: ignore
 
@@ -85,5 +87,5 @@ class CSummary(SimProcedure):
             len(self.state.globals['pc_stack']) > 0  # type: ignore
         )
 
-        c = self.state.globals['pc_stack'].pop() # type: ignore
+        c = self.state.globals['pc_stack'].pop()  # type: ignore
         self.state.solver.reload_solver(c)
