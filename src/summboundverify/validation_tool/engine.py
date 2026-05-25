@@ -90,12 +90,14 @@ class angrEngine():
         return state
 
     def _register_timeout(self, sm: SimulationManager):
+        if self.timeout is None:
+            return
 
         def handler(signum, frame):
             if self.stats_dir:
                 self._save_stats(sm, timeout=True)
             print(f'[!] Timeout Detected {self.timeout} seconds')
-            sys.exit(0)
+            raise TimeoutError()
 
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(self.timeout)
