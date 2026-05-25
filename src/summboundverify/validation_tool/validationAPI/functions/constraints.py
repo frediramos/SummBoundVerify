@@ -1,8 +1,8 @@
 import claripy
 from claripy.ast.bv import BV as BitVector
 
-from .summary import CSummary
-from .context import ValidationCTX
+from ..summary import CSummary
+from ..context import ValidationCTX
 
 
 class _NOT_(CSummary):
@@ -202,22 +202,3 @@ class _ITE_VAR_(CSummary):
             return result
         except Exception as e:
             print(e)
-
-
-summaries = [
-    _NOT_,
-    _OR_,
-    _AND_,
-    _EQ_,
-    _NEQ_,
-    _LT_,
-    _LE_,
-    _ULT_,
-    _ULE_,
-    _GT_,
-    _GE_,
-    _UGT_,
-    _UGE_,
-    _ITE_,
-    _ITE_VAR_
-]

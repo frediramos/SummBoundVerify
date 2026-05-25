@@ -11,15 +11,10 @@ import os
 from angr import Project, SimState, SimulationManager, SimHeapPTMalloc
 from angr import options, BP_AFTER
 
-from .validationAPI import init_api
-from .validationAPI import validation as Validation_API
-from .validationAPI.constraints import summaries as constraints
-from .validationAPI.solver import summaries as solver
-from .validationAPI.validation import summaries as validation
-from .validationAPI.validation import VARS as VALIDATION_VARS
-
 from .utils import truncate, write2file, get_fnames, get_states
 from .macros import SYM_VAR
+
+from .validationAPI import ValidationAPI
 
 
 class angrEngine():
@@ -48,6 +43,8 @@ class angrEngine():
         self.fnames = get_fnames(self.binary)
         self.fcalled = {}
 
+        self.api: ValidationAPI
+
     def _ignore_list(self, ignore):
         if not ignore:
             return []
@@ -55,24 +52,21 @@ class angrEngine():
             implemented = f.readlines()
             return [f.strip() for f in implemented]
 
-    # Hook API symbols
     def _set_hooks(self, p: Project, sm: SimulationManager):
-
-        summaries = [*constraints, *solver, *validation]
-
-        for s in summaries:
-            p.hook_symbol(s.__name__, s())
-
-        # Validation
-        p.hook_symbol('halt_all', Validation_API.halt_all(sm))
-        p.hook_symbol('print_counterexamples', Validation_API.print_counterexamples(
-            sm, self.binary_name, self.results_dir, self.convert_ascii))
+        self.api = ValidationAPI(p, sm)
+        self.api.hook_api(
+            self.binary_name,
+            self.results_dir,
+            self.convert_ascii
+        )
 
     def _create_entry_state(self, p: Project) -> SimState:
 
-        opt = {options.TRACK_SOLVER_VARIABLES,
-               options.ZERO_FILL_UNCONSTRAINED_MEMORY,
-               options.ZERO_FILL_UNCONSTRAINED_REGISTERS}
+        opt = {
+            options.TRACK_SOLVER_VARIABLES,
+            options.ZERO_FILL_UNCONSTRAINED_MEMORY,
+            options.ZERO_FILL_UNCONSTRAINED_REGISTERS
+        }
 
         state = p.factory.entry_state(mode='symbolic', add_options=opt)
 
@@ -82,7 +76,7 @@ class angrEngine():
             heap = SimHeapPTMalloc()
         state.register_plugin('heap', heap)
 
-        state.libc.simple_strtok = False
+        state.libc.simple_strtok = False  # type: ignore
 
         if self.stats_dir:
             state.inspect.b('call', when=BP_AFTER, action=self._count_fcall)
@@ -117,6 +111,8 @@ class angrEngine():
 
     def _save_paths(self, sm: SimulationManager):
 
+        assert isinstance(self.paths_dir, str)
+
         def filter_gen(var):
             if SYM_VAR in str(var):
                 return True
@@ -138,12 +134,18 @@ class angrEngine():
                 write2file(file, v)
         return
 
-    def _save_stats(self, sm: SimulationManager,
-                    time_spent=None, timeout=None,
-                    start=None,
-                    exception=None):
+    def _save_stats(
+        self,
+        sm: SimulationManager,
+        time_spent=None,
+        timeout=None,
+        start=None,
+        exception=None
+    ):
 
         out_stats = {}
+
+        assert isinstance(self.stats_dir, str)
 
         # Create results folder if it does not exist yet
         if not os.path.exists(self.stats_dir):
@@ -161,10 +163,10 @@ class angrEngine():
             assert time_spent is not None
             out_stats['Time'] = time_spent
 
-        if VALIDATION_VARS.SUMM_PATHS:
+        if self.api.ctx.SUMM_PATHS:
             out_stats['N_Paths'] = {
-                "summary": VALIDATION_VARS.SUMM_PATHS,
-                "concrete": VALIDATION_VARS.CNCR_PATHS,
+                "summary": self.api.ctx.SUMM_PATHS,
+                "concrete": self.api.ctx.CNCR_PATHS,
             }
         else:
             out_stats['N_Paths'] = len(get_states(sm))
@@ -198,8 +200,6 @@ class angrEngine():
             sys.exit(1)
 
     def run(self):
-        # Init validation API
-        init_api()
 
         if self.debug:
             logging.getLogger('angr').setLevel('INFO')

@@ -4,16 +4,14 @@ import claripy
 
 from typing import Any, Dict
 
-
-from angr import SimProcedure
-
 from claripy.backends.backend_z3 import BackendZ3
 from z3 import Solver, Exists, Or, Not, simplify, sat
 
 from summboundverify.validation_tool.utils import get_states
 
-from .summary import CSummary
-from .context import ValidationCTX
+from ..summary import CSummary
+from ..context import ValidationCTX
+
 
 from .utils import *
 
@@ -400,6 +398,7 @@ class print_counterexamples(CSummary):
             log['counterexamples'] = {}
 
         testid = f'{self.binary_name}_{self.ctx.TEST_COUNT}'
+        print(testid)
         self.ctx.JSON_LOG[testid] = log
         json_object = json.dumps(self.ctx.JSON_LOG, indent=2)
         file.write(json_object)
@@ -442,17 +441,3 @@ class print_counterexamples(CSummary):
         self.ret()
 
         self.ctx.SUMM_PATHS = len(get_states(self.sm))
-
-
-summaries = [
-    save_current_state,
-    get_cnstr,
-    store_cnstr,
-    mem_addr,
-    check_implications,
-
-    # These primitives require input arguments
-    # (Must be instantiated manually in the engine)
-    # halt_all,
-    # print_counterexamples,
-]
