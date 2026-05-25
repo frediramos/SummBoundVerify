@@ -19,10 +19,16 @@ from .validationAPI import ValidationAPI
 
 class angrEngine():
 
-    def __init__(self, binary: str, timeout=30*60, results_dir='.',
-                 stats_dir=None, paths_dir=None,
-                 convert_ascii=False,
-                 ignore=None, debug=False, max_memory=None) -> None:
+    def __init__(
+        self,
+        binary: str,
+        timeout: int | None = 30*60,
+        results_dir='.',
+        stats_dir=None, paths_dir=None,
+        convert_ascii=False,
+        ignore=None, debug=False,
+        max_memory=None
+    ) -> None:
 
         self.binary = os.path.normpath(binary)
         self.timeout = timeout
@@ -197,9 +203,10 @@ class angrEngine():
                 self._save_stats(sm, exception=e, start=start)
 
             print(traceback.format_exc())
-            sys.exit(1)
+            raise e
 
     def run(self):
+        logging.getLogger('angr').setLevel('CRITICAL')
 
         if self.debug:
             logging.getLogger('angr').setLevel('INFO')
