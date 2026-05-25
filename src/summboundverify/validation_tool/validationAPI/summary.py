@@ -73,14 +73,17 @@ class CSummary(SimProcedure):
 
     def push_pc(self):
         c = self.state.solver._solver.constraints
-        if 'pc_stack' not in self.state.globals.keys():
-            self.state.globals['pc_stack'] = []
+        
+        if 'pc_stack' not in self.state.globals.keys():  # type: ignore
+            self.state.globals['pc_stack'] = []  # type: ignore
 
-        self.state.globals['pc_stack'].append(c)
+        self.state.globals['pc_stack'].append(c)  # type: ignore
 
     def pop_pc(self):
-        assert 'pc_stack' in self.state.globals.keys() and \
-            len(self.state.globals['pc_stack'])
+        assert (
+            'pc_stack' in self.state.globals.keys() and   # type: ignore
+            len(self.state.globals['pc_stack']) > 0  # type: ignore
+        )
 
-        c = self.state.globals['pc_stack'].pop()
+        c = self.state.globals['pc_stack'].pop() # type: ignore
         self.state.solver.reload_solver(c)
