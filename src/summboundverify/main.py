@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import sys
+import logging
 import traceback
 from argparse import Namespace
 
 from summboundverify.cli import parse_input_args
+from summboundverify.logger import setup_logging
 from summboundverify.validation_gen import ValidationGenerator, CCompiler
 
 
@@ -80,9 +82,13 @@ def run_angr(binary: str, args: Namespace):
 
 
 def main():
+
     try:
         # Parse all input (cli and config file)
         args = parse_input_args()
+
+        level = logging.DEBUG if args.debug else logging.INFO
+        setup_logging(level)
 
         # Run a given binary a exit
         if args.run and args.binary:

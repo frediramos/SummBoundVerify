@@ -1,6 +1,7 @@
 import os
 import json
 import claripy
+import logging
 
 from typing import Any, Dict
 
@@ -14,6 +15,8 @@ from ..context import ValidationCTX
 
 
 from .utils import *
+
+logger = logging.getLogger(__name__)
 
 
 class save_current_state(CSummary):
@@ -398,7 +401,6 @@ class print_counterexamples(CSummary):
             log['counterexamples'] = {}
 
         testid = f'{self.binary_name}_{self.ctx.TEST_COUNT}'
-        print(testid)
         self.ctx.JSON_LOG[testid] = log
         json_object = json.dumps(self.ctx.JSON_LOG, indent=2)
         file.write(json_object)
@@ -428,7 +430,7 @@ class print_counterexamples(CSummary):
                 log += f'Missing path example: \n{missing}\n\n'
                 log += f'Wrong path example: \n{wrong}\n\n'
 
-        print(log.rstrip())
+        logger.info('\n'+ log.rstrip())
 
         # Create outputs folder if it does not exist yet
         if not os.path.exists(self.results_dir):

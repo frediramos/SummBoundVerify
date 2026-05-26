@@ -36,9 +36,9 @@ class CGenerator:
             self.tmp_files.append(tmp_file)
             return tmp_file
 
-        except Exception:
-            print(traceback.format_exc(), end='')
-            self.exit(f'{file} not found')
+        except Exception as e:
+            self.remove_tmp()
+            raise e
 
     def remove_files(self, *files):
         for f in files:
@@ -57,10 +57,5 @@ class CGenerator:
         outfile.flush()
         outfile.close()
 
-    def exit(self, msg):
-        try:
-            self.remove_files(*self.tmp_files)
-        except Exception:
-            pass
-
-        sys.exit(msg)
+    def remove_tmp(self):
+        self.remove_files(*self.tmp_files)

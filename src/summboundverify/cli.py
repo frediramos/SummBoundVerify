@@ -11,7 +11,8 @@ def parse_cmdline_args(input=None):
         return f'{option[0]}{option[1]}'
 
     parser = argparse.ArgumentParser(
-        prog='summvb', description='Generate Summary Validation Tests')
+        prog='summvb', description='Generate Summary Validation Tests'
+    )
 
     generation = parser.add_argument_group('Test Generation')
     validation = parser.add_argument_group('Validation')
@@ -112,7 +113,6 @@ def parse_input_args(input=None):
     # Parse config file and override cmd args
     config_file = args.config
     if config_file:
-
         config = parse_config_file(config_file)
         for c in config.keys():
             setattr(args, c, config[c])
