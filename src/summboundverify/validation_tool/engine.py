@@ -16,6 +16,9 @@ from .macros import SYM_VAR
 from .validationAPI import ValidationAPI
 
 
+logger = logging.getLogger(__name__)
+
+
 class angrEngine():
 
     def __init__(
@@ -26,15 +29,12 @@ class angrEngine():
         stats_dir=None, paths_dir=None,
         convert_ascii=False,
         ignore=None, debug=False,
-        max_memory=None
     ) -> None:
 
         self.binary = os.path.normpath(binary)
         self.timeout = timeout
-        self.max_memory = max_memory
 
         self.results_dir = results_dir
-
         self.stats_dir = stats_dir
         self.paths_dir = paths_dir
 
@@ -95,7 +95,7 @@ class angrEngine():
         def handler(signum, frame):
             if self.stats_dir:
                 self._save_stats(sm, timeout=True)
-            print(f'[!] Timeout Detected {self.timeout} seconds')
+                logger.error(f"Timeout detected: {self.timeout} seconds")
             raise TimeoutError()
 
         signal.signal(signal.SIGALRM, handler)
@@ -189,25 +189,16 @@ class angrEngine():
         file.flush()
         file.close()
 
-    def _step(self, sm: SimulationManager, start: float):
+    def step(self, sm: SimulationManager, start: float):
         try:
             while sm.active:
                 sm.step()
-
-                if self.max_memory:
-                    if psutil.virtual_memory().percent > self.max_memory:
-                        raise MemoryError
-
         except Exception as e:
-
             if self.stats_dir:
                 self._save_stats(sm, exception=e, start=start)
-
-            print(traceback.format_exc())
             raise e
 
     def run(self):
-        logging.getLogger('angr').setLevel('CRITICAL')
 
         if self.debug:
             logging.getLogger('angr').setLevel('INFO')
@@ -224,7 +215,7 @@ class angrEngine():
 
         # Run Symbolic Execution
         start = time.time()
-        self._step(sm, start)
+        self.step(sm, start)
         end = time.time()
 
         # Store execution time

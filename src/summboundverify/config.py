@@ -1,8 +1,10 @@
 import re
 import ast
 import sys
+import logging
 
 from .options import Options, OptionTypes
+
 
 
 def _get_simple(line: str):
@@ -100,6 +102,6 @@ def parse_config_file(conf) -> dict:
             config[config_option] = arg
 
         else:
-            print(f'[!] Unknown option \'{config_option}\' in {conf}')
+            (f'[!] Unknown option \'{config_option}\' in {conf}')
 
     return config

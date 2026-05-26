@@ -1,4 +1,8 @@
+import logging
 import subprocess as sp
+
+
+logger = logging.getLogger(__name__)
 
 
 class CCompiler():
@@ -26,8 +30,8 @@ class CCompiler():
             return file[:-2]
         return file
 
-    def compile(self):
-        gcc_cmd = [
+    def compile(self, verbose=True):
+        cmd = [
             'gcc',
             *self.gcc_args,
             self.inputfile,
@@ -35,12 +39,18 @@ class CCompiler():
             *self.libs
         ]
 
-        print(' '.join(gcc_cmd))
-
-        t = sp.Popen(gcc_cmd, stdout=sp.PIPE, stderr=sp.PIPE)
+        t = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
         stdout, stderr = t.communicate()
         out = stdout.decode()
         err = stderr.decode()
 
-        print(out, end='')
-        print(err, end='')
+        if verbose:
+            self.log(cmd, out, err)
+
+    def log(self, cmd, out, err):
+        cmd = ' '.join(cmd)
+        logger.info(f"Compiling:\n {cmd}")
+        if out:
+            logger.info(out)
+        if err:
+            logger.warning(err)

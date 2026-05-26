@@ -13,10 +13,7 @@ class sym_var(CSummary):
     def run(self, length):
         length = self.state.solver.eval(length)
         var = self.sym_var(length)
-        try:
-            self.ret(var)
-        except Exception as e:
-            print(e)
+        self.ret(var)
 
 
 class is_symbolic(CSummary):
@@ -142,10 +139,7 @@ class sym_var_named(CSummary):
 
         sym_var = sym_var.zero_extend(self.state.arch.bits - length)
 
-        try:
-            self.ret(sym_var)
-        except Exception as e:
-            print(e)
+        self.ret(sym_var)
 
 
 class sym_var_array(CSummary):
@@ -171,7 +165,4 @@ class sym_var_array(CSummary):
 
         sym_var = sym_var.zero_extend(self.state.arch.bits - length)
 
-        try:
-            self.ret(sym_var)
-        except Exception as e:
-            print(e)
+        self.ret(sym_var)
