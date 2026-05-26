@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import sys
 import traceback
@@ -55,9 +53,8 @@ def main():
         engine = angrEngine(
             args.binary,
             timeout=args.timeout,
-            save_stats=args.stats,
-            save_paths=args.save_paths,
-            stats_dir=args.results,
+            results_dir=args.results,
+            stats_dir=args.stats,
             paths_dir=args.paths,
             convert_ascii=args.ascii,
             ignore=args.summ_ignore,
