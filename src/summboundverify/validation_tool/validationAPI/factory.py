@@ -32,7 +32,8 @@ class ValidationAPI():
 
     def _hook(self, symbol: str, summary):
         summary = summary(self.ctx)
-        self.project.hook_symbol(symbol, summary)
+        if self.project.loader.find_symbol(symbol):
+            self.project.hook_symbol(symbol, summary)
 
     def hook_api(
         self,
