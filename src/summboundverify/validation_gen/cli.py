@@ -159,7 +159,8 @@ def parse_cmd_args(input=None):
         return f'{option[0]}{option[1]}'
 
     parser = argparse.ArgumentParser(
-        prog='valgen', description='Generate Summary Validation Tests')
+        prog='valgen', description='Generate summary validation tests'
+    )
 
     parser.add_argument(flag(Options.o), metavar='name', type=str, required=False, default='test.c',
                         help='Test output name')
