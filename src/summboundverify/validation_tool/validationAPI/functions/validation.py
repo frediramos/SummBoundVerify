@@ -54,7 +54,7 @@ class get_cnstr(CSummary):
         value = int.from_bytes(bytes_, byteorder='big', signed=True)
         return value
 
-    def memory_Constraints_aux(self, addr, nbytes, prefix):
+    def _memory_cnstrs(self, addr, nbytes, prefix):
         cnstrs = []
         sym_vars = []
         for i in range(nbytes):
@@ -72,10 +72,9 @@ class get_cnstr(CSummary):
 
         for triple in self.ctx.MEMORY_TRIPLES:
             name, addr, nbytes = triple
-            memory_name = "mem_{}".format(name)
+            name = "mem_{}".format(name)
 
-            vars, cnstr = self.memory_Constraints_aux(
-                addr, nbytes, memory_name)
+            vars, cnstr = self._memory_cnstrs(addr, nbytes, name)
 
             self.ctx.MEMORY_SYM_VARS[name] = vars
             cnstrs += cnstr
@@ -103,8 +102,11 @@ class get_cnstr(CSummary):
         # Ignore Ret for void functions
         if length != 0:
 
-            var = self.state.memory.load(var_addr,  int(
-                length/8), endness=self.state.arch.memory_endness)
+            var = self.state.memory.load(
+                var_addr,
+                int(length/8),
+                endness=self.state.arch.memory_endness
+            )
 
             # #Symbolic or Single Valued
             # if not self.state.solver.symbolic(var):
@@ -159,7 +161,10 @@ class halt_all(CSummary):
         '''
 
         ret = self.cc.teardown_callsite(  # type: ignore
-            self.state, None, prototype=self.prototype)
+            self.state,
+            None,
+            prototype=self.prototype
+        )
 
         return ret
 
@@ -242,8 +247,9 @@ class check_implications(CSummary):
         by the summary being tested
         '''
 
-        new_vars = list(set(self.state.solver.all_variables) -
-                        set(self.ctx.INPUT_VARS))
+        new_vars = list(
+            set(self.state.solver.all_variables) - set(self.ctx.INPUT_VARS)
+        )
 
         # Convert to Z3 and remove 'ret' sym var
         backend_z3 = BackendZ3()
@@ -345,7 +351,6 @@ class print_counterexamples(CSummary):
         '''HACK: clear memory pairs, sym vars, and input_vars
         in between test executions
         '''
-
         self.ctx.MEMORY_TRIPLES.clear()
         self.ctx.SYM_VARS.clear()
         self.ctx.INPUT_VARS.clear()
@@ -430,7 +435,7 @@ class print_counterexamples(CSummary):
                 log += f'Missing path example: \n{missing}\n\n'
                 log += f'Wrong path example: \n{wrong}\n\n'
 
-        logger.info('\n'+ log.rstrip())
+        logger.info('\n' + log.rstrip())
 
         # Create outputs folder if it does not exist yet
         if not os.path.exists(self.results_dir):

@@ -197,3 +197,5 @@ class _ITE_VAR_(CSummary):
 
         result = claripy.If(cnstr_if, sym1, sym2)
         result = result.sign_extend(self.state.arch.bits - result.size())
+
+        return result
