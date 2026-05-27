@@ -2,8 +2,12 @@ import os
 import sys
 import traceback
 import argparse
+import logging
 
 from .engine import angrEngine
+
+logging.getLogger('angr').setLevel('ERROR')
+logging.getLogger('cle').setLevel('ERROR')
 
 
 def parse_cmd_args(progname, input=None):
