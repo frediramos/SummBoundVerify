@@ -1,13 +1,10 @@
 import os
 import sys
-import traceback
-import argparse
 import logging
+import argparse
 
-from .engine import angrEngine
-
-logging.getLogger('angr').setLevel('ERROR')
-logging.getLogger('cle').setLevel('ERROR')
+from summboundverify.logger import setup_logging
+from summboundverify.validation_tool.engine import angrEngine
 
 
 def parse_cmd_args(progname, input=None):
@@ -52,25 +49,25 @@ def parse_cmd_args(progname, input=None):
 def main():
     prog = os.path.normpath(sys.argv[0]).split(os.sep)[-2]
 
-    try:
-        args = parse_cmd_args(prog)
-        engine = angrEngine(
-            args.binary,
-            timeout=args.timeout,
-            results_dir=args.results,
-            stats_dir=args.stats,
-            paths_dir=args.paths,
-            convert_ascii=args.ascii,
-            ignore=args.summ_ignore,
-            debug=args.debug
-        )
+    args = parse_cmd_args(prog)
 
-        engine.run()
+    level = logging.DEBUG if args.debug else logging.INFO
+    setup_logging(level)
 
-    except Exception:
-        print(traceback.format_exc(), end='')
-        return 1
+    engine = angrEngine(
+        args.binary,
+        timeout=args.timeout,
+        results_dir=args.results,
+        stats_dir=args.stats,
+        paths_dir=args.paths,
+        convert_ascii=args.ascii,
+        ignore=args.summ_ignore,
+        debug=args.debug
+    )
+
+    engine.run()
     return 0
 
 
-sys.exit(main())
+if __name__ == "__main__":
+    sys.exit(main())

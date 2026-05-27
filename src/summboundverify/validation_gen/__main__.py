@@ -1,12 +1,13 @@
 import re
 import ast
 import sys
+import logging
 import argparse
-import traceback
 from argparse import Namespace
 
-from .validation import ValidationGenerator
-from .c_compiler import CCompiler
+from summboundverify.logger import setup_logging
+from summboundverify.validation_gen.validation import ValidationGenerator
+from summboundverify.validation_gen.c_compiler import CCompiler
 
 
 class OptionTypes:
@@ -18,7 +19,7 @@ class OptionTypes:
     DICT = 'dict'
 
 
-class Options():
+class CLIOptions():
 
     # Validate option defs just in case
     # 1 - check that class attributes and option names match
@@ -57,7 +58,7 @@ class Options():
         return [opt[1] for opt in self.__dict__.values()]
 
 
-Options = Options()
+Options = CLIOptions()
 
 
 def _get_simple(line: str):
@@ -305,18 +306,17 @@ def runValidationGen(args: Namespace):
 
 
 def main():
-    try:
-        args = parse_input_args()
-        test = runValidationGen(args)
-        if args.compile:
-            arch = args.compile
-            libs = args.lib
-            compileValidationTest(arch, test, libs)
+    args = parse_input_args()
 
-    except Exception as e:
-        print(traceback.format_exc())
-        print(e)
-        return 1
+    level = logging.DEBUG if args.debug else logging.INFO
+    setup_logging(level)
+
+    test = runValidationGen(args)
+    if args.compile:
+        arch = args.compile
+        libs = args.lib
+        compileValidationTest(arch, test, libs)
+
     return 0
 
 

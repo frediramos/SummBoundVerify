@@ -11,6 +11,11 @@ COLORS = {
 RESET = "\033[0m"
 
 
+def disable_third_party():
+    logging.getLogger('angr').setLevel('ERROR')
+    logging.getLogger('cle').setLevel('ERROR')
+
+
 class FriendlyFormatter(logging.Formatter):
 
     def format(self, record):
@@ -38,3 +43,4 @@ def setup_logging(level: int):
     )
 
     root.addHandler(handler)
+    disable_third_party()
