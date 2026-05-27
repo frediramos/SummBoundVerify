@@ -5,6 +5,7 @@ import logging
 
 from .options import Options, OptionTypes
 
+logger = logging.getLogger(__name__)
 
 
 def _get_simple(line: str):
@@ -102,6 +103,6 @@ def parse_config_file(conf) -> dict:
             config[config_option] = arg
 
         else:
-            (f'[!] Unknown option \'{config_option}\' in {conf}')
+            logger.error(f'[!] Unknown option \'{config_option}\' in {conf}')
 
     return config
