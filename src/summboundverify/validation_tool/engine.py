@@ -101,6 +101,9 @@ class angrEngine():
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(self.timeout)
 
+    def _unregister_timeout(self):
+        signal.alarm(0)
+
     def _count_fcall(self, state):
         addr = str(state.inspect.function_address)  # <BV32 0x80483a3>
         addr = addr.split()[1]  # 0x80483a3>
@@ -197,6 +200,8 @@ class angrEngine():
             if self.stats_dir:
                 self._save_stats(sm, exception=e, start=start)
             raise e
+        finally:
+            self._unregister_timeout()
 
     def run(self):
 
