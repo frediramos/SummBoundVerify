@@ -1,13 +1,28 @@
+import logging
+from abc import ABC, abstractmethod
+
+from typing import Optional, List
+from dataclasses import dataclass
 from collections import OrderedDict
 
-from z3 import BitVecNumRef, Solver, Not, sat
+from angr import SimState
+
+from claripy.ast.bv import BV as BitVector
 from claripy.backends.backend_z3 import BackendZ3
 
+from z3 import (
+    BitVecNumRef,
+    ModelRef,
+    ExprRef,
+    Solver,
+    Not,
+    sat
+)
 
-'''Aux Functions'''
+logger = logging.getLogger(__name__)
 
 
-def get_name(state, addr):
+def get_name(state: SimState, addr):
     """
     Get a null terminated string from a Simprocedure
     @addr: Address of the first byte (SymActionObject type)
@@ -16,15 +31,19 @@ def get_name(state, addr):
     name = ''
     i = 0
     while True:
-        char_code = state.solver.\
-            eval(state.memory.load(addr + i, 1, endness='Iend_LE'))
+        byte: BitVector = state.memory.load(
+            addr + i, 1,
+            endness='Iend_LE'
+        )
+        code = state.solver.eval(byte)
 
-        if char_code == 0:
+        if code == 0:
             break
 
-        char = chr(char_code)
+        char = chr(code)
         name += char
         i += 1
+
     return name
 
 
@@ -53,6 +72,12 @@ def to_signed_long(number):
 
 
 # Process model-----------------------------------------
+@dataclass
+class ValidationModel():
+    missing: Optional[ModelRef] = None
+    wrong: Optional[ModelRef] = None
+
+
 class Pretty_Model():
 
     def __init__(self, input_vars, mem_vars, ret, ignore, convert_chars):
@@ -63,8 +88,7 @@ class Pretty_Model():
         self.convert_chars = convert_chars
 
     # Return a numeric value from a sym_var in a z3 model
-
-    def evaluate_sym_var(self, var, model):
+    def evaluate_sym_var(self, var, model: ModelRef):
 
         value = model.evaluate(var)
         size = var.size()
@@ -101,8 +125,9 @@ class Pretty_Model():
                 value = self.evaluate_sym_var(v, model)
 
                 if isinstance(value, int) and size == 8:
-                    if self.convert_chars and size == 8 and chr(value).isprintable():
-                        value = chr(value)
+                    if self.convert_chars:
+                        if (converted := chr(value)).isprintable():
+                            value = converted
                     else:
                         value = to_signed_char(value)
 
@@ -114,20 +139,26 @@ class Pretty_Model():
         return json_obj
 
     # Pretify return variable
-
     def _prettify_ret(self, model, json_obj):
         backend_z3 = BackendZ3()
         ret = backend_z3.convert(self.ret)
         size = ret.size()
 
-        ret_val = self.evaluate_sym_var(ret, model)
+        retval = self.evaluate_sym_var(ret, model)
 
-        if self.convert_chars and \
-                size == 8 and \
-                chr(ret_val).isprintable():
-            ret_val = chr(ret_val)
+        if (
+            isinstance(retval, int) and
+            self.convert_chars and
+            size == 8
+        ):
+            try:
+                if (char := chr(retval)).isprintable():
+                    retval = char
+            except ValueError:
+                msg = f"Could not convert to char: {retval}"
+                logger.debug(msg)
 
-        json_obj['ret'] = ret_val
+        json_obj['ret'] = retval
         return json_obj
 
     # Pretify memory variables
@@ -153,7 +184,6 @@ class Pretty_Model():
         json_obj = self._prettify_input(model, OrderedDict())
         json_obj = self._prettify_ret(model, json_obj)
         json_obj = self._prettify_mem(model, json_obj)
-
         return json_obj
 
 
@@ -168,7 +198,6 @@ def get_all_restrs(mem):
     including parent memories
     (build an execution path) 
     '''
-
     final_restrs = []
     while mem is not None:
         final_restrs += mem.next_restr
@@ -184,19 +213,44 @@ def remove_duplicates(l):
     return list(set(l))
 
 
-# Implication Results------------------------------------------------------
-class Result():
-    def __init__(self, result, summ, cncrt, vars):
-        self.internal_result = result
+class Result(ABC):
+    """
+    Validation result objects
+    """
+
+    def __init__(
+        self,
+        result: str,
+        summ: ExprRef,
+        cncrt: ExprRef,
+        ignore_vars: List[BitVector]
+    ):
+        self._result = result
         self.summ = summ
         self.cncrt = cncrt
-        self.vars = vars
+        self.ignore = ignore_vars
 
     def __str__(self):
-        return self.internal_result
+        return self._result
 
     def __eq__(self, other):
-        return self.internal_result == other
+        return self._result == other
+
+    @abstractmethod
+    def implication(self) -> str:
+        pass
+
+    @abstractmethod
+    def result(self) -> str:
+        pass
+
+    @abstractmethod
+    def simple_result(self) -> str:
+        pass
+
+    @abstractmethod
+    def models(self) -> ValidationModel:
+        pass
 
 
 class Equivalent(Result):
@@ -205,9 +259,11 @@ class Equivalent(Result):
 
     def implication(self):
 
-        impl = ('Summary ^ ~Cncrt_Function: unsat\n'
-                'Cncrt_Function ^ ~Summary: unsat\n'
-                'Summary -> Cncrt_Function ^ Cncrt_Function -> Summary')
+        impl = (
+            'Summary ^ ~Cncrt_Function: unsat\n'
+            'Cncrt_Function ^ ~Summary: unsat\n'
+            'Summary -> Cncrt_Function ^ Cncrt_Function -> Summary'
+        )
 
         return impl
 
@@ -219,7 +275,7 @@ class Equivalent(Result):
         return 'Exact'
 
     def models(self):
-        return None
+        return ValidationModel()
 
 
 class Under(Result):
@@ -227,9 +283,11 @@ class Under(Result):
         super().__init__('under', summ, cncrt, vars)
 
     def implication(self):
-        impl = ('Summary ^ ~Cncrt_Function: unsat\n'
-                'Cncrt_Function ^ ~Summary: sat\n'
-                'Summary -> Cncrt_Function')
+        impl = (
+            'Summary ^ ~Cncrt_Function: unsat\n'
+            'Cncrt_Function ^ ~Summary: sat\n'
+            'Summary -> Cncrt_Function'
+        )
 
         return impl
 
@@ -242,7 +300,8 @@ class Under(Result):
 
     # Create solver to generate models
     # Missing path
-    def create_solver(self):
+
+    def _create_solver(self):
         solver = Solver()
 
         solver.add(Not(self.summ))
@@ -250,10 +309,10 @@ class Under(Result):
         return solver
 
     def models(self):
-        solver = self.create_solver()
+        solver = self._create_solver()
         assert solver.check() == sat
         model = solver.model()
-        return model
+        return ValidationModel(missing=model)
 
 
 class Over(Result):
@@ -262,9 +321,11 @@ class Over(Result):
 
     def implication(self):
 
-        impl = ('Summary ^ ~Cncrt_Function: sat\n'
-                'Cncrt_Function ^ ~Summary: unsat\n'
-                'Cncrt_Function -> Summary')
+        impl = (
+            'Summary ^ ~Cncrt_Function: sat\n'
+            'Cncrt_Function ^ ~Summary: unsat\n'
+            'Cncrt_Function -> Summary'
+        )
 
         return impl
 
@@ -278,7 +339,7 @@ class Over(Result):
     # Create solver to generate models
     # Wrong path
 
-    def create_solver(self):
+    def _create_solver(self):
         solver = Solver()
 
         solver.add(self.summ)
@@ -286,10 +347,10 @@ class Over(Result):
         return solver
 
     def models(self):
-        solver = self.create_solver()
+        solver = self._create_solver()
         assert solver.check() == sat
         model = solver.model()
-        return model
+        return ValidationModel(wrong=model)
 
 
 class Unkown(Result):
@@ -298,8 +359,10 @@ class Unkown(Result):
 
     def implication(self):
 
-        impl = ('Summary ^ ~Cncrt_Function: sat\n'
-                'Cncrt_Function ^ ~Summary: sat')
+        impl = (
+            'Summary ^ ~Cncrt_Function: sat\n'
+            'Cncrt_Function ^ ~Summary: sat'
+        )
 
         return impl
 
@@ -311,11 +374,10 @@ class Unkown(Result):
         return 'N/A (Not under/over-approximation)'
 
     # Create solver to generate models
-    def create_solvers(self):
+    def _create_solvers(self):
 
         # Missing path
         solver1 = Solver()
-
         solver1.add(Not(self.summ))
         solver1.add(self.cncrt)
 
@@ -323,14 +385,16 @@ class Unkown(Result):
         solver2 = Solver()
         solver2.add(self.summ)
         solver2.add(Not(self.cncrt))
+
         return (solver1, solver2)
 
     def models(self):
-        solver1, solver2 = self.create_solvers()
-        assert solver1.check() == sat
-        model1 = solver1.model()
+        solver_missing, solver_wrong = self._create_solvers()
 
-        assert solver2.check() == sat
-        model2 = solver2.model()
+        assert solver_missing.check() == sat
+        missing = solver_missing.model()
 
-        return (model1, model2)
+        assert solver_wrong.check() == sat
+        wrong = solver_wrong.model()
+
+        return ValidationModel(missing=missing, wrong=wrong)

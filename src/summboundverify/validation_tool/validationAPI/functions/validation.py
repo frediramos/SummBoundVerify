@@ -3,10 +3,22 @@ import json
 import claripy
 import logging
 
-from typing import Any, Dict
+from typing import Any, Dict, Set
 
+from angr import SimulationManager
+
+from claripy.ast.bv import BV as BitVector
 from claripy.backends.backend_z3 import BackendZ3
-from z3 import Solver, Exists, Or, Not, simplify, sat
+
+from z3 import (
+    Solver,
+    Exists,
+    ExprRef,
+    Or,
+    Not,
+    simplify,
+    sat
+)
 
 from summboundverify.validation_tool.utils import get_states
 
@@ -241,7 +253,7 @@ class check_implications(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)
 
-    def summary_generated(self):
+    def summary_generated(self) -> Set[BitVector]:
         '''
         Returns a list of sym_vars generated
         by the summary being tested
@@ -263,9 +275,9 @@ class check_implications(CSummary):
             return True
 
         ret = filter(filter_vars, converted)
-        return list(ret)
+        return set(ret)
 
-    def check(self, summ, cncrt):
+    def check(self, summ: ExprRef, cncrt: ExprRef):
 
         # Create 2 solvers to verify both implications
         # A ∧ ~B; B ∧ ~A
@@ -334,7 +346,7 @@ class print_counterexamples(CSummary):
     def __init__(
         self,
         ctx: ValidationCTX,
-        sm,
+        sm: SimulationManager,
         binary_name: str,
         results_dir: str,
         convert_ascii=False
@@ -348,7 +360,8 @@ class print_counterexamples(CSummary):
         self.convert_ascii = convert_ascii
 
     def reset(self):
-        '''HACK: clear memory pairs, sym vars, and input_vars
+        '''
+        HACK: clear memory pairs, sym vars, and input_vars
         in between test executions
         '''
         self.ctx.MEMORY_TRIPLES.clear()
@@ -357,7 +370,7 @@ class print_counterexamples(CSummary):
         self.ctx.REACHED_NULL = False
         self.ctx.REACHED_HALT = True
 
-    def log_json(self, result, models, path):
+    def log_json(self, result: Result, models: ValidationModel, path: str):
 
         self.ctx.TEST_COUNT += 1
 
@@ -366,18 +379,19 @@ class print_counterexamples(CSummary):
             'result': f'{result.simple_result()}',
         }
 
-        ignore = [str(i) for i in result.vars]
+        ignore = [str(i) for i in result.ignore]
 
         pm = Pretty_Model(
-            self.ctx.SYM_VARS,
-            self.ctx.MEMORY_SYM_VARS,
-            self.ctx.RET,
-            ignore,
+            input_vars=self.ctx.SYM_VARS,
+            mem_vars=self.ctx.MEMORY_SYM_VARS,
+            ret=self.ctx.RET,
+            ignore=ignore,
             convert_chars=self.convert_ascii
         )
 
         if result == 'unknown':
-            missing, wrong = models
+            missing = models.missing
+            wrong = models.wrong
 
             p_missing = pm.prettify(missing)
             p_wrong = pm.prettify(wrong)
@@ -388,14 +402,14 @@ class print_counterexamples(CSummary):
             }
 
         elif result == 'under':
-            model = models
+            model = models.missing
             p_model = pm.prettify(model)
             log['counterexamples'] = {
                 'Over-approximation': p_model
             }
 
         elif result == 'over':
-            model = models
+            model = models.wrong
             p_model = pm.prettify(model)
 
             log['counterexamples'] = {
@@ -410,9 +424,12 @@ class print_counterexamples(CSummary):
         json_object = json.dumps(self.ctx.JSON_LOG, indent=2)
         file.write(json_object)
 
-    def run(self, result_id):
-        result_id = self.state.solver.eval(result_id)
+    def run(self, result_bv: BitVector):
+        result_id = self.state.solver.eval(result_bv)
         assert isinstance(result_id, int)
+
+        npaths = len(get_states(self.sm))
+        self.ctx.SUMM_PATHS = npaths
 
         result = self.ctx.RESULTS[result_id]
         models = result.models()
@@ -420,20 +437,20 @@ class print_counterexamples(CSummary):
         log = (f'===================== Result ===================== \n\n'
                f'==> Concrete Constraints: \n\t{result.cncrt}\n\n'
                f'==> Summary Constraints: \n\t{result.summ}\n\n'
-               f'==> Existencial Variables: \n\t{result.vars}\n\n'
+               f'==> Existencial Variables: \n\t{result.ignore}\n\n'
                f'==> Result: {result.result()}\n\n'
                f'==> Implication: \n{result.implication()}\n\n')
 
         if result != 'equivalent':
             log += f'==> Counterexamples: \n'
             if result == 'under':
-                log += f'Missing path example: \n{models}\n\n\n'
+                log += f'Missing path example: \n{models.missing}\n\n\n'
             elif result == 'over':
-                log += f'Wrong path example: \n{models}\n\n\n'
+                log += f'Wrong path example: \n{models.wrong}\n\n\n'
             else:
-                missing, wrong = models
-                log += f'Missing path example: \n{missing}\n\n'
-                log += f'Wrong path example: \n{wrong}\n\n'
+                assert isinstance(models, tuple)
+                log += f'Missing path example: \n{models.missing}\n\n'
+                log += f'Wrong path example: \n{models.wrong}\n\n'
 
         logger.info('\n' + log.rstrip())
 
@@ -446,5 +463,3 @@ class print_counterexamples(CSummary):
 
         self.reset()
         self.ret()
-
-        self.ctx.SUMM_PATHS = len(get_states(self.sm))

@@ -1,6 +1,8 @@
 import subprocess as sp
 import re
 
+from angr import SimulationManager
+
 
 def write2file(file, var):
     with open(file, 'a') as f:
@@ -12,7 +14,7 @@ def truncate(file):
         return
 
 
-def get_states(sm):
+def get_states(sm: SimulationManager):
     states = sm.deadended + sm.active
     return states
 
