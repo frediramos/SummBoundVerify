@@ -26,5 +26,3 @@ dependencies = ["angr[unicorn]==9.2.203", "autopep8>=2.3.2", "pycparser~=3.0"]
 
 [project.scripts]
 summbv = "summboundverify.main:main"
-valgen = "summboundverify.validation_gen.main:main"
-summval = "summboundverify.validation_tool.main:main"

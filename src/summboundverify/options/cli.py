@@ -2,7 +2,7 @@ import ast
 import argparse
 
 from .options import Options, OptionTypes
-from .config import parse_config_file
+from .parser import parse_config_file
 
 
 def parse_cmdline_args(input=None):
@@ -92,29 +92,7 @@ def parse_cmdline_args(input=None):
     return args
 
 
-def eval_ast(array):
-    if array and isinstance(array[0], str):
-        if '[' in array[0] or '{' in array[0]:
-            return list(map(lambda x: ast.literal_eval(x), array))
-    return array
 
 
-def parse_input_args(input=None):
 
-    # Parse command line args
-    args = parse_cmdline_args(input)
-    complex = [OptionTypes.NESTED, OptionTypes.DICT]
 
-    # Convert complex options string to Python ast
-    for opt in filter(lambda a: a[2] in complex, Options):
-        parsed = eval_ast(getattr(args, opt[1]))
-        setattr(args, opt[1], parsed)
-
-    # Parse config file and override cmd args
-    config_file = args.config
-    if config_file:
-        config = parse_config_file(config_file)
-        for c in config.keys():
-            setattr(args, c, config[c])
-
-    return args
