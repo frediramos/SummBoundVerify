@@ -360,15 +360,8 @@ class print_counterexamples(CSummary):
         self.convert_ascii = convert_ascii
 
     def reset(self):
-        '''
-        HACK: clear memory pairs, sym vars, and input_vars
-        in between test executions
-        '''
-        self.ctx.MEMORY_TRIPLES.clear()
-        self.ctx.SYM_VARS.clear()
-        self.ctx.INPUT_VARS.clear()
-        self.ctx.REACHED_NULL = False
-        self.ctx.REACHED_HALT = True
+        '''(small) HACK: reset context in between test executions'''
+        self.ctx.reset()
 
     def log_json(self, result: Result, models: ValidationModel, path: str):
 

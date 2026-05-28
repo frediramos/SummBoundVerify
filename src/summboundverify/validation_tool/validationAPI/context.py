@@ -1,6 +1,8 @@
-from typing import Any
+from typing import Any, List
 from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
+
+from .functions.utils import Result
 
 
 @dataclass
@@ -47,7 +49,7 @@ class ValidationCTX:
     # ------------------------------------------------------
     # Results of the implications
     # These are supplied to print_counterexamples
-    RESULTS: list = field(default_factory=list)
+    RESULTS: List[Result] = field(default_factory=list)
     RESULTS_COUNTER: int = 0
 
     # Logging
@@ -59,3 +61,8 @@ class ValidationCTX:
     # ------------------------------------------------------
     SUMM_PATHS: int = 0
     CNCR_PATHS: int = 0
+
+    def reset(self):
+        fresh = type(self)()
+        for field in fields(self):
+            setattr(self, field.name, getattr(fresh, field.name))
