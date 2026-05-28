@@ -5,8 +5,8 @@ import logging
 import traceback
 from argparse import Namespace
 
-from summboundverify.cli import parse_input_args
 from summboundverify.logger import setup_logging
+from summboundverify.options import parse_input_args
 from summboundverify.validation_gen import ValidationGenerator, CCompiler
 
 
@@ -90,7 +90,7 @@ def main():
         level = logging.DEBUG if args.debug else logging.INFO
         setup_logging(level)
 
-        # Run a given binary a exit
+        # Run a given binary and exit
         if args.run and args.binary:
             run_angr(args.binary, args)
             return 0

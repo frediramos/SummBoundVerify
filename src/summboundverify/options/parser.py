@@ -106,3 +106,10 @@ def parse_config_file(conf) -> dict:
             logger.error(f'[!] Unknown option \'{config_option}\' in {conf}')
 
     return config
+
+
+def eval_ast(array):
+    if array and isinstance(array[0], str):
+        if '[' in array[0] or '{' in array[0]:
+            return list(map(lambda x: ast.literal_eval(x), array))
+    return array

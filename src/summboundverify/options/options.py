@@ -12,8 +12,18 @@ class MetaOptions(type):
     def __values(self):
         return {k: v for k, v in vars(self).items() if '__' not in k}.values()
 
+    def __items(self):
+        return {k: v for k, v in vars(self).items() if '__' not in k}.items()
+
     def __keys(self):
         return [opt[1] for opt in self.__values()]
+
+    def _validate(self):
+        for name, opt in self.__items():
+            optname = opt[1]
+            opttype = opt[2]
+            assert opttype in vars(OptionTypes).values()
+            assert name == optname, f"option names must match => self.'{name}' != '{optname}'"
 
     def __iter__(self):
         for v in self.__values():
@@ -24,6 +34,10 @@ class MetaOptions(type):
 
     def __len__(self):
         return len(self.__values())
+
+    def __init__(cls, name, bases, namespace):
+        super().__init__(name, bases, namespace)
+        cls._validate()
 
 
 class Options(metaclass=MetaOptions):
