@@ -75,7 +75,6 @@ def run_angr(binary: str, args: Namespace):
         results_dir=args.results,
         stats_dir=args.stats,
         convert_ascii=args.ascii,
-        debug=args.debug
     )
 
     engine.run()
@@ -87,8 +86,7 @@ def main():
         # Parse all input (cli and config file)
         args = parse_input_args()
 
-        level = logging.DEBUG if args.debug else logging.INFO
-        setup_logging(level)
+        setup_logging(args.debug)
 
         # Run a given binary and exit
         if args.run and args.binary:

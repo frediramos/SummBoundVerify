@@ -28,7 +28,7 @@ class angrEngine():
         results_dir='.',
         stats_dir=None, paths_dir=None,
         convert_ascii=False,
-        ignore=None, debug=False,
+        ignore=None,
     ) -> None:
 
         self.binary = os.path.normpath(binary)
@@ -42,8 +42,6 @@ class angrEngine():
         self.ignore_list = self._ignore_list(ignore)
 
         self.binary_name = os.path.split(self.binary)[1]
-
-        self.debug = debug
 
         self.fnames = get_fnames(self.binary)
         self.fcalled = {}
@@ -204,9 +202,6 @@ class angrEngine():
             self._unregister_timeout()
 
     def run(self):
-
-        if self.debug:
-            logging.getLogger('angr').setLevel('INFO')
 
         sys.setrecursionlimit(20000)
 
