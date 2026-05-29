@@ -13,7 +13,7 @@ from z3 import (
 from .utils import ValidationModel
 
 
-class Result(ABC):
+class ValidationResult(ABC):
     """
     Validation result objects
     """
@@ -53,9 +53,9 @@ class Result(ABC):
         pass
 
 
-class Equivalent(Result):
+class Exact(ValidationResult):
     def __init__(self, summ, cncrt, vars):
-        super().__init__('equivalent', summ, cncrt, vars)
+        super().__init__('exact', summ, cncrt, vars)
 
     def implication(self):
 
@@ -68,7 +68,7 @@ class Equivalent(Result):
         return impl
 
     def result(self):
-        res = 'Summary and Concrete function are equivalent'
+        res = 'Summary and Concrete function are exact'
         return res
 
     def simple_result(self):
@@ -78,7 +78,7 @@ class Equivalent(Result):
         return ValidationModel()
 
 
-class Under(Result):
+class Under(ValidationResult):
     def __init__(self, summ, cncrt, vars):
         super().__init__('under', summ, cncrt, vars)
 
@@ -115,7 +115,7 @@ class Under(Result):
         return ValidationModel(missing=model)
 
 
-class Over(Result):
+class Over(ValidationResult):
     def __init__(self, summ, cncrt, vars):
         super().__init__('over', summ, cncrt, vars)
 
@@ -153,7 +153,7 @@ class Over(Result):
         return ValidationModel(wrong=model)
 
 
-class Unkown(Result):
+class Unkown(ValidationResult):
     def __init__(self, summ, cncrt, vars):
         super().__init__('unknown', summ, cncrt, vars)
 

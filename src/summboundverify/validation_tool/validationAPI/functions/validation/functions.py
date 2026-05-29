@@ -26,15 +26,15 @@ from ...context import ValidationCTX
 from ..utils import get_name
 
 from .result import (
-    Result,
+    ValidationResult,
     Under,
     Over,
-    Equivalent,
+    Exact,
     Unkown
 )
 
 from .utils import ValidationModel
-from .models import Pretty_Model, to_signed_int
+from .models import PrettyModel, to_signed_int
 
 
 logger = logging.getLogger(__name__)
@@ -303,7 +303,7 @@ class check_implications(CSummary):
         solver2_sat = solver2.check() == sat
 
         if not solver1_sat and not solver2_sat:
-            ret = Equivalent(summ, cncrt, new_vars)
+            ret = Exact(summ, cncrt, new_vars)
 
         elif not solver1_sat:
             ret = Under(summ, cncrt, new_vars)
@@ -365,7 +365,7 @@ class print_counterexamples(CSummary):
         '''(small) HACK: reset context in between test executions'''
         self.ctx.reset()
 
-    def log_json(self, result: Result, models: ValidationModel, path: str):
+    def log_json(self, result: ValidationResult, models: ValidationModel, path: str):
 
         self.ctx.TEST_COUNT += 1
 
@@ -377,7 +377,7 @@ class print_counterexamples(CSummary):
 
         ignore = [str(i) for i in result.ignore]
 
-        pm = Pretty_Model(
+        pm = PrettyModel(
             input_vars=self.ctx.SYM_VARS,
             mem_vars=self.ctx.MEMORY_SYM_VARS,
             ret=self.ctx.RET,
@@ -434,7 +434,7 @@ class print_counterexamples(CSummary):
                f'==> Result: {result.result()}\n\n'
                f'==> Implication: \n{result.implication()}\n\n')
 
-        if result != 'equivalent':
+        if result != 'exact':
             log += f'==> Counterexamples: \n'
             if result == 'under':
                 log += f'Missing path example: \n{models.missing}\n\n\n'
