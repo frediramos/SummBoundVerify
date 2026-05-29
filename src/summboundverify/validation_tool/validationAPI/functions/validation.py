@@ -363,6 +363,7 @@ class print_counterexamples(CSummary):
         file = open(path, 'w')
         log: Dict[str, Any] = {
             'result': f'{result.simple_result()}',
+            'npaths': self.ctx.SUMM_PATHS
         }
 
         ignore = [str(i) for i in result.ignore]

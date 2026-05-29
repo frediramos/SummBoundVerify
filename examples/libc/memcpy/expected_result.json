@@ -1,6 +1,7 @@
 {
   "memcpy_validation.test_1": {
     "result": "Under-approximation",
+    "npaths": 1,
     "counterexamples": {
       "Over-approximation": {
         "dest": {
