@@ -205,24 +205,26 @@ class halt_all(CSummary):
         state_id = to_signed_int(state_id)
 
         # Receives NULL
+        # End of symbolic execution
         if state_id == 0:
+            self.ctx.SUMM_PATHS += 1
             if self.all_done() and not self.ctx.REACHED_NULL:
                 self.ctx.REACHED_NULL = True
                 self.ret()
             else:
-                self.exit(0)  # Simply exit otherwise
+                self.exit(0)  # Stop the state
 
         # Receives a normal state
+        # End of concrete execution
         else:
+            self.ctx.CNCR_PATHS += 1
             if self.all_done() and not self.ctx.REACHED_HALT:
                 self.ctx.REACHED_HALT = True
                 state = self.ctx.SYM_STATES[state_id]
                 ret_addr = self.get_ret_addr()
                 self.activate_state(state, ret_addr)
 
-            self.exit(0)
-
-        self.ctx.CNCR_PATHS = len(get_states(self.sm))
+            self.exit(0)  # Stop the state
 
 
 class mem_addr(CSummary):
