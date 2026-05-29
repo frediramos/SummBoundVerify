@@ -195,18 +195,9 @@ class halt_all(CSummary):
         )
 
     def all_done(self):
-
-        n_active = len(self.sm.active)
-        active_states = [str(s) for s in self.sm.active]
-
-        # HACK: Sometimes when calling 'self.exit(0)' the state is stopped but it is
-        # still kept in the active stash. To address this, we check if the number
-        # of active states is equal to 1 _OR_ all active states have the same instr pointer
-        # i.e., the 'halt_all' addr
-
-        if n_active == 1 or len(list(dict.fromkeys(active_states))) == 1:
+        active_states = {str(s) for s in self.sm.active}
+        if len(active_states) == 1:
             return True
-
         return False
 
     def run(self, state_id):
@@ -420,9 +411,6 @@ class print_counterexamples(CSummary):
     def run(self, result_bv: BitVector):
         result_id = self.state.solver.eval(result_bv)
         assert isinstance(result_id, int)
-
-        npaths = len(get_states(self.sm))
-        self.ctx.SUMM_PATHS = npaths
 
         result = self.ctx.RESULTS[result_id]
         models = result.models()
