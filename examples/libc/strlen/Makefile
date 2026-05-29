@@ -22,7 +22,7 @@ gen:
 run:
 	summbv -config $(CONFIG) -o $(TEST) --lib $(SUMM) -run
 	
-test:
+test: clean
 	summbv -config $(CONFIG) -o $(TEST) --lib $(SUMM)
 	
 	@diff -Bb $(TEST) $(EXPECTED_TEST);\
@@ -33,10 +33,10 @@ test:
 		echo -e "$(RED)\nTest Failed!$(RESET)"; \
 	fi
 
-test-run:
-
+test-run: clean
 	summbv -config $(CONFIG) -o $(TEST) --lib $(SUMM) -run > /dev/null 2>&1
-	@diff -Bb  <(sed '3q;d' $(EXPECTED_RSLT)) <(sed '3q;d' $(RESULT));\
+	
+	@diff -Bb  <(sed -n '3,4p' $(EXPECTED_RSLT)) <(sed -n '3,4p' $(RESULT));\
 	if [ $$? -eq 0 ]; \
 	then \
 		echo -e "$(GREEN)\nTest Passed!$(RESET)"; \
