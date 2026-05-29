@@ -34,6 +34,7 @@ from .result import (
 )
 
 from .utils import ValidationModel
+from .output import ValidationOutput
 from .models import PrettyModel, to_signed_int
 
 
@@ -427,25 +428,10 @@ class print_counterexamples(CSummary):
         result = self.ctx.RESULTS[result_id]
         models = result.models()
 
-        log = (f'===================== Result ===================== \n\n'
-               f'==> Concrete Constraints: \n\t{result.cncrt}\n\n'
-               f'==> Summary Constraints: \n\t{result.summ}\n\n'
-               f'==> Existencial Variables: \n\t{result.ignore}\n\n'
-               f'==> Result: {result.result()}\n\n'
-               f'==> Implication: \n{result.implication()}\n\n')
+        output = ValidationOutput(result)
+        log = output.text_log()
 
-        if result != 'exact':
-            log += f'==> Counterexamples: \n'
-            if result == 'under':
-                log += f'Missing path example: \n{models.missing}\n\n\n'
-            elif result == 'over':
-                log += f'Wrong path example: \n{models.wrong}\n\n\n'
-            else:
-                assert isinstance(models, tuple)
-                log += f'Missing path example: \n{models.missing}\n\n'
-                log += f'Wrong path example: \n{models.wrong}\n\n'
-
-        logger.info('\n' + log.rstrip())
+        logger.info('\n' + log)
 
         # Create outputs folder if it does not exist yet
         if not os.path.exists(self.results_dir):

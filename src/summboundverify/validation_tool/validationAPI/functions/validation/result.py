@@ -1,4 +1,3 @@
-from typing import List
 from abc import ABC, abstractmethod
 
 from claripy.ast.bv import BV as BitVector
@@ -23,7 +22,7 @@ class ValidationResult(ABC):
         result: str,
         summ: ExprRef,
         cncrt: ExprRef,
-        ignore_vars: List[BitVector]
+        ignore_vars: set[BitVector]
     ):
         self._result = result
         self.summ = summ
