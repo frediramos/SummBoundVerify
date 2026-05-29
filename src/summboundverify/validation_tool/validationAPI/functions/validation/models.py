@@ -15,7 +15,7 @@ from .utils import (
 logger = logging.getLogger(__name__)
 
 
-class Pretty_Model():
+class PrettyModel():
 
     def __init__(self, input_vars, mem_vars, ret, ignore, convert_chars):
         self.input_vars = input_vars

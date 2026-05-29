@@ -2,7 +2,7 @@ from typing import Any, List
 from collections import OrderedDict
 from dataclasses import dataclass, field, fields
 
-from .functions.validation.result import Result
+from .functions.validation.result import ValidationResult
 
 
 @dataclass
@@ -49,7 +49,7 @@ class ValidationCTX:
     # ------------------------------------------------------
     # Results of the implications
     # These are supplied to print_counterexamples
-    RESULTS: List[Result] = field(default_factory=list)
+    RESULTS: List[ValidationResult] = field(default_factory=list)
     RESULTS_COUNTER: int = 0
 
     # Logging
