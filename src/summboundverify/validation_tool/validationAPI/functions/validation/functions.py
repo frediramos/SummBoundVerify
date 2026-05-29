@@ -20,13 +20,22 @@ from z3 import (
     sat
 )
 
-from summboundverify.validation_tool.utils import get_states
+from ...summary import CSummary
+from ...context import ValidationCTX
 
-from ..summary import CSummary
-from ..context import ValidationCTX
+from ..utils import get_name
 
+from .result import (
+    Result,
+    Under,
+    Over,
+    Equivalent,
+    Unkown
+)
 
-from .utils import *
+from .utils import ValidationModel
+from .models import Pretty_Model, to_signed_int
+
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ from claripy.ast.bv import BV as BitVector
 from ..summary import CSummary
 from ..context import ValidationCTX
 
-from .utils import *
+from .utils import get_name
 
 
 class sym_var(CSummary):

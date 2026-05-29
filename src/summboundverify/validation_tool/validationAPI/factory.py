@@ -1,4 +1,3 @@
-from functools import partial
 import inspect
 
 from pathlib import Path
@@ -7,10 +6,10 @@ from angr import Project, SimulationManager
 
 from .context import ValidationCTX
 from .functions import solver
-from .functions import validation
 from .functions import constraints
+from .functions.validation import functions
 
-from .functions.validation import halt_all, print_counterexamples
+from .functions.validation.functions import halt_all, print_counterexamples
 
 
 class ValidationAPI():
@@ -43,7 +42,7 @@ class ValidationAPI():
     ):
         self._hook_with_args(binary_name, out, convert_ascii)
 
-        for t in (solver, validation, constraints):
+        for t in (solver, functions, constraints):
 
             for name, cls in inspect.getmembers(t, inspect.isclass):
                 if cls.__module__ != t.__name__:

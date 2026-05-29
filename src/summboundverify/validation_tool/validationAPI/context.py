@@ -2,7 +2,7 @@ from typing import Any, List
 from collections import OrderedDict
 from dataclasses import dataclass, field, fields
 
-from .functions.utils import Result
+from .functions.validation.result import Result
 
 
 @dataclass
