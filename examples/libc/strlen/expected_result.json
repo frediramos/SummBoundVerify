@@ -1,6 +1,6 @@
 {
   "strlen_validation.test_1": {
-    "result": "Exact",
+    "result": "exact",
     "npaths": 1,
     "counterexamples": {}
   }

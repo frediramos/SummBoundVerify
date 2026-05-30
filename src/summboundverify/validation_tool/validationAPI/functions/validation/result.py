@@ -9,7 +9,7 @@ from z3 import (
     sat
 )
 
-from .utils import ValidationModel
+from .utils import ValidationModel, CorrectnessProperty
 
 
 class ValidationResult(ABC):
@@ -19,7 +19,7 @@ class ValidationResult(ABC):
 
     def __init__(
         self,
-        result: str,
+        result: CorrectnessProperty,
         summ: ExprRef,
         cncrt: ExprRef,
         ignore_vars: set[BitVector]
@@ -30,7 +30,7 @@ class ValidationResult(ABC):
         self.ignore = ignore_vars
 
     def __str__(self):
-        return self._result
+        return self._result.value
 
     def __eq__(self, other):
         return self._result == other
@@ -54,7 +54,7 @@ class ValidationResult(ABC):
 
 class Exact(ValidationResult):
     def __init__(self, summ, cncrt, vars):
-        super().__init__('exact', summ, cncrt, vars)
+        super().__init__(CorrectnessProperty.exact, summ, cncrt, vars)
 
     def implication(self):
 
@@ -71,7 +71,7 @@ class Exact(ValidationResult):
         return res
 
     def simple_result(self):
-        return 'Exact'
+        return self._result.value
 
     def models(self):
         return ValidationModel()
@@ -79,7 +79,7 @@ class Exact(ValidationResult):
 
 class Under(ValidationResult):
     def __init__(self, summ, cncrt, vars):
-        super().__init__('under', summ, cncrt, vars)
+        super().__init__(CorrectnessProperty.under, summ, cncrt, vars)
 
     def implication(self):
         impl = (
@@ -95,7 +95,7 @@ class Under(ValidationResult):
         return res
 
     def simple_result(self):
-        return 'Under-approximation'
+        return self._result.value
 
     # Create solver to generate models
     # Missing path
@@ -116,7 +116,7 @@ class Under(ValidationResult):
 
 class Over(ValidationResult):
     def __init__(self, summ, cncrt, vars):
-        super().__init__('over', summ, cncrt, vars)
+        super().__init__(CorrectnessProperty.over, summ, cncrt, vars)
 
     def implication(self):
 
@@ -133,7 +133,7 @@ class Over(ValidationResult):
         return res
 
     def simple_result(self):
-        return 'Over-approximation'
+        return self._result.value
 
     # Create solver to generate models
     # Wrong path
@@ -154,7 +154,7 @@ class Over(ValidationResult):
 
 class Unkown(ValidationResult):
     def __init__(self, summ, cncrt, vars):
-        super().__init__('unknown', summ, cncrt, vars)
+        super().__init__(CorrectnessProperty.bug, summ, cncrt, vars)
 
     def implication(self):
 
@@ -170,7 +170,7 @@ class Unkown(ValidationResult):
         return res
 
     def simple_result(self):
-        return 'N/A (Not under/over-approximation)'
+        return self._result.value
 
     # Create solver to generate models
     def _create_solvers(self):

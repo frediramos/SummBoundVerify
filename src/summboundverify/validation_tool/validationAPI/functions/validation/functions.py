@@ -210,8 +210,8 @@ class halt_all(CSummary):
             return True
         return False
 
-    def run(self, state_id):
-        state_id = self.state.solver.eval(state_id)
+    def run(self, state_bv: BitVector):
+        state_id = self.state.solver.eval(state_bv)
         state_id = to_signed_int(state_id)
 
         # Receives NULL
@@ -366,79 +366,33 @@ class print_counterexamples(CSummary):
         '''(small) HACK: reset context in between test executions'''
         self.ctx.reset()
 
-    def log_json(self, result: ValidationResult, models: ValidationModel, path: str):
-
-        self.ctx.TEST_COUNT += 1
-
-        file = open(path, 'w')
-        log: Dict[str, Any] = {
-            'result': f'{result.simple_result()}',
-            'npaths': self.ctx.SUMM_PATHS
-        }
-
-        ignore = [str(i) for i in result.ignore]
-
-        pm = PrettyModel(
-            input_vars=self.ctx.SYM_VARS,
-            mem_vars=self.ctx.MEMORY_SYM_VARS,
-            ret=self.ctx.RET,
-            ignore=ignore,
-            convert_chars=self.convert_ascii
-        )
-
-        if result == 'unknown':
-            missing = models.missing
-            wrong = models.wrong
-
-            p_missing = pm.prettify(missing)
-            p_wrong = pm.prettify(wrong)
-
-            log['counterexamples'] = {
-                'Over-approximation': p_missing,
-                'Under-approximation': p_wrong
-            }
-
-        elif result == 'under':
-            model = models.missing
-            p_model = pm.prettify(model)
-            log['counterexamples'] = {
-                'Over-approximation': p_model
-            }
-
-        elif result == 'over':
-            model = models.wrong
-            p_model = pm.prettify(model)
-
-            log['counterexamples'] = {
-                'Under-approximation': p_model
-            }
-
-        else:
-            log['counterexamples'] = {}
-
-        testid = f'{self.binary_name}_{self.ctx.TEST_COUNT}'
-        self.ctx.JSON_LOG[testid] = log
-        json_object = json.dumps(self.ctx.JSON_LOG, indent=2)
-        file.write(json_object)
-
     def run(self, result_bv: BitVector):
         result_id = self.state.solver.eval(result_bv)
         assert isinstance(result_id, int)
 
+        self.ctx.TEST_COUNT += 1
+
         result = self.ctx.RESULTS[result_id]
-        models = result.models()
+        ignore = [str(i) for i in result.ignore]
 
         output = ValidationOutput(result)
-        log = output.text_log()
+        text_result = output.text_log()
+        json_result = output.json_result(self.ctx, ignore, self.convert_ascii)
 
-        logger.info('\n' + log)
+        logger.info('\n' + text_result)
 
         # Create outputs folder if it does not exist yet
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-        json_log_path = f'{self.results_dir}/{self.binary_name}_result.json'
-        self.log_json(result, models, json_log_path)
+        testid = f'{self.binary_name}_{self.ctx.TEST_COUNT}'
+        json_path = f'{self.results_dir}/{self.binary_name}_result.json'
+
+        self.ctx.JSON_LOG[testid] = json_result
+        json_object = json.dumps(self.ctx.JSON_LOG, indent=2)
+
+        with open(json_path, 'w') as f:
+            f.write(json_object)
 
         self.reset()
         self.ret()

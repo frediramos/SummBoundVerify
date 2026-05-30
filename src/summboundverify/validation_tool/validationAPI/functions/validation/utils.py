@@ -1,7 +1,15 @@
+from enum import Enum
 from typing import Optional
 from dataclasses import dataclass
 
 from z3 import ModelRef
+
+
+class CorrectnessProperty(Enum):
+    under = "under-approximation"
+    over = "over-approximation"
+    exact = "exact"
+    bug = "unknown (bug)"
 
 
 @dataclass
