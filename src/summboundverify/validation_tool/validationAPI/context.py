@@ -4,6 +4,9 @@ from dataclasses import dataclass, field, fields
 
 from .functions.validation.result import ValidationResult
 
+from angr import SimState
+from claripy.ast.bv import BV as BitVector
+
 
 @dataclass
 class ValidationCTX:
@@ -15,16 +18,18 @@ class ValidationCTX:
 
     # Symbolic states
     # ------------------------------------------------------
-    SYM_STATES: dict = field(default_factory=dict)
+    SYM_STATES: dict[int, SimState] = field(default_factory=dict)
     STATE_ID: int = 1
 
     # Symbolic variables
     # ------------------------------------------------------
-    SYM_VARS: OrderedDict = field(default_factory=OrderedDict)
+    SYM_VARS: OrderedDict[
+        str, list[BitVector]
+    ] = field(default_factory=OrderedDict)
 
     # Input Variables
     # ------------------------------------------------------
-    INPUT_VARS: list = field(default_factory=list)
+    INPUT_VARS: list[BitVector] = field(default_factory=list)
 
     # Return variable
     # ------------------------------------------------------
