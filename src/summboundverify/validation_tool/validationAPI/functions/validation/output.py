@@ -1,8 +1,6 @@
 import json
 from dataclasses import dataclass, field, asdict
 
-from z3 import ExprRef
-
 from ...context import ValidationCTX
 
 from .utils import CorrectnessProperty
@@ -87,15 +85,17 @@ class ValidationOutput():
         data = asdict(obj)
         return data
 
-
     def _to_json(self, obj: ValidationJSON):
         data = self._to_dict(obj)
         json_str = json.dumps(data, indent=2)
         return json_str
 
-
-    def _add_counterexample(self, obj: ValidationJSON, t: CorrectnessProperty, model: Model
-                            ):
+    def _add_counterexample(
+        self,
+        obj: ValidationJSON,
+        t: CorrectnessProperty,
+        model: Model
+    ):
         obj.counterexamples[t.value] = model
 
     def json_result(
