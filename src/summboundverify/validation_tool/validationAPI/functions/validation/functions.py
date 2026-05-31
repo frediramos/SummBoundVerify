@@ -3,7 +3,8 @@ import json
 import claripy
 import logging
 
-from typing import Any, Dict, Set
+from typing import Set
+from pathlib import Path
 
 from angr import SimulationManager
 
@@ -25,17 +26,9 @@ from ...context import ValidationCTX
 
 from ..utils import get_name
 
-from .result import (
-    ValidationResult,
-    Under,
-    Over,
-    Exact,
-    Unkown
-)
-
-from .utils import ValidationModel
+from .models import to_signed_int
 from .output import ValidationOutput
-from .models import PrettyModel, to_signed_int
+from .result import Under, Over, Exact, Unkown
 
 
 logger = logging.getLogger(__name__)
@@ -351,7 +344,7 @@ class print_counterexamples(CSummary):
         ctx: ValidationCTX,
         sm: SimulationManager,
         binary_name: str,
-        results_dir: str,
+        results_dir: str | Path,
         convert_ascii=False
     ):
 
@@ -359,18 +352,32 @@ class print_counterexamples(CSummary):
 
         self.sm = sm
         self.binary_name = binary_name
-        self.results_dir = results_dir
+        self.results_dir = Path(results_dir)
         self.convert_ascii = convert_ascii
 
     def reset(self):
         '''(small) HACK: reset context in between test executions'''
         self.ctx.reset()
 
+    def save_json(self, json_result: dict):
+        self.ctx.TEST_COUNT += 1
+
+        if not os.path.exists(self.results_dir):
+            os.makedirs(self.results_dir)
+
+        testid = f"{self.binary_name}_{self.ctx.TEST_COUNT}"
+        testname = f"{self.binary_name}_result.json"
+        out = self.results_dir / testname
+
+        self.ctx.JSON_LOG[testid] = json_result
+        json_object = json.dumps(self.ctx.JSON_LOG, indent=2)
+
+        with open(out, 'w') as f:
+            f.write(json_object)
+
     def run(self, result_bv: BitVector):
         result_id = self.state.solver.eval(result_bv)
         assert isinstance(result_id, int)
-
-        self.ctx.TEST_COUNT += 1
 
         result = self.ctx.RESULTS[result_id]
         ignore = [str(i) for i in result.ignore]
@@ -379,20 +386,9 @@ class print_counterexamples(CSummary):
         text_result = output.text_log()
         json_result = output.json_result(self.ctx, ignore, self.convert_ascii)
 
+        self.save_json(json_result)
+
         logger.info('\n' + text_result)
-
-        # Create outputs folder if it does not exist yet
-        if not os.path.exists(self.results_dir):
-            os.makedirs(self.results_dir)
-
-        testid = f'{self.binary_name}_{self.ctx.TEST_COUNT}'
-        json_path = f'{self.results_dir}/{self.binary_name}_result.json'
-
-        self.ctx.JSON_LOG[testid] = json_result
-        json_object = json.dumps(self.ctx.JSON_LOG, indent=2)
-
-        with open(json_path, 'w') as f:
-            f.write(json_object)
 
         self.reset()
         self.ret()
