@@ -3,7 +3,6 @@ import json
 import claripy
 import logging
 
-from typing import Set
 from pathlib import Path
 
 from angr import SimulationManager
@@ -249,7 +248,7 @@ class check_implications(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)
 
-    def summary_generated(self) -> Set[BitVector]:
+    def summary_generated(self) -> list[BitVector]:
         '''
         Returns a list of sym_vars generated
         by the summary being tested
@@ -271,7 +270,7 @@ class check_implications(CSummary):
             return True
 
         ret = filter(filter_vars, converted)
-        return set(ret)
+        return list(ret)
 
     def check(self, summ: ExprRef, cncrt: ExprRef):
 
