@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-
 import sys
-import logging
 import traceback
 from argparse import Namespace
 

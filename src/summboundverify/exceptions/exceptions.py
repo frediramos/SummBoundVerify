@@ -19,3 +19,13 @@ class TimeoutError(RunError):
             "The code may contain an infinite loop or otherwise non-terminating execution."
         )
         super().__init__(message)
+
+
+class CompilationError(GenError):
+    def __init__(self, stderr: str, cmd: str):
+        self.cmd = cmd
+        message = (
+            "Could not compile the validation test."
+            f"Stderr:\n{stderr}"
+        )
+        super().__init__(message)

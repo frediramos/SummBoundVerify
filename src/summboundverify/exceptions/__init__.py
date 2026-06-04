@@ -2,5 +2,6 @@ from .exceptions import (
     ValidationError,
     GenError,
     RunError,
-    TimeoutError
+    TimeoutError,
+    CompilationError
 )
