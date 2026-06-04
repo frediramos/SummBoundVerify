@@ -1,20 +1,30 @@
-import traceback
 import logging
-import psutil
 import signal
 import time
 import json
 import sys
 import os
 
-from angr import Project, SimState, SimulationManager, SimHeapPTMalloc
-from angr import options, BP_AFTER
+from angr import (
+    Project,
+    SimState,
+    SimulationManager,
+    SimHeapPTMalloc,
+    options,
+    BP_AFTER
+)
 
-from .utils import truncate, write2file, get_fnames, get_states
+from summboundverify.exceptions import TimeoutError
+
 from .macros import SYM_VAR
-
 from .api import ValidationAPI
 
+from .utils import (
+    truncate,
+    write2file,
+    get_fnames,
+    get_states
+)
 
 logger = logging.getLogger(__name__)
 
@@ -91,10 +101,11 @@ class angrEngine():
             return
 
         def handler(signum, frame):
+            assert self.timeout is not None
             if self.stats_dir:
                 self._save_stats(sm, timeout=True)
                 logger.error(f"Timeout detected: {self.timeout} seconds")
-            raise TimeoutError()
+            raise TimeoutError(self.timeout)
 
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(self.timeout)
