@@ -13,7 +13,7 @@ from angr import options, BP_AFTER
 from .utils import truncate, write2file, get_fnames, get_states
 from .macros import SYM_VAR
 
-from .validationAPI import ValidationAPI
+from .api import ValidationAPI
 
 
 logger = logging.getLogger(__name__)
