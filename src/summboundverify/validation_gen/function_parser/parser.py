@@ -5,7 +5,7 @@ from .visitors import FunctionVisitor, ReturnTypeVisior
 
 from ..test_gen.arg_gen import Symbolic_Args
 
-from ..utils import utils
+from ..utils import parse_file
 
 
 class FunctionParser():
@@ -25,7 +25,7 @@ class FunctionParser():
             self.summ_functions = self.get_functions(self.summary)
 
     def get_functions(self, file: str | Path) -> dict:
-        ast = utils.parseFile(str(file))
+        ast = parse_file(str(file))
         vis = FunctionVisitor(ast, file)
         functions = vis.functions()
         return functions

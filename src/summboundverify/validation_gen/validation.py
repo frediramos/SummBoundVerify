@@ -1,27 +1,45 @@
-from pycparser import c_generator
-from pycparser.c_ast import *
+from pathlib import Path
 
-from .c_generator import CGenerator
+from pycparser import c_generator
+from pycparser.c_ast import ID, FuncDef, FileAST, FuncCall, Compound
+
 from .utils import *
-from .api_gen import api, API_Gen
+
+from .generator import Generator
 from .function_parser import FunctionParser
+
+from .api_gen import api, API_Gen
+
 from .test_gen import TestGen
 from .test_gen.arg_gen.visitors.structs import StructVisitor
 
 
-class ValidationGenerator(CGenerator):
-    def __init__(self, concrete_file, summary_file,
-                 outputfile,
-                 arraysize=[5], nullbytes=[],
-                 maxnum=[], maxnames=[],
-                 default={}, concrete_arrays={},
-                 pointersize=5, fuel=5,
-                 memory=False,
-                 cncrt_name=None, summ_name=None, no_api=False,
-                 ):
+class ValidationGenerator(Generator):
+    def __init__(
+        self,
+        concrete_file: str | Path | None,
+        summary_file: str | Path | None,
+        outputfile: str | Path,
+        *,
+        arraysize=[5],
+        nullbytes=[],
 
+        maxnum=[],
+        maxnames=[],
+
+        default={},
+        concrete_arrays={},
+
+        pointersize=5,
+        fuel=5,
+
+        cncrt_name: str | None = None,
+        summ_name: str | None = None,
+
+        memory=False,
+        no_api=False,
+    ):
         super().__init__(outputfile, concrete_file, summary_file)
-
         self.arraysize = arraysize
         self.nullbytes = nullbytes
         self.maxnum = maxnum
@@ -30,18 +48,13 @@ class ValidationGenerator(CGenerator):
         self.concrete_arrays = concrete_arrays
         self.pointersize = pointersize
         self.fuel = fuel
-
         self.memory = memory
-
-        # Summary name (if summ is not isolated in a file, e,g in a library)
         self.summ_name = summ_name
         self.cncrt_name = cncrt_name
-
         self.no_api = no_api
 
     # Gen headers
     # Typedefs, API stubs and Macros
-
     def gen_headers(self, defs):
         _, summ_def = defs
 
@@ -53,7 +66,7 @@ class ValidationGenerator(CGenerator):
             headers.append('')
 
             # Visitor to get all function calls
-            call_vis = FCallsVisitor()
+            call_vis = FuncCallsVisitor()
             call_vis.visit(summ_def)
             calls = call_vis.fcalls()
 
@@ -209,7 +222,7 @@ class ValidationGenerator(CGenerator):
                 function_defs.remove(None)
 
             # Main function to run the tests
-            main = createFunction(name='main', args=None, returnType='int')
+            main = create_function(name='main', args=None, returnType='int')
 
             # Struct builder functions (if exist)
             structs = StructVisitor(self.tmp_concrete).symbolic_structs()

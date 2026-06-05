@@ -1,9 +1,11 @@
-import logging
-import signal
-import time
-import json
-import sys
 import os
+import sys
+import json
+import time
+import signal
+import logging
+
+from pathlib import Path
 
 from angr import (
     Project,
@@ -33,15 +35,14 @@ class angrEngine():
 
     def __init__(
         self,
-        binary: str,
+        binary: str | Path,
         timeout: int | None = 30*60,
         results_dir='.',
         stats_dir=None, paths_dir=None,
         convert_ascii=False,
         ignore=None,
-    ) -> None:
-
-        self.binary = os.path.normpath(binary)
+    ):
+        self.binary = Path(binary)
         self.timeout = timeout
 
         self.results_dir = results_dir

@@ -1,7 +1,7 @@
 from pycparser.c_ast import *
 
 from ..api_gen import API_Gen
-from ..utils import returnValue
+from ..utils import return_value
 
 from .arg_gen import Symbolic_Args
 
@@ -76,7 +76,7 @@ class TestGen:
             api_gen.print_counterexamples('result'),
 
             # Return
-            returnValue(None)
+            return_value(None)
         ]
 
         # Create function ast

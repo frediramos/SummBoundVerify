@@ -1,19 +1,45 @@
-from pycparser.c_ast import *
+from pathlib import Path
 
-from ....utils import returnValue, parseFile, createFunction
-from ..generators.struct_fields import ArrayFieldGen, PrimitiveFieldGen, StructFieldGen, PtrFieldGen
+from pycparser.c_ast import (
+    NodeVisitor,
+    ID,
+    Decl,
+    PtrDecl,
+    FuncDef,
+    TypeDecl,
+    FuncCall,
+    ExprList,
+    Compound,
+    ParamList,
+    IdentifierType,
+
+)
+
+from summboundverify.validation_gen.utils import (
+    return_value,
+    parse_file,
+    create_function
+)
+
+from ..generators.struct_fields import (
+    ArrayFieldGen,
+    PrimitiveFieldGen,
+    StructFieldGen,
+    PtrFieldGen
+)
 
 
 # Generates the functions to init symbolic structs
 class StructVisitor(NodeVisitor):
-    def __init__(self, file: str):
+    def __init__(self, file: str | Path | None):
 
         self.structs = {}
         self.aliases = {}
         self.structDefs = []
 
         if file:
-            ast = parseFile(file)
+            file = Path(file)
+            ast = parse_file(file)
             vis = StructParser()
             vis.visit(ast)
 
@@ -59,9 +85,9 @@ class StructVisitor(NodeVisitor):
         paramlist = ParamList(self.init_args())
 
         # Create a function declaration with name 'create_<struct_name>'
-        decl = createFunction(name=f'create_struct_{struct_name}',
-                              args=paramlist,
-                              returnType=f'struct {struct_name}')
+        decl = create_function(name=f'create_struct_{struct_name}',
+                               args=paramlist,
+                               returnType=f'struct {struct_name}')
 
         code = []
         code.append(self.malloc_struct(struct_name))
@@ -76,7 +102,7 @@ class StructVisitor(NodeVisitor):
             code += vis.code
 
         # Return struct
-        code.append(returnValue(ID(f'struct_{struct_name}_instance'), '*'))
+        code.append(return_value(ID(f'struct_{struct_name}_instance'), '*'))
 
         # Create a block containg the function code
         block = Compound(code)
