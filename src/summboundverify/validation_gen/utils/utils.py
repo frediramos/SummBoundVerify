@@ -22,18 +22,20 @@ def fake_libc_path():
 
 def parseFile(file):
     fakelib = fake_libc_path()
-    ast = parse_file(file, use_cpp=True,
-                     cpp_path='gcc',
-                     cpp_args=['-E', f'-I{fakelib}'])
+    ast = parse_file(
+        file, use_cpp=True,
+        cpp_path='gcc',
+        cpp_args=['-E', f'-I{fakelib}']
+    )
     return ast
 
 
 def defineMacro(label, value):
-    return f'#define {label} {value}\n'
+    return f'#define {label} {value}'
 
 
 def defineInclude(name):
-    return f'#include <{name}>\n'
+    return f'#include <{name}>'
 
 
 def returnValue(val, operator=None):

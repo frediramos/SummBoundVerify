@@ -50,7 +50,7 @@ class ValidationGenerator(CGenerator):
 
         if not self.no_api:
             headers += sorted(api.validation_api.values())
-            headers.append('\n')
+            headers.append('')
 
             # Visitor to get all function calls
             call_vis = FCallsVisitor()
@@ -67,11 +67,12 @@ class ValidationGenerator(CGenerator):
             calls = filter(lambda x: x not in api.validation_api, calls)
 
             headers += [api.all_api[c] for c in sorted(calls)]
-            headers.append('\n')
+            headers.append('')
 
         # Macros
-        headers += defineMacro(POINTER_SIZE_MACRO, self.pointersize)
-        headers += defineMacro(FUEL_MACRO, self.fuel)
+        headers.append(defineMacro(POINTER_SIZE_MACRO, self.pointersize))
+        headers.append(defineMacro(FUEL_MACRO, self.fuel))
+
         headers += self.genMacros(ARRAY_SIZE_MACRO, self.arraysize)
         headers += self.genMacros(MAX_MACRO, self.maxnum)
 
@@ -98,7 +99,6 @@ class ValidationGenerator(CGenerator):
         return macros
 
     # Generate the tests code
-
     def genTests(self, args, ret_type):
 
         test_defs = []
@@ -190,15 +190,14 @@ class ValidationGenerator(CGenerator):
                               max_value, default, concrete, id)
 
     # Generate summary validation test
-
     def gen(self):
         try:
 
             fparser = FunctionParser(self.tmp_concrete, self.tmp_summary)
 
-            cname, sname, \
-                function_defs, args, \
-                ret_type = fparser.parse(self.cncrt_name, self.summ_name)
+            cname, sname,  function_defs, args, ret_type = fparser.parse(
+                self.cncrt_name, self.summ_name
+            )
 
             self.cncrt_name = cname
             self.summ_name = sname

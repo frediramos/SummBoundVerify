@@ -1,41 +1,36 @@
-from ..test_gen.arg_gen import Symbolic_Args
-
-from ..utils import utils
+from pathlib import Path
 
 from .fexception import FunctionException
 from .visitors import FunctionVisitor, ReturnTypeVisior
 
+from ..test_gen.arg_gen import Symbolic_Args
+
+from ..utils import utils
+
 
 class FunctionParser():
 
-    def getFunctions(self, file: str) -> dict:
-        ast = utils.parseFile(file)
-        vis = FunctionVisitor(ast, file)
-        functions = vis.functions()
-        return functions
+    def __init__(self, concrete: str | Path | None, summary: str | Path | None):
 
-    def __init__(self, concrete: str, summary: str):
-
-        self.concrete = concrete
-        self.summary = summary
-        self.concrete_debug = None
-        self.summary_debug = None
-        self.tmp = 'tmp_'
+        self.concrete = Path(concrete) if concrete else None
+        self.summary = Path(summary) if summary else None
 
         self.cnctr_functions = None
         self.summ_functions = None
 
         if self.concrete:
-            self.cnctr_functions = self.getFunctions(self.concrete)
-            self.concrete_debug = self.concrete.replace(self.tmp, '')
+            self.cnctr_functions = self.get_functions(self.concrete)
 
         if self.summary:
-            self.summ_functions = self.getFunctions(self.summary)
-            self.summary_debug = self.summary.replace(self.tmp, '')
+            self.summ_functions = self.get_functions(self.summary)
+
+    def get_functions(self, file: str | Path) -> dict:
+        ast = utils.parseFile(str(file))
+        vis = FunctionVisitor(ast, file)
+        functions = vis.functions()
+        return functions
 
     # Parse target functions from the given files
-    # Returns (ast_defs, ast_args, ret_type)
-
     def parse(self, cncrt_name, summ_name):
         cncrt_name, summ_name, defs = self.definitions(cncrt_name, summ_name)
         args = self.arguments(defs)
@@ -48,17 +43,24 @@ class FunctionParser():
         summ = None
 
         if self.cnctr_functions:
+            assert self.concrete
             cncrt, cncrt_name = self.get_def(
-                self.cnctr_functions, cncrt_name, self.concrete, 'Concrete Function')
+                self.cnctr_functions,
+                cncrt_name, self.concrete,
+                'Concrete Function'
+            )
 
         if self.summ_functions:
+            assert self.summary
             summ, summ_name = self.get_def(
-                self.summ_functions, summ_name, self.summary, 'Summary')
+                self.summ_functions,
+                summ_name, self.summary,
+                'Summary'
+            )
 
         return [cncrt_name, summ_name, [cncrt, summ]]
 
     # Get function arguments
-
     def arguments(self, definitions: list):
         cncrt_def, summ_def = definitions
 
@@ -71,18 +73,22 @@ class FunctionParser():
         if summ_def:
             summ_args, _ = self.get_args(summ_def)
 
-        if self.summary and self.concrete\
-                and cncrt_args != summ_args:
+        if (
+            self.summary and
+            self.concrete and
+            cncrt_args != summ_args
+        ):
+
             message = (
                 "Arguments do not match!\n"
-                f"Summary path: \'{self.summary_debug}\'\n"
-                f"Concrete Function: \'{self.concrete_debug}\'")
+                f"Summary path: '{self.summary}'\n"
+                f"Concrete Function: '{self.concrete}'"
+            )
             raise FunctionException(message)
 
         return cncrt_args_def
 
     # Get return type
-
     def returnType(self, definitions: list):
         cncrt_def, summ_def = definitions
 
@@ -101,8 +107,9 @@ class FunctionParser():
         elif ret1 != ret2:
             message = (
                 "Return values do not match!\n"
-                f"Summary path: \'{self.summary_debug}\'\n"
-                f"Concrete Function: \'{self.concrete_debug}\'")
+                f"Summary path: '{self.summary}'\n"
+                f"Concrete Function: '{self.concrete}'"
+            )
             raise FunctionException(message)
 
         return ret1
@@ -120,13 +127,11 @@ class FunctionParser():
         args_type = args_vis.get_types()
         return args_type, args_def
 
-    def get_def(self, functions: dict, fname: str, file: str, ftype: str):
+    def get_def(self, functions: dict, fname: str, file: str | Path, ftype: str):
+        file = Path(file)
         names = functions.keys()
         definition = None
         message = None
-
-        if file.startswith(self.tmp):
-            file = file.lstrip(self.tmp)
 
         if len(names) == 0:
             message = f"ERROR: No {ftype}(s) provided in: \'{file}\'"
