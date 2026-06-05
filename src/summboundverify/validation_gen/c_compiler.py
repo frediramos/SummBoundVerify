@@ -42,7 +42,7 @@ class CCompiler():
             'gcc',
             *self.gcc_args,
             str(self.inputfile),
-            '-o', (self.outputfile),
+            '-o', str(self.outputfile),
             *self.libs
         ]
 
