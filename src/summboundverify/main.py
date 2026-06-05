@@ -56,10 +56,8 @@ def run_validation_gen(args: Namespace):
         no_api=args.noapi
     )
 
-    file = valgenerator.gen()
-
-    assert (file == outputfile)
-    return file
+    valgenerator.gen()
+    return outputfile
 
 
 def run_angr(binary: str, args: Namespace):

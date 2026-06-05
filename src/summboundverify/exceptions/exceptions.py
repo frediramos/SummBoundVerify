@@ -15,7 +15,7 @@ class RunError(ValidationError):
 class TimeoutError(RunError):
     def __init__(self, timeout: int):
         message = (
-            f"Validation run timed out after {timeout} seconds. "
+            f"Validation run timed out after {timeout} seconds.\n"
             "The code may contain an infinite loop or otherwise non-terminating execution."
         )
         super().__init__(message)
@@ -25,7 +25,7 @@ class CompilationError(GenError):
     def __init__(self, stderr: str, cmd: str):
         self.cmd = cmd
         message = (
-            "Could not compile the validation test."
+            "Could not compile the validation test.\n"
             f"Stderr:\n{stderr}"
         )
         super().__init__(message)
