@@ -1,17 +1,23 @@
 import sys
 import traceback
+
+from pathlib import Path
+from typing import Literal
 from argparse import Namespace
 
 from summboundverify.logger import setup_logging
 from summboundverify.options import parse_input_args
 from summboundverify.validation_gen import ValidationGenerator, CCompiler
 
+Arch = Literal['x86', 'x64']
 
-def compile_validation_test(arch, file: str, libs):
-    bin_name = file[:-2] + '.test'  # Remove '.c' + .test
-    comp = CCompiler(arch, file, bin_name, libs)
+
+def compile_validation_test(arch: Arch, file: Path, libs: list[str]):
+    name = file.stem + '.test'
+    out = file.parent / name
+    comp = CCompiler(arch, file, out, libs)
     comp.compile()
-    return bin_name
+    return out
 
 
 # Takes command line / config file arguments
@@ -20,25 +26,29 @@ def run_validation_gen(args: Namespace):
     Take command line args and run the test generation
     @args: \'argparse\' Namespace object
     '''
-    concrete_function = args.func
-    target_summary = args.summ
+    concrete_function = Path(args.func) if args.func else None
+    target_summary = Path(args.summ) if args.summ else None
+    outputfile = Path(args.o)
     summname = args.summname
     funcname = args.funcname
-    outputfile = args.o
 
     if not concrete_function and not target_summary:
-        msg = "ERROR: At least the code for a concrete function or summary MUST be provided"
-        sys.exit(msg)
+        err = "ERROR: At least the code for a concrete function or summary MUST be provided"
+        sys.exit(err)
 
     if not concrete_function and not funcname:
-        msg = ("ERROR: No concrete function code or name provided\n"
-               "INFO: In the absence of the code, a name must be specified in order to call the function")
-        sys.exit(msg)
+        err = (
+            "ERROR: No concrete function code or name provided\n"
+            "INFO: In the absence of the code, a name must be specified in order to call the function"
+        )
+        sys.exit(err)
 
     if not target_summary and not summname:
-        msg = ("ERROR: No summary code or name provided\n"
-               "INFO: In the absence of the code, a name must be specified in order to call the summary")
-        sys.exit(msg)
+        err = (
+            "ERROR: No summary code or name provided\n"
+            "INFO: In the absence of the code, a name must be specified in order to call the summary"
+        )
+        sys.exit(err)
 
     valgenerator = ValidationGenerator(
         concrete_function,
@@ -60,7 +70,7 @@ def run_validation_gen(args: Namespace):
     return outputfile
 
 
-def run_angr(binary: str, args: Namespace):
+def run_angr(binary: Path, args: Namespace):
 
     from summboundverify.validation_tool import angrEngine
 
@@ -76,7 +86,6 @@ def run_angr(binary: str, args: Namespace):
 
 
 def main():
-
     try:
         # Parse all input (cli and config file)
         args = parse_input_args()

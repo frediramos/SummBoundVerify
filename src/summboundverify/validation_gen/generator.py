@@ -4,7 +4,7 @@ from pathlib import Path
 from summboundverify.utils.files import tmp_file
 
 
-class CGenerator:
+class Generator:
     def __init__(
         self,
         outputfile: str | Path,
@@ -48,9 +48,3 @@ class CGenerator:
         for f in files:
             if f and os.path.exists(f):
                 os.remove(f)
-
-    def remove_tmp(self):
-        self.remove_files(
-            self.tmp_concrete,
-            self.tmp_summary
-        )

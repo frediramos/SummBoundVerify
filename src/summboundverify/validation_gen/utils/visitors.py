@@ -1,76 +1,7 @@
-import pycparser
-
-from os.path import dirname, isdir
-from os.path import join as join_path
-
-from pycparser import parse_file
-from pycparser.c_ast import *
-
-SIZE_MACRO = 'SIZE'
-FUEL_MACRO = 'FUEL'
-MAX_MACRO = 'MAX_NUM'
-ARRAY_SIZE_MACRO = 'ARRAY_SIZE'
-POINTER_SIZE_MACRO = 'POINTER_SIZE'
+from pycparser.c_ast import NodeVisitor
 
 
-def fake_libc_path():
-    path = join_path(dirname(__file__), "fake_libc_include")
-    if not isdir(path):
-        raise RuntimeError("Could not locate pycparser fake_libc_include")
-    return path
-
-
-def parseFile(file):
-    fakelib = fake_libc_path()
-    ast = parse_file(
-        file, use_cpp=True,
-        cpp_path='gcc',
-        cpp_args=['-E', f'-I{fakelib}']
-    )
-    return ast
-
-
-def defineMacro(label, value):
-    return f'#define {label} {value}'
-
-
-def defineInclude(name):
-    return f'#include <{name}>'
-
-
-def returnValue(val, operator=None):
-    if operator:
-        val = UnaryOp(operator, val)
-    expr = ExprList([val])
-    return Return(expr)
-
-
-def createFunction(name, args, returnType):
-    typedecl = TypeDecl(name, [], None, IdentifierType(names=[returnType]))
-    funcdecl = FuncDecl(args, typedecl)
-    decl = Decl(name, [], [], [], [], funcdecl, None, None)
-    return decl
-
-
-def mainFunction(calls):
-    calls_ast = [c for c in map(
-        lambda x: FuncCall(ID(x), ExprList([])), calls)]
-    calls_ast.append(returnValue(Constant('int', str(0))))
-    block = Compound(calls_ast)
-    return block
-
-
-def fill_array(lvalue, rvalue, index):
-    arr_lvalue = ArrayRef(lvalue, subscript=index)
-    assign = Assignment(op='=', lvalue=arr_lvalue, rvalue=rvalue)
-    return assign
-
-
-def terminate_string(lvalue, index):
-    return fill_array(lvalue, Constant('char', '\'\\0\''), index)
-
-
-class FCallsVisitor(NodeVisitor):
+class FuncCallsVisitor(NodeVisitor):
 
     def __init__(self):
         self.calls = []
