@@ -204,48 +204,44 @@ class ValidationGenerator(Generator):
 
     # Generate summary validation test
     def gen(self):
-        try:
 
-            fparser = FunctionParser(self.tmp_concrete, self.tmp_summary)
+        fparser = FunctionParser(self.tmp_concrete, self.tmp_summary)
 
-            cname, sname,  function_defs, args, ret_type = fparser.parse(
-                self.cncrt_name, self.summ_name
-            )
+        cname, sname,  function_defs, args, ret_type = fparser.parse(
+            self.cncrt_name, self.summ_name
+        )
 
-            self.cncrt_name = cname
-            self.summ_name = sname
+        self.cncrt_name = cname
+        self.summ_name = sname
 
-            header = self.gen_headers(function_defs)
+        header = self.gen_headers(function_defs)
 
-            # If one the functions is not provided
-            if None in function_defs:
-                function_defs.remove(None)
+        # If one the functions is not provided
+        if None in function_defs:
+            function_defs.remove(None)
 
-            # Main function to run the tests
-            main = create_function(name='main', args=None, returnType='int')
+        # Main function to run the tests
+        main = create_function(name='main', args=None, returnType='int')
 
-            # Struct builder functions (if exist)
-            structs = StructVisitor(self.tmp_concrete).symbolic_structs()
-            structs += StructVisitor(self.tmp_summary).symbolic_structs()
+        # Struct builder functions (if exist)
+        structs = StructVisitor(self.tmp_concrete).symbolic_structs()
+        structs += StructVisitor(self.tmp_summary).symbolic_structs()
 
-            # Gen test definitions and calls from main
-            test_defs, main_body = self.genTests(args, ret_type)
+        # Gen test definitions and calls from main
+        test_defs, main_body = self.genTests(args, ret_type)
 
-            # Create main() body
-            block = Compound(main_body)
-            main_ast = FuncDef(main, None, block, None)
+        # Create main() body
+        block = Compound(main_body)
+        main_ast = FuncDef(main, None, block, None)
 
-            gen_ast = FileAST(structs + function_defs + test_defs)
-            gen_ast.ext.append(main_ast)
+        gen_ast = FileAST(structs + function_defs + test_defs)
+        gen_ast.ext.append(main_ast)
 
-            # Generate string from ast
-            generator = c_generator.CGenerator()
-            generated_string = generator.visit(gen_ast)
+        # Generate string from ast
+        generator = c_generator.CGenerator()
+        generated_string = generator.visit(gen_ast)
 
-            self.write_to_file(generated_string.rstrip(), header)
-            self.remove_files(self.tmp_concrete, self.tmp_summary)
-            return self.outputfile
+        self.write_to_file(generated_string.rstrip(), header)
+        self.remove_files(self.tmp_concrete, self.tmp_summary)
+        return self.outputfile
 
-        except Exception as e:
-            self.remove_files(self.tmp_concrete, self.tmp_summary)
-            raise e

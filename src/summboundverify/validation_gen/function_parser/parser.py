@@ -1,10 +1,9 @@
 from pathlib import Path
+from summboundverify.exceptions import ArgumentMismatchError
 
-from .fexception import FunctionException
 from .visitors import FunctionVisitor, ReturnTypeVisior
 
 from ..test_gen.arg_gen import Symbolic_Args
-
 from ..utils import parse_file
 
 
@@ -64,8 +63,8 @@ class FunctionParser():
     def arguments(self, definitions: list):
         cncrt_def, summ_def = definitions
 
-        cncrt_args = None
-        summ_args = None
+        cncrt_args = []
+        summ_args = []
 
         if cncrt_def:
             cncrt_args, cncrt_args_def = self.get_args(cncrt_def)
@@ -78,13 +77,7 @@ class FunctionParser():
             self.concrete and
             cncrt_args != summ_args
         ):
-
-            message = (
-                "Arguments do not match!\n"
-                f"Summary path: '{self.summary}'\n"
-                f"Concrete Function: '{self.concrete}'"
-            )
-            raise FunctionException(message)
+            raise ArgumentMismatchError(summ_args, cncrt_args)
 
         return cncrt_args_def
 
