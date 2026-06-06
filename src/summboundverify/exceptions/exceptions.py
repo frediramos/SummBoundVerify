@@ -29,3 +29,11 @@ class CompilationError(GenError):
             f"Stderr:\n{stderr}"
         )
         super().__init__(message)
+
+
+class ArgumentMismatchError(GenError):
+    def __init__(self, summ_args: list, cncrt_args: list):
+        self.summ_args = summ_args
+        self.cncrt_args = cncrt_args
+        message = "Summary and concrete function arguments do not match.\n"
+        super().__init__(message)
