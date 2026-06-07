@@ -28,7 +28,7 @@ class Generator:
         fake_include = '#include <stdlib.h>\n'
         content = file.read_text()
         content = fake_include + content
-        suffix = f"__{file.name}.c"
+        suffix = f"__{file.name}"
         tmp = tmp_file(suffix)
         tmp.write_text(content)
         return tmp

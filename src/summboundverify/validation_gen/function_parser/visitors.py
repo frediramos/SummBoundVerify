@@ -1,16 +1,19 @@
-from pycparser.c_ast import *
+from pycparser.c_ast import NodeVisitor
 
-# Visit the ASt to separate each elemenet of interest
-# function definitions; defined structs; and Typedefs
+from summboundverify.exceptions import DuplicateFunctionsError
+
+"""
+Visit the ASt to separate each elemenet of interest function definitions; defined structs; and Typedefs
+"""
 
 
 class ReturnTypeVisior(NodeVisitor):
     def __init__(self):
-        self.name = None
+        self.name: str
         self.ptr = 0
 
     def get_ret(self):
-        typ = self.name + self.ptr*'*'
+        typ = self.name + self.ptr * '*'
         return typ
 
     def generic_visit(self, node):
@@ -65,9 +68,9 @@ class FunctionVisitor(NodeVisitor):
 
     def visit_FuncDef(self, node):
         name = node.decl.name
+
         if name in self._functions.keys():
-            sys.exit(
-                f"ERROR: Mutiple functions with same name in: \'{self.file}\'")
+            raise DuplicateFunctionsError(name, self.file)
 
         self._functions[node.decl.name] = node
         self._function_args[node.decl.name] = node.decl.type.args.params if node.decl.type.args else None
