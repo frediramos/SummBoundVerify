@@ -1,5 +1,13 @@
 from pathlib import Path
-from summboundverify.exceptions import ArgumentMismatchError
+
+from summboundverify.exceptions import (
+    ArgumentMismatchError,
+    MissingFunctionError,
+    ReturnMismatchError,
+    MultipleFunctionsError,
+)
+
+from summboundverify.utils.summary import FunctionType
 
 from .visitors import FunctionVisitor, ReturnTypeVisior
 
@@ -37,24 +45,24 @@ class FunctionParser():
         return cncrt_name, summ_name, defs, args, ret
 
     # Get the target functions ast_def from the functions in the given files
-    def definitions(self, cncrt_name: str, summ_name: str):
+    def definitions(self, cncrt_name: str | None, summ_name: str | None):
         cncrt = None
         summ = None
 
         if self.cnctr_functions:
-            assert self.concrete
             cncrt, cncrt_name = self.get_def(
                 self.cnctr_functions,
-                cncrt_name, self.concrete,
-                'Concrete Function'
+                cncrt_name,
+                self.concrete,  # type: ignore
+                FunctionType.concrete
             )
 
         if self.summ_functions:
-            assert self.summary
             summ, summ_name = self.get_def(
                 self.summ_functions,
-                summ_name, self.summary,
-                'Summary'
+                summ_name,
+                self.summary,  # type: ignore
+                FunctionType.summary
             )
 
         return [cncrt_name, summ_name, [cncrt, summ]]
@@ -77,7 +85,7 @@ class FunctionParser():
             self.concrete and
             cncrt_args != summ_args
         ):
-            raise ArgumentMismatchError(summ_args, cncrt_args)
+            raise ArgumentMismatchError(cncrt_args, summ_args)
 
         return cncrt_args_def
 
@@ -98,12 +106,7 @@ class FunctionParser():
             return ret1 if ret1 else ret2
 
         elif ret1 != ret2:
-            message = (
-                "Return values do not match!\n"
-                f"Summary path: '{self.summary}'\n"
-                f"Concrete Function: '{self.concrete}'"
-            )
-            raise FunctionException(message)
+            raise ReturnMismatchError(ret1, ret2)
 
         return ret1
 
@@ -120,32 +123,31 @@ class FunctionParser():
         args_type = args_vis.get_types()
         return args_type, args_def
 
-    def get_def(self, functions: dict, fname: str, file: str | Path, ftype: str):
+    def get_def(
+        self,
+        functions: dict,
+        fname: str | None,
+        file: str | Path,
+        ftype: FunctionType
+    ):
         file = Path(file)
-        names = functions.keys()
+        names = list(functions.keys())
         definition = None
-        message = None
 
         if len(names) == 0:
-            message = f"ERROR: No {ftype}(s) provided in: \'{file}\'"
-            raise FunctionException(message)
+            raise MissingFunctionError(ftype, file)
 
         if fname:
             if fname not in names:
-                message = f"ERROR: {ftype} ({fname}) not found in the given file: \'{file}\'"
-                raise FunctionException(message)
-
+                raise MissingFunctionError(ftype, file, fname)
             else:
                 definition = functions[fname]
 
         else:
             if len(names) == 1:
                 definition, = list(functions.values())
-                fname, = names
+                fname = names.pop(0)
             else:
-                message = f"ERROR: If no function name provided\n \
-						There should be only one {ftype}\
-						to be compared with in \'{file}\'"
-                raise FunctionException(message)
+                raise MultipleFunctionsError(ftype, file)
 
         return definition, fname
