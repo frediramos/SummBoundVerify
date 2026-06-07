@@ -26,6 +26,24 @@ class TimeoutError(RunError):
         super().__init__(message)
 
 
+class InvalidSymbolicVariableSizeError(Exception):
+    def __init__(self, length):
+        message = (
+            f"Cannot create a symbolic variable with size: {length}. "
+            "Size in bits must be divisible by 8."
+        )
+        super().__init__(message)
+
+
+class UnsatConstraintError(Exception):
+    def __init__(self, function: str, constraint):
+        message = (
+            f"Unsatisfiable constraint passed to '{function}' function.\n"
+            f"Constraint: {constraint}"
+        )
+        super().__init__(message)
+
+
 class CompilationError(GenError):
     def __init__(self, stderr: str, cmd: str):
         self.cmd = cmd

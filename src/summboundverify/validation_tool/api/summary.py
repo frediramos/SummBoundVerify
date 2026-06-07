@@ -1,22 +1,13 @@
 import claripy
 from angr import SimProcedure
 
+from summboundverify.exceptions import (
+    InvalidSymbolicVariableSizeError,
+    UnsatConstraintError
+)
+
 from ..macros import SYM_VAR
 from . context import ValidationCTX
-
-
-class UnsatException(Exception):
-    pass
-
-
-class InvalidSymbolicVariableSize(Exception):
-
-    def __init__(self, length):
-        message = (
-            f"Cannot create a symbolic variable with size: {length}"
-            "Size in bits must be divisible by 8"
-        )
-        super().__init__(message)
 
 
 class CSummary(SimProcedure):
@@ -38,7 +29,7 @@ class CSummary(SimProcedure):
 
     def sym_var(self, length):
         if length % 8 != 0:
-            raise InvalidSymbolicVariableSize(length)
+            raise InvalidSymbolicVariableSizeError(length)
 
         sym_var = self.state.solver.BVS(SYM_VAR, length)
         sym_var = sym_var.zero_extend(self.state.arch.bits - length)
@@ -59,7 +50,7 @@ class CSummary(SimProcedure):
 
     def assume(self, cnstr):
         if not self.state.solver.satisfiable(extra_constraints=(cnstr,)):
-            raise UnsatException(f'Unsat cnstr in \'assume\': {cnstr}')
+            raise UnsatConstraintError("assume", cnstr)
         self.state.solver.add(cnstr)
 
     def is_certain(self, cnstr):
@@ -71,7 +62,7 @@ class CSummary(SimProcedure):
 
     def _assert(self, cnstr):
         if not self.state.solver.satisfiable(extra_constraints=(cnstr,)):
-            raise UnsatException(f'Unsat cnstr in \'_assert\': {cnstr}')
+            raise UnsatConstraintError("_assert", cnstr)
 
     def push_pc(self):
         c = self.state.solver._solver.constraints
