@@ -42,6 +42,7 @@ void _assert(int expr){return;}
 int is_certain(cnstr_t cnstr){return 0;}
 int is_symbolic(symbolic sym_var) {return 0;} 
 long maximize(symbolic sym_var){return 0;}
+long minimize(symbolic sym_var){return 0;}
 void pop_pc(){return;}
 void push_pc(){return;}
 symbolic sym_var(size_t size) {return 0;}
