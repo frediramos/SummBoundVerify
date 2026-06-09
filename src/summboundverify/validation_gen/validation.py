@@ -244,4 +244,3 @@ class ValidationGenerator(Generator):
         self.write_to_file(generated_string.rstrip(), header)
         self.remove_files(self.tmp_concrete, self.tmp_summary)
         return self.outputfile
-

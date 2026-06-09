@@ -27,6 +27,9 @@ class FuncCallsVisitor(NodeVisitor):
     def visit_Return(self, node):
         self.visit(node.expr)
 
+    def visit_Cast(self, node):
+        self.visit(node.expr)
+
     def visit_Case(self, node):
         self.visit(node.expr)
         if node.stmts is not None:
@@ -91,3 +94,8 @@ class FuncCallsVisitor(NodeVisitor):
         self.visit(node.stmt)
         self.visit(node.cond)
         return node
+
+    def visit_TernaryOp(self, node):
+        self.visit(node.cond)
+        self.visit(node.iftrue)
+        self.visit(node.iffalse)
