@@ -10,9 +10,10 @@ class sym_var(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)
 
-    def run(self, length):
-        length = self.state.solver.eval(length)
+    def run(self, length_bv: BitVector):
+        length = self.state.solver.eval(length_bv)
         var = self.sym_var(length)
+        var = var.zero_extend(self.state.arch.bits - length)
         self.ret(var)
 
 
@@ -129,12 +130,11 @@ class sym_var_named(CSummary):
 
     def run(self, name_addr, length_bv: BitVector):
         length = self.state.solver.eval(length_bv)
-        assert length % 8 == 0, "[!] Size in bits must be divisible by 8"
 
         name = get_name(self.state, name_addr)
         assert (name not in self.ctx.SYM_VARS.keys())
 
-        sym_var = self.state.solver.BVS(name, length, explicit_name=True)
+        sym_var = self.sym_var(length, name)
         self.ctx.SYM_VARS[name] = [sym_var]
 
         sym_var = sym_var.zero_extend(self.state.arch.bits - length)
@@ -149,20 +149,17 @@ class sym_var_array(CSummary):
     def run(self, name_addr, index, length_bv: BitVector):
 
         length = self.state.solver.eval(length_bv)
-        assert length % 8 == 0, "[!] Size in bits must be divisible by 8"
-
         index = self.state.solver.eval(index)
 
         name = get_name(self.state, name_addr)
         bvname = f'{name}_{index}'
 
-        sym_var = self.state.solver.BVS(bvname, length, explicit_name=True)
+        sym_var = self.sym_var(length, bvname)
 
         if name not in self.ctx.SYM_VARS:
             self.ctx.SYM_VARS[name] = []
 
         self.ctx.SYM_VARS[name].append(sym_var)
-
         sym_var = sym_var.zero_extend(self.state.arch.bits - length)
 
         self.ret(sym_var)
