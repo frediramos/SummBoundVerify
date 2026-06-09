@@ -20,6 +20,9 @@ from z3 import (
     sat
 )
 
+from summboundverify.exceptions import InvalidSymbolicVariableSizeError
+
+
 from ...summary import CSummary
 from ...context import ValidationCTX
 
@@ -104,8 +107,8 @@ class get_cnstr(CSummary):
         self.ctx.CNSTR_COUNTER += 1
 
         length = self.state.solver.eval(length)
-        assert length % 8 == 0, \
-            "[!] Size in bits must be divisible by 8!"
+        if length % 8 != 0:
+            raise InvalidSymbolicVariableSizeError(length)
 
         # Lift memory contents for functions with side-effects
         mem_cnstrs = self.get_memory()

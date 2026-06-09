@@ -3,6 +3,7 @@ from angr import SimProcedure
 
 from summboundverify.exceptions import (
     InvalidSymbolicVariableSizeError,
+    InvalidArchVariableSizeError,
     UnsatConstraintError
 )
 
@@ -27,12 +28,22 @@ class CSummary(SimProcedure):
     def Load(self, addr):
         return self.state.memory.load(addr, 1, endness=self.state.arch.memory_endness)
 
-    def sym_var(self, length):
+    def sym_var(self, length, name=None):
+        arch_bits = self.state.arch.bits
+        explicit_name = True
+
+        if length > arch_bits:
+            raise InvalidArchVariableSizeError(length, arch_bits)
+
         if length % 8 != 0:
             raise InvalidSymbolicVariableSizeError(length)
 
-        sym_var = self.state.solver.BVS(SYM_VAR, length)
-        sym_var = sym_var.zero_extend(self.state.arch.bits - length)
+        if not name:
+            name = SYM_VAR
+            explicit_name = False
+
+        sym_var = self.state.solver.BVS(
+            name, length, explicit_name=explicit_name)
         return sym_var
 
     def is_symbolic(self, var):

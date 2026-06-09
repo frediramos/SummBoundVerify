@@ -29,8 +29,17 @@ class TimeoutError(RunError):
 class InvalidSymbolicVariableSizeError(Exception):
     def __init__(self, length):
         message = (
-            f"Cannot create a symbolic variable with size: {length}. "
+            f"Cannot create a symbolic variable with {length} bits. "
             "Size in bits must be divisible by 8."
+        )
+        super().__init__(message)
+
+
+class InvalidArchVariableSizeError(Exception):
+    def __init__(self, length, arch):
+        message = (
+            f"Cannot create a symbolic variable with {length} bits. "
+            f"We are using a {arch}-bit arch."
         )
         super().__init__(message)
 
