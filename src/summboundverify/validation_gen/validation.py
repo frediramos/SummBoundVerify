@@ -8,7 +8,14 @@ from .utils import *
 from .generator import Generator
 from .function_parser import FunctionParser
 
-from .api_gen import api, API_Gen
+from .api_gen import (
+    API_Gen,
+    type_defs,
+    complete_api,
+    constraints_api,
+    validation_api,
+    standard_api
+)
 
 from .test_gen import TestGen
 from .test_gen.arg_gen.visitors.structs import StructVisitor
@@ -59,10 +66,10 @@ class ValidationGenerator(Generator):
         _, summ_def = defs
 
         # Add core api functions
-        headers = [*api.type_defs]
+        headers = type_defs
 
         if not self.no_api:
-            headers += sorted(api.validation_api.values())
+            headers += sorted(validation_api.values())
             headers.append('')
 
             # Visitor to get all function calls
@@ -72,14 +79,15 @@ class ValidationGenerator(Generator):
 
             # Summary code is not provided
             if not calls:
-                calls = api.all_api.keys()
+                calls = complete_api.keys()
 
             # Check if calls are api functions
-            # Only add stubs for functions not already added by API.validation_api
-            calls = filter(lambda x: x in api.all_api.keys(), calls)
-            calls = filter(lambda x: x not in api.validation_api, calls)
+            # Only add stubs for functions not
+            # already included by the validation api
+            calls = filter(lambda x: x in complete_api.keys(), calls)
+            calls = filter(lambda x: x not in validation_api, calls)
 
-            headers += [api.all_api[c] for c in sorted(calls)]
+            headers += [complete_api[c] for c in sorted(calls)]
             headers.append('')
 
         # Macros
