@@ -166,7 +166,7 @@ class Unkown(ValidationResult):
         return impl
 
     def result(self):
-        res = 'Summary is not an over/under-approximation of the concrete function'
+        res = 'Summary is (buggy) not an over/under-approximation of the concrete function'
         return res
 
     def simple_result(self):

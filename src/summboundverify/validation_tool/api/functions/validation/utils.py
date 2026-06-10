@@ -9,7 +9,7 @@ class CorrectnessProperty(Enum):
     under = "under-approximation"
     over = "over-approximation"
     exact = "exact"
-    bug = "unknown (bug)"
+    bug = "bug"
 
 
 @dataclass
