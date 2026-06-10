@@ -1,9 +1,14 @@
 import claripy
+
+from typing import Callable, Any
+
 from angr import SimProcedure
+from claripy import ClaripyError
 
 from summboundverify.exceptions import (
     InvalidSymbolicVariableSizeError,
     InvalidArchVariableSizeError,
+    ClaripyConstraintError,
     UnsatConstraintError
 )
 
@@ -91,3 +96,11 @@ class CSummary(SimProcedure):
 
         c = self.state.globals['pc_stack'].pop()  # type: ignore
         self.state.solver.reload_solver(c)
+
+    def constraint(self, op: Callable[..., Any], *args):
+        try:
+            result = op(*args)
+        except ClaripyError as e:
+            fname = op.__name__
+            raise ClaripyConstraintError(fname, e)
+        return result
