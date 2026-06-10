@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from claripy import ClaripyError
 from summboundverify.utils.summary import FunctionType
 
 
@@ -26,7 +27,7 @@ class TimeoutError(RunError):
         super().__init__(message)
 
 
-class InvalidSymbolicVariableSizeError(Exception):
+class InvalidSymbolicVariableSizeError(RunError):
     def __init__(self, length):
         message = (
             f"Cannot create a symbolic variable with {length} bits. "
@@ -35,7 +36,7 @@ class InvalidSymbolicVariableSizeError(Exception):
         super().__init__(message)
 
 
-class InvalidArchVariableSizeError(Exception):
+class InvalidArchVariableSizeError(RunError):
     def __init__(self, length, arch):
         message = (
             f"Cannot create a symbolic variable with {length} bits. "
@@ -44,13 +45,25 @@ class InvalidArchVariableSizeError(Exception):
         super().__init__(message)
 
 
-class UnsatConstraintError(Exception):
+class UnsatConstraintError(RunError):
     def __init__(self, function: str, constraint):
         message = (
             f"Unsatisfiable constraint passed to '{function}' function.\n"
             f"Constraint: {constraint}"
         )
         super().__init__(message)
+
+
+class ClaripyConstraintError(RunError):
+    def __init__(self, function: str, claripy_exception: ClaripyError):
+        message = (
+            f"Error in constraint function '{function}'.\n"
+            f"The Claripy backend errored with the following message:\n"
+            f"{claripy_exception}"
+        )
+        super().__init__(message)
+
+# ---
 
 
 class CompilationError(GenError):
