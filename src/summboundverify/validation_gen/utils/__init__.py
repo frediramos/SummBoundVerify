@@ -1,5 +1,3 @@
-from .visitors import FuncCallsVisitor
-
 from pycparser import parse_file as pycparser_parse_file
 from pycparser.c_ast import (
     Decl,
@@ -13,8 +11,10 @@ from pycparser.c_ast import (
     Assignment,
     IdentifierType,
 )
+from pycparser.c_parser import ParseError
 
 from summboundverify.utils.files import current_dir
+from summboundverify.exceptions import FileParseError
 
 SIZE_MACRO = 'SIZE'
 FUEL_MACRO = 'FUEL'
@@ -32,13 +32,16 @@ def fake_libc_path():
 
 
 def parse_file(file):
-    fakelib = fake_libc_path()
-    ast = pycparser_parse_file(
-        file, use_cpp=True,
-        cpp_path='gcc',
-        cpp_args=['-E', f'-I{fakelib}']  # type: ignore
-    )
-    return ast
+    try:
+        fakelib = fake_libc_path()
+        ast = pycparser_parse_file(
+            file, use_cpp=True,
+            cpp_path='gcc',
+            cpp_args=['-E', f'-I{fakelib}']  # type: ignore
+        )
+        return ast
+    except ParseError as e:
+        raise FileParseError(file, e)
 
 
 def defineMacro(label, value):

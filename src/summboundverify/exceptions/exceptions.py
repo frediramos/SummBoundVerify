@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from claripy import ClaripyError
+from pycparser.c_parser import ParseError
+
 from summboundverify.utils.summary import FunctionType
 
 
@@ -64,6 +66,17 @@ class ClaripyConstraintError(RunError):
         super().__init__(message)
 
 # ---
+
+
+class FileParseError(GenError):
+    def __init__(self, file: Path, pycparser_error: ParseError):
+        self.file = file
+        err = str(pycparser_error)
+        message = (
+            f"'pycparser' could not parse the C file: {file}.\n"
+            f"Error:\n{err}"
+        )
+        super().__init__(message)
 
 
 class CompilationError(GenError):
