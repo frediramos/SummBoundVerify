@@ -17,12 +17,13 @@ class CCompiler():
         arch: Arch,
         inputfile: str | Path,
         outputfile: str | Path,
-        libs: list[str]
+        libs: list[str] | list[Path]
     ):
 
         self.arch = arch
         self.inputfile = Path(inputfile)
         self.outputfile = Path(outputfile)
+        self.libs = [Path(lib) for lib in libs]
 
         self.gcc_args = [
             '-Wall', '-O0',
@@ -38,12 +39,13 @@ class CCompiler():
         self.libs = libs or []
 
     def compile(self, verbose=True):
+        libs = [str(lib) for lib in self.libs]
         cmd = [
             'gcc',
             *self.gcc_args,
             str(self.inputfile),
             '-o', str(self.outputfile),
-            *self.libs
+            *libs
         ]
 
         cmd_string = ' '.join(cmd)
