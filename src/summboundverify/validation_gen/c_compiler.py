@@ -17,13 +17,15 @@ class CCompiler():
         arch: Arch,
         inputfile: str | Path,
         outputfile: str | Path,
-        libs: list[str] | list[Path]
+        libs: list[str] | list[Path] | None
     ):
 
         self.arch = arch
         self.inputfile = Path(inputfile)
         self.outputfile = Path(outputfile)
-        self.libs = [Path(lib) for lib in libs]
+
+        if libs:
+            self.libs = [Path(lib) for lib in libs]
 
         self.gcc_args = [
             '-Wall', '-O0',
