@@ -1,6 +1,7 @@
 from pycparser.c_ast import *
 
-from ..api_gen import API_Gen
+from ..api_gen.gen import *
+
 from ..utils import return_value
 
 from .arg_gen import Symbolic_Args
@@ -23,14 +24,14 @@ class TestGen:
             return rvalue
         return Decl(ret_name, [], [], [], [], lvalue, rvalue, None)
 
-    def tag_memory(self, gen, ptr_names, size_macro):
+    def tag_memory(self, ptr_names, size_macro):
         code = []
         if isinstance(size_macro, list):
             for ptr, size in zip(ptr_names, size_macro):
-                code.append(gen.mem_addr(ptr, size))
+                code.append(mem_addr(ptr, size))
         else:
             for ptr in ptr_names:
-                code.append(gen.mem_addr(ptr, size_macro))
+                code.append(mem_addr(ptr, size_macro))
         return code
 
     def createTest(self, name, size_macro,
@@ -40,7 +41,6 @@ class TestGen:
         # Helper objects
         sym_args_gen = Symbolic_Args(
             self.args, size_macro, null_bytes, max_macro, self.max_args)
-        api_gen = API_Gen()
 
         # Create symbolic args
         args_code = sym_args_gen.create_symbolic_args(default, concrete)
@@ -51,29 +51,33 @@ class TestGen:
         # Body contains the test code
         body = [
             *args_code,
-            api_gen.save_current_state('initial_state'),
+            save_current_state('initial_state'),
         ]
 
         if self.memory:
             ptr_names = sym_args_gen.get_ptr_args()
-            body += self.tag_memory(api_gen, ptr_names, size_macro)
+            body += self.tag_memory(ptr_names, size_macro)
 
         body += [
             self.call_function(self.cncrt_name, args_names, 'ret1', self.ret),
-            api_gen.get_cnstr('cnstr1', 'ret1', self.ret),
-            api_gen.store_cnstr(f'cnctr_test{id}', 'cnstr1'),
+            get_cnstr('cnstr1', 'ret1', self.ret),
+            store_cnstr(f'cnctr_test{id}', 'cnstr1'),
 
-            api_gen.halt_all('initial_state'),
+            halt_all('initial_state'),
 
             self.call_function(self.summ_name, args_names, 'ret2', self.ret),
-            api_gen.get_cnstr('cnstr2', 'ret2', self.ret),
-            api_gen.store_cnstr(f'summ_test{id}', 'cnstr2'),
+            get_cnstr('cnstr2', 'ret2', self.ret),
+            store_cnstr(f'summ_test{id}', 'cnstr2'),
 
-            api_gen.halt_all('NULL'),
+            halt_all('NULL'),
 
-            api_gen.check_implications(
-                'result', f'cnctr_test{id}', f'summ_test{id}'),
-            api_gen.print_counterexamples('result'),
+            check_implications(
+                'result',
+                f'cnctr_test{id}',
+                f'summ_test{id}'
+            ),
+
+            print_counterexamples('result'),
 
             # Return
             return_value(None)
