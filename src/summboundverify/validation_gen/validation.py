@@ -65,8 +65,12 @@ class ValidationGenerator(Generator):
     def gen_headers(self, defs):
         _, summ_def = defs
 
-        # Add core api functions
-        headers = type_defs
+        # Add core api functions.
+        # Copy the module-level list: the assembly below uses in-place `+=`
+        # and `append`, so aliasing `type_defs` would mutate the shared global
+        # and make every later call (e.g. a second validation in the same
+        # process) re-append the API stubs, producing duplicate definitions.
+        headers = list(type_defs)
 
         if not self.no_api:
             headers += sorted(validation_api.values())
