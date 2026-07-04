@@ -65,6 +65,17 @@ class ClaripyConstraintError(RunError):
         )
         super().__init__(message)
 
+
+class DuplicateSymbolicVariableError(RunError):
+    def __init__(self, name: str):
+        message = (
+            f"A symbolic variable named '{name}' already exists.\n"
+            "Each named symbolic variable must have a unique name; use a "
+            "different name or 'sym_var', which generates a unique name "
+            "automatically."
+        )
+        super().__init__(message)
+
 # ---
 
 

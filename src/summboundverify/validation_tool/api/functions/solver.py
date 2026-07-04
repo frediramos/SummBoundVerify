@@ -1,5 +1,7 @@
 from claripy.ast.bv import BV as BitVector
 
+from summboundverify.exceptions import DuplicateSymbolicVariableError
+
 from ..summary import CSummary
 from ..context import ValidationCTX
 
@@ -132,7 +134,11 @@ class sym_var_named(CSummary):
         length = self.state.solver.eval(length_bv)
 
         name = get_name(self.state, name_addr)
-        assert (name not in self.ctx.SYM_VARS.keys())
+        # A duplicate name would silently overwrite the earlier variable; report
+        # it as a RunError so the caller can surface it (and the refinement loop
+        # can act on it) instead of crashing with a bare AssertionError.
+        if name in self.ctx.SYM_VARS.keys():
+            raise DuplicateSymbolicVariableError(name)
 
         sym_var = self.sym_var(length, name)
         self.ctx.SYM_VARS[name] = [sym_var]
