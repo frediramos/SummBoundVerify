@@ -33,7 +33,7 @@ class _OR_(CSummary):
         cnstr_id2 = self.state.solver.eval(cnstr2)
         cnstr2 = self.ctx.CNSTR_MAP[cnstr_id2]
 
-        result = self.constraint(claripy.Or, cnstr1, cnstr1)
+        result = self.constraint(claripy.Or, cnstr1, cnstr2)
         self.ctx.CNSTR_MAP.append(result)
         return return_value
 
@@ -51,7 +51,7 @@ class _AND_(CSummary):
         cnstr_id2 = self.state.solver.eval(cnstr2)
         cnstr2 = self.ctx.CNSTR_MAP[cnstr_id2]
 
-        result = self.constraint(claripy.And, cnstr1, cnstr1)
+        result = self.constraint(claripy.And, cnstr1, cnstr2)
         self.ctx.CNSTR_MAP.append(result)
         return return_value
 
