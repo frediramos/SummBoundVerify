@@ -131,9 +131,9 @@ cnstr_t _UGE_(symbolic var1, symbolic var2); -> var1 >= var2 (unsigned)
 ``` c
 cnstr_t _ITE_(cnstr_t cond, cnstr_t cnstr1, cnstr_t cnstr2); -> cond ? cnstr1 : cnstr2
 ```
-- **Note:** This function is mean for constraints only.
+- **Note:** This function is meant for constraints only.
 
 ``` c
-cnstr_t _ITE_VAR_(cnstr_t cond, symbolic var1, symbolic var2, size_t len, size_t len2); -> cond ? var1 : var2
+cnstr_t _ITE_VAR_(cnstr_t cond, symbolic var1, symbolic var2); -> cond ? var1 : var2
 ```
-- **Note:** This function is mean for variables only.
+- **Note:** This function is meant for variables only.
