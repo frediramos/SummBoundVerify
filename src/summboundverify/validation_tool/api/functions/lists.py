@@ -264,9 +264,10 @@ class lst_zeros(ListSummary):
 
 class cond_write(ListSummary):
 
-    def run(self, addr, c, pc_: BitVector):
+    def run(self, addr: BitVector, c: BitVector, pc_: BitVector):
         pc_id = self.state.solver.eval(pc_)
         pc = self.ctx.CNSTR_MAP[pc_id]
+        c = claripy.Extract(7, 0, c)
 
         if self.is_symbolic(addr):
             min_addr = self.state.solver.min(addr)
