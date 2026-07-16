@@ -1,3 +1,4 @@
+from typing import Any
 from pathlib import Path
 
 from claripy import ClaripyError
@@ -73,6 +74,15 @@ class DuplicateSymbolicVariableError(RunError):
             "Each named symbolic variable must have a unique name; use a "
             "different name or 'sym_var', which generates a unique name "
             "automatically."
+        )
+        super().__init__(message)
+
+
+class MemoryPermissionsError(RunError):
+    def __init__(self, addr, ptr, size):
+        message = (
+            f"The memory address: '{addr}' does not have R/W permission.\n"
+            f"This check was called on pointer '{ptr}' and the next {size} bytes."
         )
         super().__init__(message)
 

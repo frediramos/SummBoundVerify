@@ -23,6 +23,10 @@ class ValidationCTX:
     LIST_MAP: list = field(default_factory=list)
     LIST_COUNTER: int = 0
 
+    # Heap
+    # ------------------------------------------------------
+    HEAP_CHUNKS: dict = field(default_factory=dict)
+
     # Symbolic states
     # ------------------------------------------------------
     SYM_STATES: dict[int, SimState] = field(default_factory=dict)
