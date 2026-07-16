@@ -7,6 +7,7 @@ from angr import Project, SimulationManager
 from .context import ValidationCTX
 from .functions import solver
 from .functions import constraints
+from .functions import lists
 from .functions.validation import functions
 
 from .functions.validation.functions import halt_all, print_counterexamples
@@ -42,10 +43,14 @@ class ValidationAPI():
     ):
         self._hook_with_args(binary_name, out, convert_ascii)
 
-        for t in (solver, functions, constraints):
+        for t in (solver, functions, constraints, lists):
 
             for name, cls in inspect.getmembers(t, inspect.isclass):
+
                 if cls.__module__ != t.__name__:
+                    continue
+
+                if inspect.isabstract(cls):
                     continue
 
                 args = inspect.signature(cls).parameters

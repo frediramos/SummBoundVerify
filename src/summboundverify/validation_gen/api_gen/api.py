@@ -9,6 +9,7 @@ type_defs = [
     'typedef unsigned int size_t;',
     'typedef unsigned int cnstr_t;',
     'typedef unsigned int result_t;',
+    'typedef unsigned int list_t;',
     ''  # Hacky '\n'
 ]
 
@@ -59,4 +60,20 @@ constraints_api = {
     '_ITE_VAR_': 'cnstr_t _ITE_VAR_(cnstr_t cnstr1, symbolic var1, symbolic var2) {return 0;}'
 }
 
-complete_api = validation_api | standard_api | constraints_api
+list_api = {
+    'lst_mk':     'list_t lst_mk(){return 0;}',
+    'lst_cons':   'list_t lst_cons(symbolic value, list_t lst) {return 0;}',
+    'lst_empty':  'cnstr_t lst_empty(list_t lst) {return 0;}',
+    'lst_tl':     'list_t lst_tl(list_t lst) {return 0;}',
+    'lst_hd':     'symbolic lst_hd(list_t lst) {return 0;}',
+    'lst_len':    'size_t lst_len(list_t lst) {return 0;}',
+    'lst_nbytes': 'list_t lst_nbytes(char c, size_t n) {return 0;}',
+    'lst_zeros':  'list_t lst_zeros(size_t n) {return 0;}',
+    'allocd':     'void allocd(void* ptr, size_t size) {return;}',
+    'cond_write': 'void cond_write(void* ptr, symbolic c, cnstr_t pc) {return;}',
+    'mem_alloc':  'void* mem_alloc(size_t bytes) {return 0;}',
+    'mem_free':   'void  mem_free(void* ptr) {return ;}',
+    'n_allocd':   'size_t n_allocd(void* ptr) {return 0;}'
+}
+
+complete_api = validation_api | standard_api | constraints_api | list_api

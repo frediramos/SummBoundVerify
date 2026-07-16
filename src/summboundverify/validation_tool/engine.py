@@ -83,11 +83,8 @@ class angrEngine():
         }
 
         state = p.factory.entry_state(mode='symbolic', add_options=opt)
-
-        if state.arch.bits == 64:
-            heap = SimHeapPTMalloc(heap_base=0x0000000000000000)
-        else:
-            heap = SimHeapPTMalloc()
+        heap = SimHeapPTMalloc()
+            
         state.register_plugin('heap', heap)
 
         state.libc.simple_strtok = False  # type: ignore

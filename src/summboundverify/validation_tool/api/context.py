@@ -13,8 +13,15 @@ class ValidationCTX:
 
     # Restrictions
     # ------------------------------------------------------
-    CNSTR_MAP: list = field(default_factory=list)
-    CNSTR_COUNTER: int = 0
+    CNSTR_MAP: list = field(default_factory=lambda: [False, True])
+    CNSTR_COUNTER: int = 2
+    FALSE = 0
+    TRUE = 1
+
+    # Lists
+    # ------------------------------------------------------
+    LIST_MAP: list = field(default_factory=list)
+    LIST_COUNTER: int = 0
 
     # Symbolic states
     # ------------------------------------------------------
