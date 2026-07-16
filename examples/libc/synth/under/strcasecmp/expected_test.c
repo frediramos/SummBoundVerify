@@ -65,31 +65,46 @@ symbolic sym_var(size_t size) {return 0;}
 #define FUEL 5
 #define ARRAY_SIZE_1 3
 
-size_t concrete_strlen(const char *str)
+int concrete_strcasecmp(char *s1, char *s2)
 {
-  size_t i;
-  for (i = 0;; i++)
-    if (str[i] == 0)
-    return i;
+  while (1)
+  {
+    unsigned char u1 = (unsigned char) _tolower((int) (*s1));
+    unsigned char u2 = (unsigned char) _tolower((int) (*s2));
+    s1++;
+    s2++;
+    if (u1 != u2)
+      return u1 - u2;
+    if (u1 == '\0')
+      return 0;
+  }
 
+  return 0;
 }
 
 void test_1()
 {
-  char str[ARRAY_SIZE_1];
-  for (int str_idx_1 = 0; str_idx_1 < ARRAY_SIZE_1; str_idx_1++)
+  char s1[ARRAY_SIZE_1];
+  for (int s1_idx_1 = 0; s1_idx_1 < ARRAY_SIZE_1; s1_idx_1++)
   {
-    str[str_idx_1] = sym_var_array("str", str_idx_1, sizeof(char) * 8);
+    s1[s1_idx_1] = sym_var_array("s1", s1_idx_1, sizeof(char) * 8);
   }
 
-  str[ARRAY_SIZE_1 - 1] = '\0';
+  s1[ARRAY_SIZE_1 - 1] = '\0';
+  char s2[ARRAY_SIZE_1];
+  for (int s2_idx_1 = 0; s2_idx_1 < ARRAY_SIZE_1; s2_idx_1++)
+  {
+    s2[s2_idx_1] = sym_var_array("s2", s2_idx_1, sizeof(char) * 8);
+  }
+
+  s2[ARRAY_SIZE_1 - 1] = '\0';
   state_t initial_state = save_current_state();
-  size_t ret1 = concrete_strlen(str);
-  cnstr_t cnstr1 = get_cnstr(&ret1, sizeof(size_t) * 8);
+  int ret1 = concrete_strcasecmp(s1, s2);
+  cnstr_t cnstr1 = get_cnstr(&ret1, sizeof(int) * 8);
   store_cnstr("cnctr_test1", cnstr1);
   halt_all(initial_state);
-  size_t ret2 = strlen(str);
-  cnstr_t cnstr2 = get_cnstr(&ret2, sizeof(size_t) * 8);
+  int ret2 = strcasecmp(s1, s2);
+  cnstr_t cnstr2 = get_cnstr(&ret2, sizeof(int) * 8);
   store_cnstr("summ_test1", cnstr2);
   halt_all(NULL);
   result_t result = check_implications("cnctr_test1", "summ_test1");

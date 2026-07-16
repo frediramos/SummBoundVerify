@@ -62,7 +62,7 @@ class _EQ_(CSummary):
 
     def run(self, var1, var2):
         return_value = self.increment_CC()
-        def _EQ_(): return var1 == (var2)
+        def _EQ_(): return var1 == var2
         result = self.constraint(_EQ_)
         self.ctx.CNSTR_MAP.append(result)
         return return_value
@@ -74,7 +74,7 @@ class _NEQ_(CSummary):
 
     def run(self, var1, var2):
         return_value = self.increment_CC()
-        def _NEQ_(): return var1 != (var2)
+        def _NEQ_(): return var1 != var2
         result = self.constraint(_NEQ_)
         self.ctx.CNSTR_MAP.append(result)
         return return_value
