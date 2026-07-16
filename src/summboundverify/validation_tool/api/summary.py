@@ -30,8 +30,17 @@ class CSummary(SimProcedure):
     # Symbolic State
     # -----------------------------------------------------------------------------------
 
-    def Load(self, addr):
-        return self.state.memory.load(addr, 1, endness=self.state.arch.memory_endness)
+    def load(self, addr, n=1):
+        return self.state.memory.load(
+            addr, n,
+            endness=self.state.arch.memory_endness
+        )
+
+    def store(self, addr, value, n=1):
+        self.state.memory.store(
+            addr, value, n,
+            endness=self.state.arch.memory_endness
+        )
 
     def sym_var(self, length, name=None):
         arch_bits = self.state.arch.bits
