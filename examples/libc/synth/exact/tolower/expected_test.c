@@ -65,31 +65,25 @@ symbolic sym_var(size_t size) {return 0;}
 #define FUEL 5
 #define ARRAY_SIZE_1 3
 
-size_t concrete_strlen(const char *str)
+int concrete_tolower(int c)
 {
-  size_t i;
-  for (i = 0;; i++)
-    if (str[i] == 0)
-    return i;
-
+  if ((c >= 65) && (c <= 90))
+  {
+    return c + 32;
+  }
+  return c;
 }
 
 void test_1()
 {
-  char str[ARRAY_SIZE_1];
-  for (int str_idx_1 = 0; str_idx_1 < ARRAY_SIZE_1; str_idx_1++)
-  {
-    str[str_idx_1] = sym_var_array("str", str_idx_1, sizeof(char) * 8);
-  }
-
-  str[ARRAY_SIZE_1 - 1] = '\0';
+  int c = sym_var_named("c", sizeof(int) * 8);
   state_t initial_state = save_current_state();
-  size_t ret1 = concrete_strlen(str);
-  cnstr_t cnstr1 = get_cnstr(&ret1, sizeof(size_t) * 8);
+  int ret1 = concrete_tolower(c);
+  cnstr_t cnstr1 = get_cnstr(&ret1, sizeof(int) * 8);
   store_cnstr("cnctr_test1", cnstr1);
   halt_all(initial_state);
-  size_t ret2 = strlen(str);
-  cnstr_t cnstr2 = get_cnstr(&ret2, sizeof(size_t) * 8);
+  int ret2 = tolower(c);
+  cnstr_t cnstr2 = get_cnstr(&ret2, sizeof(int) * 8);
   store_cnstr("summ_test1", cnstr2);
   halt_all(NULL);
   result_t result = check_implications("cnctr_test1", "summ_test1");

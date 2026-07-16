@@ -1,0 +1,4 @@
+arraysize 3
+func concrete.c
+summname tolower
+compile x86

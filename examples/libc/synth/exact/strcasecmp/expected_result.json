@@ -1,0 +1,7 @@
+{
+  "strcasecmp_validation.test_1": {
+    "result": "exact",
+    "npaths": 1,
+    "counterexamples": {}
+  }
+}

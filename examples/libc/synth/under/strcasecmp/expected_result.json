@@ -1,0 +1,21 @@
+{
+  "strcasecmp_validation.test_1": {
+    "result": "under-approximation",
+    "npaths": 1,
+    "counterexamples": {
+      "over-approximation": {
+        "s1": {
+          "s1_0": 122,
+          "s1_1": 0,
+          "s1_2": "Not in model"
+        },
+        "s2": {
+          "s2_0": 90,
+          "s2_1": 127,
+          "s2_2": "Not in model"
+        },
+        "ret": -1
+      }
+    }
+  }
+}

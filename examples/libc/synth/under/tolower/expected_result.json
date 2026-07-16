@@ -1,0 +1,12 @@
+{
+  "tolower_validation.test_1": {
+    "result": "under-approximation",
+    "npaths": 1,
+    "counterexamples": {
+      "over-approximation": {
+        "c": 80,
+        "ret": 112
+      }
+    }
+  }
+}
