@@ -1,0 +1,4 @@
+func concrete.c
+summname strdup
+maxvalue 3
+compile x86
