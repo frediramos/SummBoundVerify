@@ -1,0 +1,27 @@
+{
+  "strdup_validation.test_1": {
+    "result": "under-approximation",
+    "npaths": 1,
+    "counterexamples": {
+      "over-approximation": {
+        "str": {
+          "str_0": 0,
+          "str_1": 0,
+          "str_2": 0,
+          "str_3": 0,
+          "str_4": "Not in model"
+        },
+        "ret": 0,
+        "memory": {
+          "mem_str": {
+            "mem_str_0": 0,
+            "mem_str_1": 0,
+            "mem_str_2": 0,
+            "mem_str_3": 0,
+            "mem_str_4": 0
+          }
+        }
+      }
+    }
+  }
+}
