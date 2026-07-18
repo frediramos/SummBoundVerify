@@ -1,4 +1,0 @@
-summ summary.c
-func concrete.c
-maxvalue 5
-compile x86
