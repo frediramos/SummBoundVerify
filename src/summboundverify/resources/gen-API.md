@@ -73,8 +73,8 @@ void pop_pc()
 
 - This is typically used after finishing the exploration of a branch, reverting the path condition to its earlier state.
 
-## Constraints
 
+## Constraints
 
 ``` c
 cnstr_t _NOT_(cnstr_t cnstr); -> ¬cnstr
@@ -137,3 +137,53 @@ cnstr_t _ITE_(cnstr_t cond, cnstr_t cnstr1, cnstr_t cnstr2); -> cond ? cnstr1 : 
 cnstr_t _ITE_VAR_(cnstr_t cond, symbolic var1, symbolic var2); -> cond ? var1 : var2
 ```
 - **Note:** This function is meant for variables only.
+
+# Lists
+This section of the API describes the functions for creating and manipulating lists of bytes (`list_t`).
+
+```c
+list_t lst_mk();
+```
+- Returns a new empty list.
+
+```c
+list_t lst_cons(symbolic value, list_t lst);
+```
+- Prepends a `value` to `lst`.
+
+```c
+cnstr_t lst_empty(list_t lst);
+```
+- Returns `True` if `lst` is empty, and `False` otherwise. 
+
+```c
+list_t lst_tl(list_t lst); 
+```
+- Returns the tail of `lst`, that is, `lst` without its first element.
+
+```c
+symbolic lst_hd(list_t lst);
+```
+- Returns the first element (head) of `lst`.
+
+```c
+size_t lst_len(list_t lst);
+```
+- Returns the number of elements contained in `lst`.
+
+```c
+list_t lst_nbytes(char c, size_t n);
+```
+- Returns a new list containing `n` copies of the byte `c`.
+
+```c
+list_t lst_zeros(size_t n);
+```
+- Returns a new list containing `n` null (`'\0'`) bytes.
+
+```c
+void cond_write(void* ptr, symbolic c, cnstr_t pc);
+```
+- Stores a conditional value at the memory address pointed to by `ptr`. The resulting value is an if-then-else expression: if `pc` evaluates to true, the byte at `ptr` is `c`; otherwise, it retains its previous value.
+
+- If `ptr` is symbolic, the write is performed over the set of possible addresses represented by `ptr`. For each affected address, the resulting value is encoded as an if-then-else expression that captures both the path condition `pc` and whether that address is selected by `ptr`.
