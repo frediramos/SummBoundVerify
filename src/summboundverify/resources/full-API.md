@@ -190,6 +190,28 @@ void cond_write(void* ptr, symbolic c, cnstr_t pc);
 - If `ptr` is symbolic, the write is performed over the set of possible addresses represented by `ptr`. For each affected address, the resulting value is encoded as an if-then-else expression that captures both the path condition `pc` and whether that address is selected by `ptr`.
 
 
+# Heap
+
+```c
+void* mem_alloc(size_t nbytes); 
+```
+- Allocates `nbytes` bytes of memory on the heap and returns a pointer to the allocated region.
+
+```c
+void mem_free(void* ptr);
+```
+- Frees the heap region pointed to by `ptr`. The pointer must have been returned by `mem_alloc`.
+
+```c
+size_t n_allocd(void* ptr);
+```
+- Returns the number of allocated bytes pointed to by `ptr`. The pointer must have been returned by `mem_alloc`.
+
+```c
+size_t allocd(void* ptr);
+```
+- Throws and exception if the memory pointed to by `ptr` does not have `r/w` permissions. The input `ptr` does **not** need to be a mallocd heap pointer.
+
 ## Validation Primitives
 
 ```c

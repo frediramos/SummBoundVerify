@@ -138,6 +138,7 @@ cnstr_t _ITE_VAR_(cnstr_t cond, symbolic var1, symbolic var2); -> cond ? var1 : 
 ```
 - **Note:** This function is meant for variables only.
 
+
 # Lists
 This section of the API describes the functions for creating and manipulating lists of bytes (`list_t`).
 
@@ -187,3 +188,26 @@ void cond_write(void* ptr, symbolic c, cnstr_t pc);
 - Stores a conditional value at the memory address pointed to by `ptr`. The resulting value is an if-then-else expression: if `pc` evaluates to true, the byte at `ptr` is `c`; otherwise, it retains its previous value.
 
 - If `ptr` is symbolic, the write is performed over the set of possible addresses represented by `ptr`. For each affected address, the resulting value is encoded as an if-then-else expression that captures both the path condition `pc` and whether that address is selected by `ptr`.
+
+
+# Heap
+
+```c
+void* mem_alloc(size_t nbytes); 
+```
+- Allocates `nbytes` bytes of memory on the heap and returns a pointer to the allocated region.
+
+```c
+void mem_free(void* ptr);
+```
+- Frees the heap region pointed to by `ptr`. The pointer must have been returned by `mem_alloc`.
+
+```c
+size_t n_allocd(void* ptr);
+```
+- Returns the number of allocated bytes pointed to by `ptr`. The pointer must have been returned by `mem_alloc`.
+
+```c
+size_t allocd(void* ptr);
+```
+- Throws and exception if the memory pointed to by `ptr` does not have `r/w` permissions. The input `ptr` does **not** need to be a mallocd heap pointer.
