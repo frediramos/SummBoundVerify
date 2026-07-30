@@ -212,6 +212,7 @@ size_t allocd(void* ptr);
 ```
 - Throws and exception if the memory pointed to by `ptr` does not have `r/w` permissions. The input `ptr` does **not** need to be a mallocd heap pointer.
 
+
 ## Validation Primitives
 
 ```c
