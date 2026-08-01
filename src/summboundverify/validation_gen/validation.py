@@ -60,37 +60,50 @@ class ValidationGenerator(Generator):
         self.cncrt_name = cncrt_name
         self.no_api = no_api
 
+    def get_api_calls(self, funcs):
+        fdefs = []
+        fcalls = set()
+
+        # Always include the validation API
+        fdefs += sorted(validation_api.values())
+        fdefs.append('')
+
+        for func in funcs:
+
+            # Visit and fetch all function calls
+            visitor = FuncCallsVisitor()
+            visitor.visit(func)
+            called = visitor.fcalls()
+
+            if not called:
+                called = complete_api.keys()
+
+            # Filter non API functions
+            called = filter(lambda x: x in complete_api.keys(), called)
+
+            # Filter functions already included with the validation API
+            called = filter(lambda x: x not in validation_api, called)
+
+            fcalls.update(called)
+
+        fdefs += [complete_api[c] for c in sorted(fcalls)]
+
+        return fdefs
+
     # Gen headers
     # Typedefs, API stubs and Macros
     def gen_headers(self, defs):
-        _, summ_def = defs
 
         # Add core api functions.
         headers = list(type_defs)
+        headers.append('')
 
+        # Add API calls
         if not self.no_api:
-            headers += sorted(validation_api.values())
+            headers += self.get_api_calls(defs)
             headers.append('')
 
-            # Visitor to get all function calls
-            call_vis = FuncCallsVisitor()
-            call_vis.visit(summ_def)
-            calls = call_vis.fcalls()
-
-            # Summary code is not provided
-            if not calls:
-                calls = complete_api.keys()
-
-            # Check if calls are api functions
-            # Only add stubs for functions not
-            # already included by the validation api
-            calls = filter(lambda x: x in complete_api.keys(), calls)
-            calls = filter(lambda x: x not in validation_api, calls)
-
-            headers += [complete_api[c] for c in sorted(calls)]
-            headers.append('')
-
-        # Macros
+        # Add macros
         headers.append(defineMacro(POINTER_SIZE_MACRO, self.pointersize))
         headers.append(defineMacro(FUEL_MACRO, self.fuel))
 
@@ -204,21 +217,27 @@ class ValidationGenerator(Generator):
         max_value = f'{MAX_MACRO}_{id}' if id <= len(self.maxnum) else None
 
         # Call Gen visitor
-        gen = TestGen(args, ret_type,
-                      self.cncrt_name, self.summ_name,
-                      self.memory, self.maxnames)
+        gen = TestGen(
+            args, ret_type,
+            self.cncrt_name, self.summ_name,
+            self.memory, self.maxnames
+        )
 
-        return gen.createTest(testname,
-                              array_size, null_bytes,
-                              max_value, default, concrete, id)
+        return gen.createTest(
+            testname,
+            array_size, null_bytes,
+            max_value, default,
+            concrete, id
+        )
 
     # Generate summary validation test
     def gen(self):
 
         fparser = FunctionParser(self.tmp_concrete, self.tmp_summary)
 
-        cname, sname,  function_defs, args, ret_type = fparser.parse(
-            self.cncrt_name, self.summ_name
+        cname, sname, function_defs, args, ret_type = fparser.parse(
+            self.cncrt_name,
+            self.summ_name
         )
 
         self.cncrt_name = cname

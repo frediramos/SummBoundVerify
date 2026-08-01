@@ -10,7 +10,6 @@ type_defs = [
     'typedef unsigned int cnstr_t;',
     'typedef unsigned int result_t;',
     'typedef unsigned int list_t;',
-    ''  # Hacky '\n'
 ]
 
 validation_api = {

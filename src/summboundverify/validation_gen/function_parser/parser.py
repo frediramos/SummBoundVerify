@@ -39,18 +39,23 @@ class FunctionParser():
 
     # Parse target functions from the given files
     def parse(self, cncrt_name, summ_name):
-        cncrt_name, summ_name, defs = self.definitions(cncrt_name, summ_name)
-        args = self.arguments(defs)
-        ret = self.returnType(defs)
+        cncrt_name, summ_name, entries, defs = self.definitions(
+            cncrt_name, summ_name
+        )
+        args = self.arguments(entries)
+        ret = self.returnType(entries)
         return cncrt_name, summ_name, defs, args, ret
 
     # Get the target functions ast_def from the functions in the given files
     def definitions(self, cncrt_name: str | None, summ_name: str | None):
-        cncrt = None
-        summ = None
+        cnctr_funcs = [None]
+        summ_funcs = [None]
+
+        cncrt_entry = None
+        summ_entry = None
 
         if self.cnctr_functions:
-            cncrt, cncrt_name = self.get_def(
+            cncrt_name, cncrt_entry, cnctr_funcs = self.get_def(
                 self.cnctr_functions,
                 cncrt_name,
                 self.concrete,  # type: ignore
@@ -58,14 +63,18 @@ class FunctionParser():
             )
 
         if self.summ_functions:
-            summ, summ_name = self.get_def(
+            summ_name, summ_entry, summ_funcs = self.get_def(
                 self.summ_functions,
                 summ_name,
                 self.summary,  # type: ignore
                 FunctionType.summary
             )
 
-        return [cncrt_name, summ_name, [cncrt, summ]]
+        return [
+            cncrt_name, summ_name,
+            (cncrt_entry, summ_entry),
+            [*cnctr_funcs, *summ_funcs]
+        ]
 
     # Get function arguments
     def arguments(self, definitions: list):
@@ -125,14 +134,13 @@ class FunctionParser():
 
     def get_def(
         self,
-        functions: dict,
+        functions: dict[str, str],
         fname: str | None,
         file: str | Path,
         ftype: FunctionType
     ):
         file = Path(file)
         names = list(functions.keys())
-        definition = None
 
         if len(names) == 0:
             raise MissingFunctionError(ftype, file)
@@ -140,14 +148,14 @@ class FunctionParser():
         if fname:
             if fname not in names:
                 raise MissingFunctionError(ftype, file, fname)
-            else:
-                definition = functions[fname]
-
+            entry = functions[fname]
         else:
             if len(names) == 1:
-                definition, = list(functions.values())
                 fname = names.pop(0)
+                entry, = list(functions.values())
             else:
                 raise MultipleFunctionsError(ftype, file)
 
-        return definition, fname
+        defs = list(functions.values())
+
+        return fname, entry, defs
