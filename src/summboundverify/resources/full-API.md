@@ -3,13 +3,13 @@
 ```c
 long maximize(symbolic var);
 ```
-- Takes the symbolic variable `var` and  returns the maximum value that it may denote given the current path condition.
+- Takes the symbolic variable `var` and returns the maximum value that it may denote given the current path condition.
 
 
 ```c
 long minimize(symbolic var);
 ```
-- Takes the symbolic variable `var` and  returns the minimum value that it may denote given the current path condition.
+- Takes the symbolic variable `var` and returns the minimum value that it may denote given the current path condition.
 
 
 ```c
