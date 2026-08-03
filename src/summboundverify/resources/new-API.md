@@ -1,18 +1,49 @@
 # WIP: File API
 
+## `concretize`
+
+```c
+long __concretize(symbolic var);
+```
+- Takes the symbolic variable `var` and returns a value that it may denote given the current path condition.
+
+## `assert` / `report`
+
+```c
+void __assert(cnstr_t cnstr);
+```
+- Asserts that `cnstr` holds.
+- If `cnstr` is unsatisfiable, reports an assertion failure and terminates execution.
+
+```c
+void __report_error(const char* filename, unsigned int line, const char* message);
+```
+- Reports an error originating from `filename` at line `line` with the message `message`.
+- This function does not return.
+
+## `errno`
+
+```c
+unsigned int __set_errno(unsigned int errno);
+```
+- Sets the current value of `errno`.
+- Returns the previous value of `errno`.
+
+```c
+unsigned int __get_errno();
+```
+- Returns the current value of `errno`.
+
 ## `open` / `fopen`
 
 ```c
-int __file_create(char* name);
+int __file_create(const char* name);
 ```
 - Creates a new file named `name` and returns its file descriptor.
 - Returns `-1` if the file could not be created.
 
 ```c
 int __file_close(int fd);
-
-// Identical
-int close(int fd);
 ```
 - Closes the file associated with file descriptor `fd`.
 - Returns `0` on success and `-1` on failure.
@@ -24,7 +55,7 @@ int __file_delete(int fd);
 - Returns `1` on success and `-1` on failure.
 
 ```c
-int __file_open(char* name);
+int __file_open(const char* name);
 ```
 - Opens the file named `name` and returns its file descriptor.
 - Returns `-1` if the file does not exist or cannot be opened.
@@ -77,11 +108,11 @@ int __file_set_mode(int fd, mode_t mode);
 - Sets the mode (`st_mode`) of the file associated with file descriptor `fd`.
 
 ```c
-mode_t __file_mode(int fd);
+int __file_mode(int fd, mode_t* mode);
 ```
-- Returns the `st_mode` value of the file associated with file descriptor `fd`.
-- The returned value encodes both the file type and permission bits (e.g., regular file, directory, `0644`, `0755`).
-- Returns `-1` if `fd` does not refer to a valid file.
+- Stores the `st_mode` value of the file associated with file descriptor `fd` in `*mode`.
+- The stored value encodes both the file type and permission bits (e.g., regular file, directory, `0644`, `0755`).
+- Returns `0` on success and `-1` on failure.
 
 ```c
 int __file_flags(int fd);
@@ -94,9 +125,6 @@ int __file_flags(int fd);
 
 ```c
 ssize_t __file_read(int fd, void* buffer, size_t count);
-
-// Identical
-ssize_t read(int fd, void buf[count], size_t count);
 ```
 - Reads up to `count` bytes from the file associated with file descriptor `fd` into `buffer`.
 - Returns the number of bytes read, which may be less than `count`.
@@ -116,9 +144,6 @@ ssize_t __file_write(int fd, void* buffer, size_t count);
 
 ```c
 int __file_dup(int oldfd);
-
-// Identical
-int dup(int oldfd);
 ```
 - Creates a duplicate of the file descriptor `oldfd`.
 - The duplicate refers to the same open file description as `oldfd`; both descriptors share the same file offset and open status flags.
@@ -126,9 +151,6 @@ int dup(int oldfd);
 
 ```c
 int __file_dup2(int oldfd, int newfd);
-
-// Identical
-int dup2(int oldfd, int newfd);
 ```
 - Duplicates the file descriptor `oldfd` onto `newfd`.
 - If `newfd` is already open, it is closed before being reused.
