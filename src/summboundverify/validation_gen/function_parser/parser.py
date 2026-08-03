@@ -150,11 +150,8 @@ class FunctionParser():
                 raise MissingFunctionError(ftype, file, fname)
             entry = functions[fname]
         else:
-            if len(names) == 1:
-                fname = names.pop(0)
-                entry, = list(functions.values())
-            else:
-                raise MultipleFunctionsError(ftype, file)
+            fname = names[-1]
+            entry = list(functions.values())[-1]
 
         defs = list(functions.values())
 
