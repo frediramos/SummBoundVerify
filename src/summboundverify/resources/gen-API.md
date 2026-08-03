@@ -1,65 +1,65 @@
 ## Core Primitives
 
 ```c
-long maximize(symbolic var);
+long __maximize(symbolic var);
 ```
 - Takes the symbolic variable `var` and returns the maximum value that it may denote given the current path condition.
 
 
 ```c
-long minimize(symbolic var);
+long __minimize(symbolic var);
 ```
 - Takes the symbolic variable `var` and returns the minimum value that it may denote given the current path condition.
 
 
 ```c
-symbolic sym_var(size_t size);
+symbolic __sym_var(size_t size);
 ```
 - Returns a new symbolic variable with a uniquely generated identifier and denoting a value with `size` bits.
 
 
 ```c
-symbolic sym_var_named(char* name, size_t size);
+symbolic __sym_var_named(char* name, size_t size);
 ```
 - Returns a new symbolic variable identified by `name` and denoting a value with `size` bits.
 
 
 ```c
-symbolic sym_var_array(char* name, size_t index, size_t size);
+symbolic __sym_var_array(char* name, size_t index, size_t size);
 ```
 - Returns a new symbolic variable, identified by an array `name`
 and an <index>, denoting a value with <length> bits. Used to fill symbolic arrays.
 
 
 ```c
-int is_symbolic(symbolic var);
+int __is_symbolic(symbolic var);
 ```
 - Checks if variable `var` bits is symbolic.
 
 
 ```c
-int is_sat(cnstr_t cnstr);
+int __is_sat(cnstr_t cnstr);
 ```
 - Calls the SMT solver to check if the constraint `cnstr` is
 satisfiable given the current path condition.
 
 
 ```c
-int is_certain(cnstr_t cnstr);
+int __is_certain(cnstr_t cnstr);
 ```
 - Calls the SMT solver to check if the constraint `cnstr` is
 certainly true given the current path condition.
 
 
 ```c
-void assume(cnstr_t cnstr)
+void __assume(cnstr_t cnstr)
 ```
 - Adds the constraint `cnstr` to the current path condition
 of the symbolic state.
 
 
 ```c
-void push_pc()
+void __push_pc()
 ```
 - Saves the current path condition by creating a copy and pushing it onto the path condition stack.
 
@@ -67,7 +67,7 @@ void push_pc()
 
 
 ```c
-void pop_pc()
+void __pop_pc()
 ```
 - Restores the previous path condition by popping the top element from the path condition stack.
 
@@ -143,47 +143,47 @@ cnstr_t _ITE_VAR_(cnstr_t cond, symbolic var1, symbolic var2); -> cond ? var1 : 
 This section of the API describes the functions for creating and manipulating lists of bytes (`list_t`).
 
 ```c
-list_t lst_mk();
+list_t __lst_mk();
 ```
 - Returns a new empty list.
 
 ```c
-list_t lst_cons(symbolic value, list_t lst);
+list_t __lst_cons(symbolic value, list_t lst);
 ```
 - Prepends a `value` to `lst`.
 
 ```c
-cnstr_t lst_empty(list_t lst);
+cnstr_t __lst_empty(list_t lst);
 ```
 - Returns `True` if `lst` is empty, and `False` otherwise. 
 
 ```c
-list_t lst_tl(list_t lst); 
+list_t __lst_tl(list_t lst); 
 ```
 - Returns the tail of `lst`, that is, `lst` without its first element.
 
 ```c
-symbolic lst_hd(list_t lst);
+symbolic __lst_hd(list_t lst);
 ```
 - Returns the first element (head) of `lst`.
 
 ```c
-size_t lst_len(list_t lst);
+size_t __lst_len(list_t lst);
 ```
 - Returns the number of elements contained in `lst`.
 
 ```c
-list_t lst_nbytes(char c, size_t n);
+list_t __lst_nbytes(char c, size_t n);
 ```
 - Returns a new list containing `n` copies of the byte `c`.
 
 ```c
-list_t lst_zeros(size_t n);
+list_t __lst_zeros(size_t n);
 ```
 - Returns a new list containing `n` null (`'\0'`) bytes.
 
 ```c
-void cond_write(void* ptr, symbolic c, cnstr_t pc);
+void __cond_write(void* ptr, symbolic c, cnstr_t pc);
 ```
 - Stores a conditional value at the memory address pointed to by `ptr`. The resulting value is an if-then-else expression: if `pc` evaluates to true, the byte at `ptr` is `c`; otherwise, it retains its previous value.
 
@@ -193,21 +193,21 @@ void cond_write(void* ptr, symbolic c, cnstr_t pc);
 # Heap
 
 ```c
-void* mem_alloc(size_t nbytes); 
+void* __mem_alloc(size_t nbytes); 
 ```
 - Allocates `nbytes` bytes of memory on the heap and returns a pointer to the allocated region.
 
 ```c
-void mem_free(void* ptr);
+void __mem_free(void* ptr);
 ```
 - Frees the heap region pointed to by `ptr`. The pointer must have been returned by `mem_alloc`.
 
 ```c
-size_t n_allocd(void* ptr);
+size_t __n_allocd(void* ptr);
 ```
 - Returns the number of allocated bytes pointed to by `ptr`. The pointer must have been returned by `mem_alloc`.
 
 ```c
-size_t allocd(void* ptr);
+size_t __allocd(void* ptr);
 ```
 - Throws and exception if the memory pointed to by `ptr` does not have `r/w` permissions. The input `ptr` does **not** need to be a mallocd heap pointer.
