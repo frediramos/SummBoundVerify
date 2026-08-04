@@ -104,15 +104,15 @@ class ValidationGenerator(Generator):
             headers.append('')
 
         # Add macros
-        headers.append(defineMacro(POINTER_SIZE_MACRO, self.pointersize))
-        headers.append(defineMacro(FUEL_MACRO, self.fuel))
+        headers.append(define_macro(POINTER_SIZE_MACRO, self.pointersize))
+        headers.append(define_macro(FUEL_MACRO, self.fuel))
 
-        headers += self.genMacros(ARRAY_SIZE_MACRO, self.arraysize)
-        headers += self.genMacros(MAX_MACRO, self.maxnum)
+        headers += self.gen_macros(ARRAY_SIZE_MACRO, self.arraysize)
+        headers += self.gen_macros(MAX_MACRO, self.maxnum)
 
         return headers
 
-    def genMacros(self, macro, values=[]):
+    def gen_macros(self, macro, values=[]):
         macros = []
         for i, v in enumerate(values):
 
@@ -121,19 +121,19 @@ class ValidationGenerator(Generator):
 
                 for x, y in enumerate(v):
                     name = f'{macro}_{i+1}_VAR{x+1}'
-                    stringlst.append(defineMacro(name, y))
+                    stringlst.append(define_macro(name, y))
                 string = ''.join(stringlst)
 
             else:
                 name = f'{macro}_{i+1}'
-                string = defineMacro(name, v)
+                string = define_macro(name, v)
 
             macros.append(string)
 
         return macros
 
     # Generate the tests code
-    def genTests(self, args, ret_type):
+    def gen_tests(self, args, ret_type):
 
         test_defs = []
         main_body = []
@@ -151,7 +151,7 @@ class ValidationGenerator(Generator):
             testName = f'test_{i}'
 
             # Gen test code
-            testCode = self.genTest(testName, args, ret_type, i)
+            testCode = self.gen_test(testName, args, ret_type, i)
             test_defs.append(testCode)
 
             # Call test function from main
@@ -206,7 +206,8 @@ class ValidationGenerator(Generator):
         else:
             return dict
 
-    def genTest(self, testname, args, ret_type, id):
+    def gen_test(self, testname, args, ret_type, id):
+
         array_size = self.get_array_size(id)
         null_bytes = self.get_null_byte(id)
         default = self.get_dict_value(id, self.default)
@@ -266,7 +267,7 @@ class ValidationGenerator(Generator):
         structs += StructVisitor(self.tmp_summary).symbolic_structs()
 
         # Gen test definitions and calls from main
-        test_defs, main_body = self.genTests(args, ret_type)
+        test_defs, main_body = self.gen_tests(args, ret_type)
 
         # Create main() body
         block = Compound(main_body)

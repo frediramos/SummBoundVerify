@@ -44,11 +44,11 @@ def parse_file(file):
         raise FileParseError(file, e)
 
 
-def defineMacro(label, value):
+def define_macro(label, value):
     return f'#define {label} {value}'
 
 
-def defineInclude(name):
+def define_include(name):
     return f'#include <{name}>'
 
 
