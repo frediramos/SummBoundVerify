@@ -1,6 +1,13 @@
+from dataclasses import dataclass
 from pycparser.c_ast import NodeVisitor
 
-from summboundverify.exceptions import DuplicateFunctionsError
+from summboundverify.exceptions import (
+    DuplicateFunctionDeclarationError,
+    DuplicateFunctionDefinitionError
+)
+
+from pycparser.c_ast import Decl, FuncDecl, FuncDef, NodeVisitor
+
 
 """
 Visit the ASt to separate each elemenet of interest function definitions; defined structs; and Typedefs
@@ -34,6 +41,28 @@ class ReturnTypeVisior(NodeVisitor):
         self.name = node.names[0]
 
 
+@dataclass
+class Function:
+    declaration: Decl
+    definition: FuncDef | None = None
+
+    @property
+    def name(self) -> str:
+        return self.declaration.name
+
+    @property
+    def args(self):
+        return self.declaration.type.args
+
+    @property
+    def return_type(self):
+        return self.declaration.type.type
+
+    @property
+    def body(self):
+        return self.definition.body if self.definition else None
+
+
 class FunctionVisitor(NodeVisitor):
 
     def __init__(self, ast, filename):
@@ -41,36 +70,44 @@ class FunctionVisitor(NodeVisitor):
         self.file = filename
         self.ast = ast
 
-        self._functions = {}
-        self._function_args = {}
+        self._functions: dict[str, Function] = {}
 
     def functions(self):
         if not self._functions:
             self.visit(self.ast)
-
         return self._functions
 
-    def function_names(self):
-        if not self._functions:
-            self.visit(self.ast)
-
-        return list(self._functions.keys())
-
-    def function_args(self):
-        if not self._function_args:
-            self.visit(self.ast)
-
-        return self._function_args
+    def fnames(self):
+        return list(self.functions())
 
     def visit(self, node):
         if node is not None:
             return NodeVisitor.visit(self, node)
 
-    def visit_FuncDef(self, node):
+    def visit_Decl(self, node: Decl):
+        if not isinstance(node.type, FuncDecl):
+            return
+
+        name = node.name
+        function = self._functions.get(name)
+
+        if function is None:
+            self._functions[name] = Function(declaration=node)
+        else:
+            DuplicateFunctionDeclarationError(name, self.file)
+
+    def visit_FuncDef(self, node: FuncDef):
         name = node.decl.name
+        function = self._functions.get(name)
 
-        if name in self._functions.keys():
-            raise DuplicateFunctionsError(name, self.file)
-
-        self._functions[node.decl.name] = node
-        self._function_args[node.decl.name] = node.decl.type.args.params if node.decl.type.args else None
+        if function is None:
+            function = Function(
+                declaration=node.decl,
+                definition=node
+            )
+            self._functions[name] = function
+        else:
+            if function.definition is not None:
+                raise DuplicateFunctionDefinitionError(name, self.file)
+            else:
+                function.definition = node

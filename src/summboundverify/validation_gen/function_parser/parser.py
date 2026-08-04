@@ -9,7 +9,7 @@ from summboundverify.exceptions import (
 
 from summboundverify.utils.summary import FunctionType
 
-from .visitors import FunctionVisitor, ReturnTypeVisior
+from .visitors import FunctionVisitor, ReturnTypeVisior, Function
 
 from ..test_gen.arg_gen import Symbolic_Args
 from ..utils import parse_file
@@ -31,20 +31,11 @@ class FunctionParser():
         if self.summary:
             self.summ_functions = self.get_functions(self.summary)
 
-    def get_functions(self, file: str | Path) -> dict:
+    def get_functions(self, file: str | Path):
         ast = parse_file(str(file))
         vis = FunctionVisitor(ast, file)
         functions = vis.functions()
         return functions
-
-    # Parse target functions from the given files
-    def parse(self, cncrt_name, summ_name):
-        cncrt_name, summ_name, entries, defs = self.definitions(
-            cncrt_name, summ_name
-        )
-        args = self.arguments(entries)
-        ret = self.returnType(entries)
-        return cncrt_name, summ_name, defs, args, ret
 
     # Get the target functions ast_def from the functions in the given files
     def definitions(self, cncrt_name: str | None, summ_name: str | None):
@@ -77,8 +68,8 @@ class FunctionParser():
         ]
 
     # Get function arguments
-    def arguments(self, definitions: list):
-        cncrt_def, summ_def = definitions
+    def arguments(self, entries: list):
+        cncrt_def, summ_def = entries
 
         cncrt_args = []
         summ_args = []
@@ -119,22 +110,22 @@ class FunctionParser():
 
         return ret1
 
-    def get_ret(self, definition):
-        ret = definition.decl.type.type
+    def get_ret(self, func: Function):
+        ret = func.return_type
         ret_vis = ReturnTypeVisior()
         ret_vis.visit(ret)
         ret = ret_vis.get_ret()
         return ret
 
-    def get_args(self, definition):
-        args_def = definition.decl.type.args.params if definition.decl.type.args else None
+    def get_args(self, func: Function):
+        args_def = func.args
         args_vis = Symbolic_Args(args_def)
         args_type = args_vis.get_types()
         return args_type, args_def
 
     def get_def(
         self,
-        functions: dict[str, str],
+        functions: dict[str, Function],
         fname: str | None,
         file: str | Path,
         ftype: FunctionType
@@ -156,3 +147,14 @@ class FunctionParser():
         defs = list(functions.values())
 
         return fname, entry, defs
+
+    # Parse target functions from the given files
+    def parse(self, cncrt_name, summ_name):
+        cncrt_name, summ_name, entries, defs = self.definitions(
+            cncrt_name, summ_name
+        )
+        def_nodes = [d.definition if d is not None else None for d in defs]
+        args = self.arguments(entries)
+        ret = self.returnType(entries)
+
+        return cncrt_name, summ_name, def_nodes, args, ret
