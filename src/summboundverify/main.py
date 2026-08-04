@@ -21,14 +21,17 @@ def compile_validation_test(arch: Arch, file: Path, libs: list[str]):
 
 
 # Takes command line / config file arguments
-def run_validation_gen(args: Namespace):
+def run_validation_gen(args: Namespace, engine: str = 'se',
+                       outputfile: Path | None = None):
     '''
     Take command line args and run the test generation
     @args: \'argparse\' Namespace object
+    @engine: which backend the test is emitted for ('se' or 'fuzz')
+    @outputfile: override for the generated test path
     '''
     concrete_function = Path(args.func) if args.func else None
     target_summary = Path(args.summ) if args.summ else None
-    outputfile = Path(args.o)
+    outputfile = Path(outputfile) if outputfile else Path(args.o)
     summname = args.summname
     funcname = args.funcname
 
@@ -63,7 +66,8 @@ def run_validation_gen(args: Namespace):
         memory=args.memory,
         cncrt_name=funcname,
         summ_name=summname,
-        no_api=args.noapi
+        no_api=args.noapi,
+        engine=engine,
     )
 
     valgenerator.gen()
@@ -85,6 +89,41 @@ def run_angr(binary: Path, args: Namespace):
     engine.run()
 
 
+def run_fuzz(test: Path, args: Namespace):
+
+    from summboundverify.validation_tool import fuzzEngine
+
+    engine = fuzzEngine(
+        test,
+        libs=args.lib,
+        arch=args.compile or 'x86',
+        execs=args.execs,
+        timeout=args.timeout,
+        results_dir=args.results,
+    )
+
+    engine.run()
+
+
+def run_se(test: Path, args: Namespace):
+
+    if not args.compile:
+        return
+
+    binary = compile_validation_test(args.compile, test, args.lib)
+
+    if args.run:
+        run_angr(binary, args)
+
+
+def fuzz_outputfile(args: Namespace) -> Path:
+    """Keep the two engines' generated tests side by side in a `both` run."""
+    out = Path(args.o)
+    if args.engine != 'both':
+        return out
+    return out.with_name(f'{out.stem}-fuzz{out.suffix}')
+
+
 def main():
     try:
         # Parse all input (cli and config file)
@@ -97,18 +136,22 @@ def main():
             run_angr(args.binary, args)
             return 0
 
-        # Gen validation test
-        test = run_validation_gen(args)
+        engines = ['se', 'fuzz'] if args.engine == 'both' else [args.engine]
 
-        # Compile
-        if args.compile:
-            arch = args.compile
-            libs = args.lib
-            binary = compile_validation_test(arch, test, libs)
+        for engine in engines:
 
-            # Run if specified
-            if args.run:
-                run_angr(binary, args)
+            if engine == 'se':
+                test = run_validation_gen(args, engine='se')
+                run_se(test, args)
+
+            else:
+                test = run_validation_gen(
+                    args, engine='fuzz', outputfile=fuzz_outputfile(args)
+                )
+                # The fuzz engine links the test against the concrete backend
+                # itself, so compilation is part of its run.
+                if args.run:
+                    run_fuzz(test, args)
 
     except Exception as e:
         print(traceback.format_exc())

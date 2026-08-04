@@ -1,7 +1,8 @@
+from copy import deepcopy
 from pathlib import Path
 
 from pycparser import c_generator
-from pycparser.c_ast import ID, FuncDef, FileAST, FuncCall, Compound
+from pycparser.c_ast import ID, FuncDef, FileAST, FuncCall, Compound, TypeDecl
 
 from .utils import *
 from .utils.visitors import FuncCallsVisitor
@@ -19,6 +20,8 @@ from .api_gen import (
 
 from .test_gen import TestGen
 from .test_gen.arg_gen.visitors.structs import StructVisitor
+
+from .concrete import RUNTIME_HEADER
 
 
 class ValidationGenerator(Generator):
@@ -45,6 +48,7 @@ class ValidationGenerator(Generator):
 
         memory=False,
         no_api=False,
+        engine: str = 'se',
     ):
         super().__init__(outputfile, concrete_file, summary_file)
         self.arraysize = arraysize
@@ -59,6 +63,7 @@ class ValidationGenerator(Generator):
         self.summ_name = summ_name
         self.cncrt_name = cncrt_name
         self.no_api = no_api
+        self.engine = engine
 
     def get_api_calls(self, funcs):
         fdefs = []
@@ -90,18 +95,67 @@ class ValidationGenerator(Generator):
 
         return fdefs
 
+    def gen_summary_prototype(self, defs):
+        """Declare the summary before the test body calls it.
+
+        The summary is a separate translation unit, so without a declaration
+        the call goes through an implicit `int`-returning declaration and a
+        wider return value is silently truncated. Symbolically that is
+        invisible (the test is built for a 32-bit target, where it happens to
+        be a no-op) but a native build reports it as a divergence between the
+        summary and the concrete function -- a harness artefact that looks
+        exactly like a real finding.
+        """
+        def find(name):
+            return next(
+                (d for d in defs if d is not None and d.decl.name == name),
+                None
+            )
+
+        summ_def = find(self.summ_name)
+
+        if summ_def is not None:
+            decl = summ_def.decl
+
+        else:
+            # Only `-summ` gives us the summary's AST; with `--lib` we know
+            # nothing but its name. Fall back to the concrete function's
+            # signature, which is the premise of the comparison anyway.
+            cncrt_def = find(self.cncrt_name)
+            if cncrt_def is None:
+                return []
+
+            decl = deepcopy(cncrt_def.decl)
+            decl.name = self.summ_name
+
+            inner = decl.type
+            while not isinstance(inner, TypeDecl):
+                inner = inner.type
+            inner.declname = self.summ_name
+
+        generator = c_generator.CGenerator()
+        return [f'extern {generator.visit(decl)};', '']
+
     # Gen headers
     # Typedefs, API stubs and Macros
     def gen_headers(self, defs):
 
-        # Add core api functions.
-        headers = list(type_defs)
-        headers.append('')
+        if self.engine == 'fuzz':
+            # The concrete backend supplies both the typedefs and real
+            # implementations, so the stub prelude is replaced by its header.
+            # Emitting the stub typedefs here as well would collide with it.
+            headers = [f'#include "{RUNTIME_HEADER.name}"', '']
+            headers += self.gen_summary_prototype(defs)
 
-        # Add API calls
-        if not self.no_api:
-            headers += self.get_api_calls(defs)
+        else:
+            # Add core api functions.
+            headers = list(type_defs)
             headers.append('')
+
+            # Add API calls
+            if not self.no_api:
+                headers += self.get_api_calls(defs)
+                headers.append('')
 
         # Add macros
         headers.append(defineMacro(POINTER_SIZE_MACRO, self.pointersize))

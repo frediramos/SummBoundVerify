@@ -1,8 +1,12 @@
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from pathlib import Path
 
-from claripy import ClaripyError
 from pycparser.c_parser import ParseError
+
+if TYPE_CHECKING:
+    # Annotation only: importing claripy at runtime would pull the whole
+    # symbolic stack into a `--engine fuzz` run, which does not need it.
+    from claripy import ClaripyError
 
 from summboundverify.utils.summary import FunctionType
 
@@ -58,7 +62,7 @@ class UnsatConstraintError(RunError):
 
 
 class ClaripyConstraintError(RunError):
-    def __init__(self, function: str, claripy_exception: ClaripyError):
+    def __init__(self, function: str, claripy_exception: "ClaripyError"):
         message = (
             f"Error in constraint function '{function}'.\n"
             f"The Claripy backend errored with the following message:\n"

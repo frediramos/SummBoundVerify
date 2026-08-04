@@ -60,3 +60,7 @@ dist/
 # Virtual environments
 .venv/
 venv/
+
+#Fuzz engine artifacts
+/**/*.fuzz
+/**/*.fuzz_result.json
