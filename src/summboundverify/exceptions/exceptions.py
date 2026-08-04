@@ -145,7 +145,13 @@ class MultipleFunctionsError(GenError):
         super().__init__(message)
 
 
-class DuplicateFunctionsError(GenError):
+class DuplicateFunctionDefinitionError(GenError):
     def __init__(self, name: str, file: Path):
-        message = f"Multiple functions named '{name}' in file: {file}"
+        message = f"Multiple functions named '{name}' defined in file: {file}"
+        super().__init__(message)
+
+
+class DuplicateFunctionDeclarationError(GenError):
+    def __init__(self, name: str, file: Path):
+        message = f"Multiple functions named '{name}' declared in file: {file}"
         super().__init__(message)
