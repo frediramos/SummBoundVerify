@@ -1,15 +1,21 @@
 import sys
+import json
 import traceback
 
 from pathlib import Path
 from typing import Literal
 from argparse import Namespace
 
-from summboundverify.logger import setup_logging
+from summboundverify.logger import Colors, section, setup_logging
 from summboundverify.options import parse_input_args
 from summboundverify.validation_gen import ValidationGenerator, CCompiler
 
 Arch = Literal['x86', 'x64']
+
+ENGINE_TITLES = {
+    'se': 'Symbolic execution (angr)',
+    'fuzz': 'Fuzzing (AFL++)',
+}
 
 
 def compile_validation_test(arch: Arch, file: Path, libs: list[str]):
@@ -74,7 +80,7 @@ def run_validation_gen(args: Namespace, engine: str = 'se',
     return outputfile
 
 
-def run_angr(binary: Path, args: Namespace):
+def run_angr(binary: Path, args: Namespace) -> Path:
 
     from summboundverify.validation_tool import angrEngine
 
@@ -88,8 +94,11 @@ def run_angr(binary: Path, args: Namespace):
 
     engine.run()
 
+    # Written by the print_counterexamples hook, one entry per test.
+    return Path(args.results) / f'{binary.name}_result.json'
 
-def run_fuzz(test: Path, args: Namespace):
+
+def run_fuzz(test: Path, args: Namespace) -> Path:
 
     from summboundverify.validation_tool import fuzzEngine
 
@@ -102,18 +111,20 @@ def run_fuzz(test: Path, args: Namespace):
         results_dir=args.results,
     )
 
-    engine.run()
+    return engine.run()
 
 
-def run_se(test: Path, args: Namespace):
+def run_se(test: Path, args: Namespace) -> Path | None:
 
     if not args.compile:
-        return
+        return None
 
     binary = compile_validation_test(args.compile, test, args.lib)
 
-    if args.run:
-        run_angr(binary, args)
+    if not args.run:
+        return None
+
+    return run_angr(binary, args)
 
 
 def fuzz_outputfile(args: Namespace) -> Path:
@@ -122,6 +133,109 @@ def fuzz_outputfile(args: Namespace) -> Path:
     if args.engine != 'both':
         return out
     return out.with_name(f'{out.stem}-fuzz{out.suffix}')
+
+
+def load_results(path: Path | None) -> dict:
+    if not path or not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def test_id(key: str) -> str:
+    '''Strip the engine's file naming so both sides agree on a test's name.
+
+    A `both` run writes the fuzz test to `<name>-fuzz.c`, so the same test is
+    keyed `<name>.test_1` by one engine and `<name>-fuzz.test_1` by the other.
+    '''
+    name, _, test = key.rpartition('.')
+    if not test:
+        return key
+    return f"{name.removesuffix('-fuzz')}.{test}"
+
+
+def se_verdict(entry: dict) -> tuple[str, str]:
+    result = entry.get('result', 'unknown')
+    color = Colors.green if result == 'exact' else Colors.yellow
+    return result, color
+
+
+def fuzz_verdict(entry: dict) -> tuple[str, str]:
+    verdict = entry.get('verdict', 'unknown')
+    execs = entry.get('execs')
+
+    detail = f' in {execs} execs' if execs else ''
+
+    if verdict in ('diverged', 'crashed'):
+        counterexample = entry.get('counterexample') or {}
+        inputs = counterexample.get('inputs')
+        detail += f' [{inputs}]' if inputs else ''
+        color = Colors.red
+
+    elif verdict == 'starved':
+        color = Colors.yellow
+
+    else:
+        color = Colors.green
+
+    return f'{verdict}{detail}', color
+
+
+def print_summary(se_results: Path | None, fuzz_results: Path | None):
+    '''Side-by-side verdicts, so a `both` run ends with one thing to read.'''
+    se = load_results(se_results)
+    fuzz = load_results(fuzz_results)
+
+    if not se and not fuzz:
+        return
+
+    rows: dict[str, dict] = {}
+
+    for key, entry in se.items():
+        rows.setdefault(test_id(key), {})['se'] = se_verdict(entry)
+
+    for key, entry in fuzz.items():
+        rows.setdefault(test_id(key), {})['fuzz'] = fuzz_verdict(
+            entry.get('fuzz', {})
+        )
+
+    unknown = ('not run', Colors.white)
+    width = max(len(name) for name in rows)
+
+    section('Summary')
+
+    for name, verdicts in rows.items():
+        se_text, se_color = verdicts.get('se', unknown)
+        fz_text, fz_color = verdicts.get('fuzz', unknown)
+
+        print(
+            f"  {name:<{width}}"
+            f"  symbolic: {se_color}{se_text:<12}{Colors.reset}"
+            f"  fuzz: {fz_color}{fz_text}{Colors.reset}",
+            file=sys.stderr,
+        )
+
+        # The engines only contradict each other in one direction: fuzzing
+        # found a concrete input the symbolic result says cannot exist. The
+        # opposite (SE reports a bug, fuzzing does not) is expected -- a
+        # bounded campaign simply may not have reached it.
+        if se_text == 'exact' and fz_text.startswith(('diverged', 'crashed')):
+            print(
+                f"  {Colors.red}the engines disagree: one of them is wrong"
+                f"{Colors.reset}",
+                file=sys.stderr,
+            )
+
+        if fz_text.startswith('starved'):
+            print(
+                f"  {Colors.yellow}fuzzing compared nothing; its verdict "
+                f"carries no weight{Colors.reset}",
+                file=sys.stderr,
+            )
+
+    print(file=sys.stderr, flush=True)
 
 
 def main():
@@ -137,12 +251,17 @@ def main():
             return 0
 
         engines = ['se', 'fuzz'] if args.engine == 'both' else [args.engine]
+        results: dict[str, Path | None] = {}
 
         for engine in engines:
 
+            # A single engine's output is unambiguous on its own.
+            if len(engines) > 1:
+                section(ENGINE_TITLES[engine])
+
             if engine == 'se':
                 test = run_validation_gen(args, engine='se')
-                run_se(test, args)
+                results['se'] = run_se(test, args)
 
             else:
                 test = run_validation_gen(
@@ -151,7 +270,10 @@ def main():
                 # The fuzz engine links the test against the concrete backend
                 # itself, so compilation is part of its run.
                 if args.run:
-                    run_fuzz(test, args)
+                    results['fuzz'] = run_fuzz(test, args)
+
+        if len(engines) > 1 and args.run:
+            print_summary(results.get('se'), results.get('fuzz'))
 
     except Exception as e:
         print(traceback.format_exc())
