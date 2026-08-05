@@ -68,14 +68,14 @@ class ValidationGenerator(Generator):
         fdefs += sorted(validation_api.values())
         fdefs.append('')
 
-        for func in funcs:
+        for i, func in enumerate(funcs, 1):
 
             # Visit and fetch all function calls
             visitor = FuncCallsVisitor()
             visitor.visit(func)
             called = visitor.fcalls()
 
-            if not called:
+            if not called and i == len(funcs):
                 called = complete_api.keys()
 
             # Filter non API functions
