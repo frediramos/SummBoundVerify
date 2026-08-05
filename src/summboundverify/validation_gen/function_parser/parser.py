@@ -9,7 +9,6 @@ from summboundverify.exceptions import (
     MissingFunctionError,
     ReturnMismatchError,
 )
-
 from summboundverify.utils.summary import FunctionType
 
 from .visitors import FunctionVisitor, Function
