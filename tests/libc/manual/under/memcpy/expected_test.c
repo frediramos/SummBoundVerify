@@ -34,7 +34,6 @@ long maximize(symbolic sym_var){return 0;}
 #define ARRAY_SIZE_1 5
 #define MAX_NUM_1 5
 
-
 void *concrete_memcpy(void *dest, void *src, size_t n)
 {
   unsigned char *str_dest = (unsigned char *) dest;
@@ -90,12 +89,12 @@ void test_1()
   state_t initial_state = save_current_state();
   mem_addr("dest", dest, ARRAY_SIZE_1);
   mem_addr("src", src, ARRAY_SIZE_1);
-  void* ret1 = concrete_memcpy(dest, src, n);
-  cnstr_t cnstr1 = get_cnstr(&ret1, sizeof(void*) * 8);
+  void * ret1 = concrete_memcpy(dest, src, n);
+  cnstr_t cnstr1 = get_cnstr(&ret1, sizeof(void *) * 8);
   store_cnstr("cnctr_test1", cnstr1);
   halt_all(initial_state);
-  void* ret2 = summ_memcpy(dest, src, n);
-  cnstr_t cnstr2 = get_cnstr(&ret2, sizeof(void*) * 8);
+  void * ret2 = summ_memcpy(dest, src, n);
+  cnstr_t cnstr2 = get_cnstr(&ret2, sizeof(void *) * 8);
   store_cnstr("summ_test1", cnstr2);
   halt_all(NULL);
   result_t result = check_implications("cnctr_test1", "summ_test1");

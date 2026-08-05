@@ -235,13 +235,20 @@ class ValidationGenerator(Generator):
 
         fparser = FunctionParser(self.tmp_concrete, self.tmp_summary)
 
-        cname, sname, function_defs, args, ret_type = fparser.parse(
+        parsed = fparser.parse(
             self.cncrt_name,
             self.summ_name
         )
 
-        self.cncrt_name = cname
-        self.summ_name = sname
+        self.cncrt_name = parsed.concrete_name
+        self.summ_name = parsed.summary_name
+
+        function_defs = [
+            f.definition if f else None
+            for f in parsed.functions
+        ]
+        args = parsed.arguments
+        ret_type = parsed.return_type
 
         header = self.gen_headers(function_defs)
 
