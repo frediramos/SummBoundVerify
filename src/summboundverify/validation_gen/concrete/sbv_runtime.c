@@ -12,6 +12,7 @@
 
 #include <setjmp.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define SBV_MAX_REGIONS 8

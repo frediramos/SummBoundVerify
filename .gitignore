@@ -62,5 +62,6 @@ dist/
 venv/
 
 #Fuzz engine artifacts
-/**/*.fuzz
-/**/*.fuzz_result.json
+/**/*-fuzz*
+/**/*.fuzz*
+/**/*.aflwork*
