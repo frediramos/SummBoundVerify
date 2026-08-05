@@ -16,8 +16,8 @@ class TestGen:
         self.summ_name = summ_name
         self.max_args = max_args
 
-    def call_function(self, fname, call_args, ret_name, ret_type):
-        lvalue = TypeDecl(ret_name, [], None, IdentifierType(names=[ret_type]))
+    def call_function(self, fname, call_args, ret_name, ret_type: IdentifierType):
+        lvalue = TypeDecl(ret_name, [], None, ret_type)
         rvalue = FuncCall(ID(fname), ExprList(
             [a for a in map(lambda x: ID(x), call_args)]))
         if ret_type == 'void':

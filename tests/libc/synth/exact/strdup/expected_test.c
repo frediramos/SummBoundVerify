@@ -85,12 +85,12 @@ void test_1()
   str[ARRAY_SIZE_1 - 1] = '\0';
   state_t initial_state = save_current_state();
   mem_addr("str", str, ARRAY_SIZE_1);
-  char* ret1 = concrete_strdup(str);
-  cnstr_t cnstr1 = get_cnstr(&ret1, sizeof(char*) * 8);
+  char * ret1 = concrete_strdup(str);
+  cnstr_t cnstr1 = get_cnstr(&ret1, sizeof(char *) * 8);
   store_cnstr("cnctr_test1", cnstr1);
   halt_all(initial_state);
-  char* ret2 = strdup(str);
-  cnstr_t cnstr2 = get_cnstr(&ret2, sizeof(char*) * 8);
+  char * ret2 = strdup(str);
+  cnstr_t cnstr2 = get_cnstr(&ret2, sizeof(char *) * 8);
   store_cnstr("summ_test1", cnstr2);
   halt_all(NULL);
   result_t result = check_implications("cnctr_test1", "summ_test1");
