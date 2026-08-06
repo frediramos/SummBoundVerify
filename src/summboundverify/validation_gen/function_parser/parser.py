@@ -13,7 +13,7 @@ from summboundverify.exceptions import (
 from summboundverify.utils.summary import FunctionType
 
 from .visitors import FunctionVisitor, Function
-from ..test_gen.arg_gen import Symbolic_Args
+from ..test_gen.arg_gen import SymbolicArgs
 from ..utils import parse_file
 
 _CGEN = CGenerator()
@@ -74,8 +74,8 @@ class FunctionParser:
         return name, function, list(functions.values())
 
     def _args(self, function: Function) -> list[str]:
-        visitor = Symbolic_Args(function.args)
-        return visitor.get_types()
+        visitor = SymbolicArgs(function.args)
+        return visitor.types
 
     def arguments(self, concrete: Function | None, summary: Function | None) -> ParamList:
 

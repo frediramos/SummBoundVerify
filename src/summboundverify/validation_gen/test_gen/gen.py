@@ -4,7 +4,7 @@ from ..api_gen.gen import *
 
 from ..utils import return_value
 
-from .arg_gen import Symbolic_Args
+from .arg_gen import SymbolicArgs
 
 
 class TestGen:
@@ -39,14 +39,15 @@ class TestGen:
                    default, concrete, id):
 
         # Helper objects
-        sym_args_gen = Symbolic_Args(
-            self.args, size_macro, null_bytes, max_macro, self.max_args)
+        sym_args_gen = SymbolicArgs(
+            self.args, size_macro, null_bytes, max_macro, self.max_args
+        )
 
         # Create symbolic args
         args_code = sym_args_gen.create_symbolic_args(default, concrete)
 
         # Get ordered arg names
-        args_names = sym_args_gen.get_all_args()
+        args_names = sym_args_gen.call_args
 
         # Body contains the test code
         body = [
@@ -55,7 +56,7 @@ class TestGen:
         ]
 
         if self.memory:
-            ptr_names = sym_args_gen.get_ptr_args()
+            ptr_names = sym_args_gen.pointer_args
             body += self.tag_memory(ptr_names, size_macro)
 
         body += [
