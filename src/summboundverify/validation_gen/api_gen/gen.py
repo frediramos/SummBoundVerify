@@ -21,7 +21,7 @@ def save_current_state(name=None):
     return decl
 
 
-def get_cnstr(name, ret_name: str, ret_type: IdentifierType):
+def get_cnstr(name, ret_name: str, ret_type: Decl):
     if ret_type == 'void':
         args = [ID('NULL'), Constant('int', str(0))]
 

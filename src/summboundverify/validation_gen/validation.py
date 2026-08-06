@@ -207,7 +207,6 @@ class ValidationGenerator(Generator):
             return dict
 
     def genTest(self, testname, args, ret_type, id):
-
         array_size = self.get_array_size(id)
         null_bytes = self.get_null_byte(id)
         default = self.get_dict_value(id, self.default)
@@ -216,6 +215,9 @@ class ValidationGenerator(Generator):
         # Select Macro id for Max value
         max_value = f'{MAX_MACRO}_{id}' if id <= len(self.maxnum) else None
 
+        assert self.cncrt_name is not None
+        assert self.summ_name is not None
+
         # Call Gen visitor
         gen = TestGen(
             args, ret_type,
@@ -223,7 +225,7 @@ class ValidationGenerator(Generator):
             self.memory, self.maxnames
         )
 
-        return gen.createTest(
+        return gen.create_test(
             testname,
             array_size, null_bytes,
             max_value, default,

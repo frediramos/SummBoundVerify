@@ -8,8 +8,8 @@ from summboundverify.exceptions import (
     ArgumentMismatchError,
     MissingFunctionError,
     ReturnMismatchError,
-    MultipleFunctionsError,
 )
+
 from summboundverify.utils.summary import FunctionType
 
 from .visitors import FunctionVisitor, Function

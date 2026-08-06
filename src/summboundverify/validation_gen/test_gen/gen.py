@@ -1,94 +1,127 @@
-from pycparser.c_ast import *
+from typing import Any
+
+from pycparser.c_ast import (
+    ID,
+    Decl,
+    Node,
+    FuncDef,
+    Compound,
+    ExprList,
+    FuncCall,
+    FuncDecl,
+    TypeDecl,
+    IdentifierType,
+)
 
 from ..api_gen.gen import *
-
 from ..utils import return_value
-
 from .arg_gen import SymbolicArgs
 
 
 class TestGen:
-    def __init__(self, args, ret, cncrt_name, summ_name, memory, max_args):
+    """Generates validation tests for a concrete function and its summary."""
+
+    def __init__(
+        self,
+        args: list[Node] | None,
+        ret: Decl,
+        cncrt_name: str,
+        summ_name: str,
+        memory: bool,
+        max_args: list[Any] | None,
+    ) -> None:
         self.args = args
         self.ret = ret
-        self.memory = memory
         self.cncrt_name = cncrt_name
         self.summ_name = summ_name
-        self.max_args = max_args
+        self.memory = memory
+        self.max_args = max_args or []
 
-    def call_function(self, fname, call_args, ret_name, ret_type: IdentifierType):
+    def _returns_void(self, node):
+        return isinstance(node, TypeDecl) and node.type.names == ["void"]
+
+    def call_function(
+        self,
+        name: str,
+        call_args: list[str],
+        ret_name: str,
+        ret_type: Decl,
+    ) -> Node:
+        """Generate a function call, assigning its result if non-void."""
+
+        call = FuncCall(ID(name), ExprList([ID(arg) for arg in call_args]))
+
+        if self._returns_void(ret_type):
+            return call
+
         lvalue = TypeDecl(ret_name, [], None, ret_type)
-        rvalue = FuncCall(ID(fname), ExprList(
-            [a for a in map(lambda x: ID(x), call_args)]))
-        if ret_type == 'void':
-            return rvalue
-        return Decl(ret_name, [], [], [], [], lvalue, rvalue, None)
+        return Decl(ret_name, [], [], [], [], lvalue, call, None)
 
-    def tag_memory(self, ptr_names, size_macro):
-        code = []
+    def tag_memory(
+        self,
+        ptr_names: list[str],
+        size_macro: str | list[str] | None,
+    ) -> list[Node]:
+        """Generate memory tags for pointer arguments."""
+
         if isinstance(size_macro, list):
-            for ptr, size in zip(ptr_names, size_macro):
-                code.append(mem_addr(ptr, size))
-        else:
-            for ptr in ptr_names:
-                code.append(mem_addr(ptr, size_macro))
-        return code
+            return [mem_addr(ptr, size) for ptr, size in zip(ptr_names, size_macro)]
 
-    def createTest(self, name, size_macro,
-                   null_bytes, max_macro,
-                   default, concrete, id):
+        return [mem_addr(ptr, size_macro) for ptr in ptr_names]
 
-        # Helper objects
-        sym_args_gen = SymbolicArgs(
+    def create_test(
+        self,
+        name: str,
+        size_macro: str | list[str] | None,
+        null_bytes: list[Any] | None,
+        max_macro: Any,
+        default: dict[int, Any] | None,
+        concrete: dict[int, Any] | None,
+        test_id: int,
+    ) -> FuncDef:
+        """Generate a validation test."""
+        sym_args = SymbolicArgs(
             self.args, size_macro, null_bytes, max_macro, self.max_args
         )
 
-        # Create symbolic args
-        args_code = sym_args_gen.create_symbolic_args(default, concrete)
+        args_code = sym_args.create_symbolic_args(default, concrete)
+        call_args = sym_args.call_args
 
-        # Get ordered arg names
-        args_names = sym_args_gen.call_args
-
-        # Body contains the test code
-        body = [
-            *args_code,
-            save_current_state('initial_state'),
-        ]
+        body: list[Node] = [*args_code, save_current_state("initial_state")]
 
         if self.memory:
-            ptr_names = sym_args_gen.pointer_args
-            body += self.tag_memory(ptr_names, size_macro)
+            body.extend(self.tag_memory(sym_args.pointer_args, size_macro))
 
-        body += [
-            self.call_function(self.cncrt_name, args_names, 'ret1', self.ret),
-            get_cnstr('cnstr1', 'ret1', self.ret),
-            store_cnstr(f'cnctr_test{id}', 'cnstr1'),
+        body.extend([
+            self.call_function(self.cncrt_name, call_args, "ret1", self.ret),
+            get_cnstr("cnstr1", "ret1", self.ret),
+            store_cnstr(f"cnctr_test{test_id}", "cnstr1"),
 
-            halt_all('initial_state'),
+            halt_all("initial_state"),
 
-            self.call_function(self.summ_name, args_names, 'ret2', self.ret),
-            get_cnstr('cnstr2', 'ret2', self.ret),
-            store_cnstr(f'summ_test{id}', 'cnstr2'),
+            self.call_function(self.summ_name, call_args, "ret2", self.ret),
+            get_cnstr("cnstr2", "ret2", self.ret),
+            store_cnstr(f"summ_test{test_id}", "cnstr2"),
 
-            halt_all('NULL'),
+            halt_all("NULL"),
 
             check_implications(
-                'result',
-                f'cnctr_test{id}',
-                f'summ_test{id}'
+                "result",
+                f"cnctr_test{test_id}",
+                f"summ_test{test_id}",
             ),
 
-            print_counterexamples('result'),
+            print_counterexamples("result"),
+            return_value(None),
+        ])
 
-            # Return
-            return_value(None)
-        ]
-
-        # Create function ast
         block = Compound(body)
 
-        typedecl = TypeDecl(name, [], None, IdentifierType(names=['void']))
-        funcdecl = FuncDecl(None, typedecl)
-        decl = Decl(name, [], [], [], [], funcdecl, None, None)
+        decl = Decl(
+            name, [], [], [], [],
+            FuncDecl(None, TypeDecl(name, [], None,
+                     IdentifierType(names=["void"]))),
+            None, None,
+        )
 
         return FuncDef(decl, None, block)
