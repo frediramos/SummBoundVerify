@@ -1,158 +1,190 @@
 from pathlib import Path
+from dataclasses import dataclass
+
+from pycparser.c_ast import Node, ParamList
+from pycparser.c_generator import CGenerator
 
 from summboundverify.exceptions import (
     ArgumentMismatchError,
     MissingFunctionError,
     ReturnMismatchError,
-    MultipleFunctionsError,
 )
 
 from summboundverify.utils.summary import FunctionType
 
-from .visitors import FunctionVisitor, ReturnTypeVisior
-
-from ..test_gen.arg_gen import Symbolic_Args
+from .visitors import FunctionVisitor, Function
+from ..test_gen.arg_gen import SymbolicArgs
 from ..utils import parse_file
 
+_CGEN = CGenerator()
 
-class FunctionParser():
 
-    def __init__(self, concrete: str | Path | None, summary: str | Path | None):
+@dataclass
+class ParsedFunctions:
+    concrete_name: str
+    summary_name: str
+    functions: list[Function | None]
+    arguments: ParamList
+    return_type: Node
 
+
+class FunctionParser:
+
+    def __init__(
+        self,
+        concrete: str | Path | None,
+        summary: str | Path | None
+    ):
         self.concrete = Path(concrete) if concrete else None
         self.summary = Path(summary) if summary else None
 
-        self.cnctr_functions = None
-        self.summ_functions = None
-
-        if self.concrete:
-            self.cnctr_functions = self.get_functions(self.concrete)
-
-        if self.summary:
-            self.summ_functions = self.get_functions(self.summary)
-
-    def get_functions(self, file: str | Path) -> dict:
-        ast = parse_file(str(file))
-        vis = FunctionVisitor(ast, file)
-        functions = vis.functions()
-        return functions
-
-    # Parse target functions from the given files
-    def parse(self, cncrt_name, summ_name):
-        cncrt_name, summ_name, entries, defs = self.definitions(
-            cncrt_name, summ_name
+        self.cnctr_functions = (
+            self._load_functions(self.concrete)
+            if self.concrete else None
         )
-        args = self.arguments(entries)
-        ret = self.returnType(entries)
-        return cncrt_name, summ_name, defs, args, ret
 
-    # Get the target functions ast_def from the functions in the given files
-    def definitions(self, cncrt_name: str | None, summ_name: str | None):
-        cnctr_funcs = [None]
-        summ_funcs = [None]
+        self.summ_functions = (
+            self._load_functions(self.summary)
+            if self.summary else None
+        )
 
-        cncrt_entry = None
-        summ_entry = None
+    def _load_functions(self, file: Path) -> dict[str, Function]:
+        ast = parse_file(str(file))
+        return FunctionVisitor(ast, file).functions()
 
-        if self.cnctr_functions:
-            cncrt_name, cncrt_entry, cnctr_funcs = self.get_def(
-                self.cnctr_functions,
-                cncrt_name,
-                self.concrete,  # type: ignore
-                FunctionType.concrete
-            )
-
-        if self.summ_functions:
-            summ_name, summ_entry, summ_funcs = self.get_def(
-                self.summ_functions,
-                summ_name,
-                self.summary,  # type: ignore
-                FunctionType.summary
-            )
-
-        return [
-            cncrt_name, summ_name,
-            (cncrt_entry, summ_entry),
-            [*cnctr_funcs, *summ_funcs]
-        ]
-
-    # Get function arguments
-    def arguments(self, definitions: list):
-        cncrt_def, summ_def = definitions
-
-        cncrt_args = []
-        summ_args = []
-
-        if cncrt_def:
-            cncrt_args, cncrt_args_def = self.get_args(cncrt_def)
-
-        if summ_def:
-            summ_args, _ = self.get_args(summ_def)
-
-        if (
-            self.summary and
-            self.concrete and
-            cncrt_args != summ_args
-        ):
-            raise ArgumentMismatchError(cncrt_args, summ_args)
-
-        return cncrt_args_def
-
-    # Get return type
-    def returnType(self, definitions: list):
-        cncrt_def, summ_def = definitions
-
-        ret1 = None
-        ret2 = None
-
-        if cncrt_def:
-            ret1 = self.get_ret(cncrt_def)
-
-        if summ_def:
-            ret2 = self.get_ret(summ_def)
-
-        if not ret1 or not ret2:
-            return ret1 if ret1 else ret2
-
-        elif ret1 != ret2:
-            raise ReturnMismatchError(ret1, ret2)
-
-        return ret1
-
-    def get_ret(self, definition):
-        ret = definition.decl.type.type
-        ret_vis = ReturnTypeVisior()
-        ret_vis.visit(ret)
-        ret = ret_vis.get_ret()
-        return ret
-
-    def get_args(self, definition):
-        args_def = definition.decl.type.args.params if definition.decl.type.args else None
-        args_vis = Symbolic_Args(args_def)
-        args_type = args_vis.get_types()
-        return args_type, args_def
-
-    def get_def(
+    def _get_function(
         self,
-        functions: dict[str, str],
-        fname: str | None,
-        file: str | Path,
-        ftype: FunctionType
-    ):
-        file = Path(file)
-        names = list(functions.keys())
+        functions: dict[str, Function],
+        name: str | None,
+        file: Path,
+        ftype: FunctionType,
+    ) -> tuple[str, Function, list[Function]]:
 
-        if len(names) == 0:
+        if not functions:
             raise MissingFunctionError(ftype, file)
 
-        if fname:
-            if fname not in names:
-                raise MissingFunctionError(ftype, file, fname)
-            entry = functions[fname]
+        if name is None:
+            name, function = next(reversed(functions.items()))
         else:
-            fname = names[-1]
-            entry = list(functions.values())[-1]
+            try:
+                function = functions[name]
+            except KeyError:
+                raise MissingFunctionError(ftype, file, name)
 
-        defs = list(functions.values())
+        return name, function, list(functions.values())
 
-        return fname, entry, defs
+    def _args(self, function: Function) -> list[str]:
+        visitor = SymbolicArgs(function.args)
+        return visitor.types
+
+    def arguments(self, concrete: Function | None, summary: Function | None) -> ParamList:
+
+        concrete_args = []
+        summary_args = []
+        args_def = None
+
+        if concrete:
+            concrete_args = self._args(concrete)
+            args_def = concrete.args
+
+        if summary:
+            summary_args = self._args(summary)
+            args_def = summary.args
+
+        if (
+            concrete_args
+            and summary_args
+            and concrete_args != summary_args
+        ):
+            raise ArgumentMismatchError(
+                concrete_args,
+                summary_args,
+            )
+
+        assert args_def is not None
+        return args_def
+
+    def return_type(self, concrete: Function | None, summary: Function | None) -> Node:
+
+        concrete_ret = None
+        summary_ret = None
+        ret_def = None
+
+        if concrete:
+            concrete_ret = concrete.return_type
+            ret_def = concrete_ret
+
+        if summary:
+            summary_ret = summary.return_type
+            ret_def = summary_ret
+
+        if (
+            concrete_ret and summary_ret and
+            _CGEN.visit(concrete_ret) != _CGEN.visit(summary_ret)
+        ):
+            raise ReturnMismatchError(
+                _CGEN.visit(concrete_ret),
+                _CGEN.visit(summary_ret),
+            )
+
+        assert ret_def is not None
+        return ret_def
+
+    def parse(self, concrete: str | None, summary: str | None) -> ParsedFunctions:
+
+        concrete_functions = [None]
+        summary_functions = [None]
+
+        concrete_entry = None
+        summary_entry = None
+
+        concrete_name = None
+        summary_name = None
+
+        if self.cnctr_functions:
+            (
+                concrete_name,
+                concrete_entry,
+                concrete_functions,
+
+            ) = self._get_function(
+                self.cnctr_functions,
+                concrete,
+                self.concrete,      # type: ignore
+                FunctionType.concrete,
+            )
+        else:
+            assert concrete is not None
+            concrete_name = concrete
+
+        if self.summ_functions:
+            (
+                summary_name,
+                summary_entry,
+                summary_functions,
+
+            ) = self._get_function(
+                self.summ_functions,
+                summary,
+                self.summary,       # type: ignore
+                FunctionType.summary,
+            )
+        else:
+            assert summary is not None
+            summary_name = summary
+
+        arguments = self.arguments(concrete_entry, summary_entry)
+        return_type = self.return_type(concrete_entry, summary_entry)
+
+        parsed = ParsedFunctions(
+            concrete_name=concrete_name,
+            summary_name=summary_name,
+            functions=[
+                *concrete_functions,
+                *summary_functions,
+            ],
+            arguments=arguments,
+            return_type=return_type
+        )
+
+        return parsed

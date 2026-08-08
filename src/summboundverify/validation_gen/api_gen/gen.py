@@ -21,7 +21,7 @@ def save_current_state(name=None):
     return decl
 
 
-def get_cnstr(name, ret_name, ret_type):
+def get_cnstr(name, ret_name: str, ret_type: Decl):
     if ret_type == 'void':
         args = [ID('NULL'), Constant('int', str(0))]
 
@@ -33,7 +33,7 @@ def get_cnstr(name, ret_name, ret_type):
                 op='*',
                 left=FuncCall(
                     ID('sizeof'),
-                    ExprList([ID(ret_type)])
+                    ExprList([ret_type])
                 ),
                 right=Constant('int', str(8)))
         ]

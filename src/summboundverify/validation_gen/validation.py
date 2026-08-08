@@ -73,14 +73,14 @@ class ValidationGenerator(Generator):
         fdefs += sorted(validation_api.values())
         fdefs.append('')
 
-        for func in funcs:
+        for i, func in enumerate(funcs, 1):
 
             # Visit and fetch all function calls
             visitor = FuncCallsVisitor()
             visitor.visit(func)
             called = visitor.fcalls()
 
-            if not called:
+            if not called and i == len(funcs):
                 called = complete_api.keys()
 
             # Filter non API functions
@@ -261,7 +261,6 @@ class ValidationGenerator(Generator):
             return dict
 
     def genTest(self, testname, args, ret_type, id):
-
         array_size = self.get_array_size(id)
         null_bytes = self.get_null_byte(id)
         default = self.get_dict_value(id, self.default)
@@ -270,6 +269,9 @@ class ValidationGenerator(Generator):
         # Select Macro id for Max value
         max_value = f'{MAX_MACRO}_{id}' if id <= len(self.maxnum) else None
 
+        assert self.cncrt_name is not None
+        assert self.summ_name is not None
+
         # Call Gen visitor
         gen = TestGen(
             args, ret_type,
@@ -277,7 +279,7 @@ class ValidationGenerator(Generator):
             self.memory, self.maxnames
         )
 
-        return gen.createTest(
+        return gen.create_test(
             testname,
             array_size, null_bytes,
             max_value, default,
@@ -289,13 +291,20 @@ class ValidationGenerator(Generator):
 
         fparser = FunctionParser(self.tmp_concrete, self.tmp_summary)
 
-        cname, sname, function_defs, args, ret_type = fparser.parse(
+        parsed = fparser.parse(
             self.cncrt_name,
             self.summ_name
         )
 
-        self.cncrt_name = cname
-        self.summ_name = sname
+        self.cncrt_name = parsed.concrete_name
+        self.summ_name = parsed.summary_name
+
+        function_defs = [
+            f.definition if f else None
+            for f in parsed.functions
+        ]
+        args = parsed.arguments
+        ret_type = parsed.return_type
 
         header = self.gen_headers(function_defs)
 

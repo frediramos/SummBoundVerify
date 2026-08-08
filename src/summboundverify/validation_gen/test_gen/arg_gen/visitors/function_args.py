@@ -1,133 +1,127 @@
-from pycparser.c_ast import *
+from pycparser.c_ast import (
+    ID,
+    Decl,
+    Struct,
+    PtrDecl,
+    TypeDecl,
+    ArrayDecl,
+    FuncDecl,
+    IdentifierType,
+    NodeVisitor
+)
 
 from ..generators.types import ArrayTypeGen, PrimitiveTypeGen, StructTypeGen
 
 
 class ArgVisitor(NodeVisitor):
-
-    def __init__(self, sizeMacro=None, max_macro=None,
-                 null=None, max_args=[],
-                 default=None, concrete_arr=[]):
-
+    def __init__(
+        self,
+        size_macro: str | None = None,
+        max_macro=None,
+        null=None,
+        max_args: list | None = None,
+        default=None,
+        concrete_arr: list | None = None,
+    ) -> None:
         # Store argument node (Decl)
-        self.node = None
+        self.node: Decl | None = None
 
-        # array or ptr
-        if not sizeMacro:
-            sizeMacro = 'ptr'
-
-        self.sizeMacro = sizeMacro
+        # Array or pointer
+        self.size_macro = size_macro or "ptr"
         self.null = null
         self.max_macro = max_macro
-        self.max_args = max_args
+        self.max_args = max_args or []
         self.default = default
-        self.concrete_arr = concrete_arr
+        self.concrete_arr = concrete_arr or []
 
-        # ID object
-        self.argname = None
-        self.argtype = None
+        # Argument information
+        self.argname: str | None = None
+        self.argtype: str | None = None
 
         # Array properties
-        self.arrayDim = []
+        self.array_dim: list[str] = []
 
         # Struct properties
-        self.struct = False
+        self.struct: bool = False
 
-        # Final line(s) of code
-        self.code = []
+        # Generated declarations
+        self.code: list[Decl] = []
 
-    def get_type(self):
-        return (self.argtype, self.arrayDim, self.struct)
+    def get_type(self) -> tuple[str, list[str], bool]:
+        assert self.argtype is not None
+        return (self.argtype, self.array_dim, self.struct)
 
-    # Return generated code
-    # If HEAP=true, change declaration of
-    # arrays (dim: 2+) in function headers
-    def gen_code(self):
+    def gen_code(self) -> list[Decl]:
         return self.code
 
-    # Visitors
     def visit(self, node):
-
         # Store top 'Decl' node
         if isinstance(node, Decl):
             self.node = node
 
-        return NodeVisitor.visit(self, node)
+        return super().visit(node)
 
-    # Entry Node
-    def visit_Decl(self, node):
+    # Entry node
+    def visit_Decl(self, node: Decl) -> None:
         self.argname = node.name
         self.visit(node.type)
-        return
 
-    # TypeDecl (Common node)
-    def visit_TypeDecl(self, node):
+    # Common node
+    def visit_TypeDecl(self, node: TypeDecl) -> None:
         self.visit(node.type)
+
+        assert self.argname is not None
+        assert self.argtype is not None
+
         argname = ID(self.argname)
 
-        # Single
-        if len(self.arrayDim) == 0:
-
-            # Struct
+        # Primitive or struct
+        if not self.array_dim:
             if self.struct:
                 generator = StructTypeGen(argname, self.argtype)
                 self.code = generator.gen()
-                return
-
-            # Primitive Type
             else:
                 generator = PrimitiveTypeGen(
-                    argname, self.argtype, self.max_macro, self.max_args)
+                    argname,
+                    self.argtype,
+                    self.max_macro,
+                    self.max_args,
+                )
                 self.code = generator.gen(self.default)
-                return
+
+            return
 
         # Array or pointer
-        else:
-            if self.argtype == 'void':
-                self.argtype = 'char'
-            generator = ArrayTypeGen(
-                argname, self.argtype, self.arrayDim, self.struct, self.null)
-            self.code = generator.gen(self.default, self.concrete_arr)
-            return
+        argtype = "char" if self.argtype == "void" else self.argtype
 
-    # ArrayDecl
+        generator = ArrayTypeGen(
+            argname,
+            argtype,
+            self.array_dim,
+            self.struct,
+            self.null,
+        )
+        self.code = generator.gen(self.default, self.concrete_arr)
 
-    def visit_ArrayDecl(self, node):
+    def visit_ArrayDecl(self, node: ArrayDecl) -> None:
         if node.dim is not None:
-            self.arrayDim.append(node.dim.value)
-
+            self.array_dim.append(node.dim.value)
         else:
-            self.arrayDim.append('array')
+            self.array_dim.append("array")
 
         self.visit(node.type)
-        return
 
-    # Pointer
-
-    def visit_PtrDecl(self, node):
+    def visit_PtrDecl(self, node: PtrDecl) -> None:
+        # Function pointers are ignored.
         if isinstance(node.type, FuncDecl):
-            self.code = None
             return
 
-        self.arrayDim.append(self.sizeMacro)
-
+        self.array_dim.append(self.size_macro)
         self.visit(node.type)
-        return
 
-    # Struct Type
-
-    def visit_Struct(self, node):
-        self.argtype = f'struct {node.name}'
+    def visit_Struct(self, node: Struct) -> None:
+        self.argtype = f"struct {node.name}"
         self.struct = True
-        return
 
-    # IdentifierType (Common and last node)
-
-    def visit_IdentifierType(self, node):
-        typ = node.names[0]
-        if len(node.names) > 1:
-            for t in node.names[1:]:
-                typ += f' {t}'
-
-        self.argtype = typ
-        return
+    def visit_IdentifierType(self, node: IdentifierType) -> None:
+        self.argtype = " ".join(node.names)
