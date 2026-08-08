@@ -1,16 +1,20 @@
 import sys
 import json
+import logging
 import traceback
 
 from pathlib import Path
 from typing import Literal
 from argparse import Namespace
 
+from summboundverify.exceptions import RunError
 from summboundverify.logger import Colors, section, setup_logging
 from summboundverify.options import parse_input_args
 from summboundverify.validation_gen import ValidationGenerator, CCompiler
 
 Arch = Literal['x86', 'x64']
+
+logger = logging.getLogger(__name__)
 
 ENGINE_TITLES = {
     'se': 'Symbolic execution (angr)',
@@ -238,6 +242,56 @@ def print_summary(se_results: Path | None, fuzz_results: Path | None):
     print(file=sys.stderr, flush=True)
 
 
+def plan_engines(args: Namespace) -> list[str]:
+    '''The engines to actually run, after refusing the ones that cannot work.
+
+    Symbolic execution is dropped when the concrete function is one angr
+    cannot finish, *even when it was asked for explicitly*: the alternative
+    is a run that burns the whole timeout and reports nothing.
+
+    When that leaves nothing, fuzzing stands in. Refusing the only requested
+    engine and then validating nothing at all would be strictly less useful
+    than running the engine that handles precisely these targets, but it is
+    a substitution, so it is announced rather than slipped in quietly.
+    '''
+    from summboundverify.validation_tool.se_support import se_obstacles_in
+
+    engines = ['se', 'fuzz'] if args.engine == 'both' else [args.engine]
+
+    if 'se' not in engines or not args.func:
+        return engines
+
+    obstacles = se_obstacles_in(args.func, args.funcname)
+
+    if not obstacles:
+        return engines
+
+    name = args.funcname or Path(args.func).stem
+    engines = [engine for engine in engines if engine != 'se']
+
+    logger.warning(
+        "Skipping symbolic execution: %s %s.\n"
+        "angr cannot finish this target, so it would run until the timeout "
+        "and report nothing.",
+        name, "; ".join(obstacles),
+    )
+
+    if engines:
+        return engines
+
+    from summboundverify.validation_tool.fuzz_engine import afl_available
+
+    if not afl_available():
+        raise RunError(
+            f"Symbolic execution was skipped ({obstacles[0]}) and fuzzing, "
+            f"the engine that handles such targets, needs AFL++ "
+            f"(Debian/Ubuntu: apt install afl++). Nothing was validated."
+        )
+
+    logger.warning("Falling back to fuzzing, the only engine left for %s", name)
+    return ['fuzz']
+
+
 def main():
     try:
         # Parse all input (cli and config file)
@@ -250,7 +304,7 @@ def main():
             run_angr(args.binary, args)
             return 0
 
-        engines = ['se', 'fuzz'] if args.engine == 'both' else [args.engine]
+        engines = plan_engines(args)
         results: dict[str, Path | None] = {}
 
         for engine in engines:
