@@ -21,6 +21,7 @@ validation_api = {
     'print_counterexamples':    'void print_counterexamples(result_t result) {return;}',
     'sym_var_named':            'symbolic sym_var_named(char* name, size_t size) {return 0;}',
     'sym_var_array':            'symbolic sym_var_array(char* name, size_t index, size_t size) {return 0;}',
+    'sym_var_bytes':            'void sym_var_bytes(char* name, void* dst, size_t size) {return;}',
     'mem_addr':                 'void mem_addr(char* name, void* addr, size_t length) {return;}',
     '_ULE_':                    'cnstr_t _ULE_(symbolic var1, symbolic var2) {return 0;}',
     'is_sat':                   'int is_sat(cnstr_t cnstr) {return 0;}',

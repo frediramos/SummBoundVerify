@@ -3,6 +3,11 @@ from ..default import DefaultGen
 
 MAX_ID = 0
 
+# Types whose value cannot be carried inside a `symbolic` (a void*): there is
+# no conversion from a pointer to a floating-point type, so these are drawn
+# through a pointer instead. See sym_var_bytes in the runtime.
+FLOAT_TYPES = frozenset({'float', 'double', 'long double'})
+
 # Create a primitive symbolic var
 
 
@@ -37,6 +42,19 @@ class PrimitiveTypeGen(DefaultGen):
 
     # e.g, int a = summ_new_sym_var(sizeof(int))
 
+    def is_float(self):
+        return self.vartype in FLOAT_TYPES
+
+    # double x;
+    # sym_var_bytes("x", &x, sizeof(double) * 8);
+    def _fill_bytes(self, name):
+        args = ExprList([
+            Constant('string', f'\"{name}\"'),
+            UnaryOp('&', ID(name)),
+            self.type_size(self.vartype),
+        ])
+        return FuncCall(ID('sym_var_bytes'), args)
+
     def gen(self, const=None):
 
         code = []
@@ -48,12 +66,20 @@ class PrimitiveTypeGen(DefaultGen):
         # Make symbolic type
         if const is not None:
             rvalue = self.const_rvalue(const)
+        elif self.is_float():
+            rvalue = None
         else:
             rvalue = self.symbolic_rvalue(Constant('string', f'\"{name}\"'))
 
         # Assemble declaration
         decl = Decl(name, [], [], [], [], lvalue, rvalue, None)
         code.append(decl)
+
+        # A float is declared uninitialised and then filled through its
+        # address, since the value cannot come back as a return type.
+        if rvalue is None:
+            code.append(self._fill_bytes(name))
+            return code
 
         if (self.max_macro and const is None)\
                 and (name in self.max_args or not self.max_args):

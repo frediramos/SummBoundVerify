@@ -114,6 +114,12 @@ typedef struct {
     int indexed;
     long value;
     size_t bits;
+
+    /* Draws made through sym_var_bytes() carry their bytes verbatim: the
+     * value may be wider than a long (a double at -m32) or not an integer at
+     * all, so `value` cannot represent it. */
+    int raw;
+    unsigned char bytes[8];
 } draw_t;
 
 static draw_t g_draws[SBV_MAX_DRAWS];
@@ -271,7 +277,50 @@ static long record(const char *name, long index, int indexed, size_t bits)
     d->indexed = indexed;
     d->value = value;
     d->bits = bits;
+    d->raw = 0;
     return value;
+}
+
+static unsigned char tape_byte(void)
+{
+    unsigned char byte = 0;
+
+    if (g_input_pos < g_input_len)
+        byte = g_input[g_input_pos];
+
+    g_input_pos++;
+    return byte;
+}
+
+void sym_var_bytes(char *name, void *dst, size_t bits)
+{
+    unsigned char *out = (unsigned char *)dst;
+    size_t nbytes = bits / 8;
+    draw_t *d;
+    size_t i;
+
+    if (nbytes == 0)
+        return;
+
+    /* Byte-wise rather than through record()/tape_next(), which funnel every
+     * draw through a `long` -- 4 bytes at -m32, so a double would silently
+     * lose half of its bits. */
+    for (i = 0; i < nbytes; i++)
+        out[i] = tape_byte();
+
+    if (g_ndraws >= SBV_MAX_DRAWS)
+        return;
+
+    d = &g_draws[g_ndraws++];
+    sbv_strcpy(d->name, sizeof(d->name), name);
+    d->index = 0;
+    d->indexed = 0;
+    d->value = 0;
+    d->bits = bits;
+    d->raw = 1;
+
+    for (i = 0; i < nbytes && i < sizeof(d->bytes); i++)
+        d->bytes[i] = out[i];
 }
 
 symbolic sym_var(size_t size)
@@ -851,7 +900,29 @@ const char *sbv_fuzz_inputs(void)
     for (i = 0; i < g_ndraws && off + 32 < sizeof(g_inputs); i++) {
         draw_t *d = &g_draws[i];
 
-        if (d->indexed)
+        if (d->raw) {
+            /* Today only floating-point arguments take the sym_var_bytes()
+             * path, so a raw draw of float width is one. Should the primitive
+             * ever be reused (long long, opaque handles), this needs a type
+             * tag rather than a width guess -- printing a `long long` as a
+             * double would be worse than useless in a counterexample. */
+            if (d->bits == 32) {
+                float f;
+                memcpy(&f, d->bytes, sizeof(f));
+                off += (size_t)snprintf(g_inputs + off, sizeof(g_inputs) - off,
+                                        "%s%s=%g", off ? " " : "", d->name,
+                                        (double)f);
+            } else if (d->bits == 64) {
+                double v;
+                memcpy(&v, d->bytes, sizeof(v));
+                off += (size_t)snprintf(g_inputs + off, sizeof(g_inputs) - off,
+                                        "%s%s=%g", off ? " " : "", d->name, v);
+            } else {
+                off += (size_t)snprintf(g_inputs + off, sizeof(g_inputs) - off,
+                                        "%s%s=<%lu bits>", off ? " " : "",
+                                        d->name, (unsigned long)d->bits);
+            }
+        } else if (d->indexed)
             off += (size_t)snprintf(g_inputs + off, sizeof(g_inputs) - off,
                                     "%s%s[%ld]=0x%02lx", off ? " " : "",
                                     d->name, d->index,

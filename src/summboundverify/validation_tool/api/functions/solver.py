@@ -148,6 +148,37 @@ class sym_var_named(CSummary):
         self.ret(sym_var)
 
 
+class sym_var_bytes(CSummary):
+    """Write a fresh symbolic variable through a pointer instead of returning it.
+
+    The counterpart of sym_var_named() for types that cannot survive a trip
+    through a `symbolic` (a void*) -- floating point above all. The variable is
+    registered under its name exactly as sym_var_named() does, so a
+    counterexample names it the same way.
+
+    Note that self.sym_var refuses a length wider than the architecture, so a
+    64-bit double is rejected here at -m32. That is a real limit of the
+    symbolic backend rather than an oversight: those targets are the ones
+    `validation_tool.se_support` routes to fuzzing instead.
+    """
+
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
+
+    def run(self, name_addr, dst, length_bv: BitVector):
+        length = self.state.solver.eval(length_bv)
+
+        name = get_name(self.state, name_addr)
+        if name in self.ctx.SYM_VARS.keys():
+            raise DuplicateSymbolicVariableError(name)
+
+        sym_var = self.sym_var(length, name)
+        self.ctx.SYM_VARS[name] = [sym_var]
+
+        self.store(dst, sym_var, length // 8)
+        self.ret()
+
+
 class sym_var_array(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)

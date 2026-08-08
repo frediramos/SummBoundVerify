@@ -44,6 +44,17 @@ symbolic sym_var(size_t size);
 symbolic sym_var_named(char *name, size_t size);
 symbolic sym_var_array(char *name, size_t index, size_t size);
 
+/*
+ * Fill `size` bits at `dst` with fresh input, instead of returning a value.
+ *
+ * sym_var_named() carries its draw inside a `symbolic` (a void*), which only
+ * works for types a pointer can be reinterpreted as. Floating point cannot:
+ * there is no conversion from void* to double, and the draw would not survive
+ * one anyway. Writing through a pointer sidesteps both problems and is exact
+ * for any width.
+ */
+void sym_var_bytes(char *name, void *dst, size_t size);
+
 int is_symbolic(symbolic var);
 int is_sat(cnstr_t cnstr);
 int is_certain(cnstr_t cnstr);
