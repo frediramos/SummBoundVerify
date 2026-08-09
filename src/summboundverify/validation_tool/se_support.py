@@ -19,6 +19,17 @@ showed a wide one to be wrong:
   fuzzing run that was equally doomed. It is back now that the generator can
   build one -- backed by fmemopen, which has no symbolic counterpart, so it
   is genuinely fuzz-only.
+* Non-local control flow (`exit`, `abort`, `longjmp`) was listed on the
+  reasoning that the symbolic path simply disappears. Measuring killed it too:
+  a concrete function calling `exit(1)` terminates the harness process, which
+  AFL++ records as a crash, so fuzzing reports a confident `crashed` verdict
+  for a summary that is not wrong at all. Handing the target to fuzzing is
+  worse than not skipping, because a fabricated finding costs more than a
+  missing one.
+
+The rule that survives all of this: only skip symbolic execution when fuzzing
+can genuinely take over. Anything else trades a missing verdict for a false
+one.
 
 What is left is what the generator *can* build and fuzzing *can* run, but
 symbolic execution cannot: either it never finishes, or the primitive the
@@ -42,13 +53,6 @@ from summboundverify.validation_gen.function_parser.visitors import (
 
 logger = logging.getLogger(__name__)
 
-
-# Calls that end the process or leave the frame without returning. angr has
-# nowhere to continue from, so the path simply disappears.
-NONLOCAL_FLOW = frozenset({
-    'exit', '_exit', 'abort', 'longjmp', 'setjmp',
-    'fork', 'pthread_create', 'pthread_join',
-})
 
 # Argument types drawn through sym_var_bytes(). The concrete runtime fills
 # them byte by byte, which works at any width; the symbolic backend has to
@@ -108,10 +112,6 @@ def se_obstacles(function: Function) -> list[str]:
     # but nothing bounds the recursion depth symbolically.
     if function.name in calls:
         obstacles.append("is recursive")
-
-    if hits := calls & NONLOCAL_FLOW:
-        names = ", ".join(sorted(hits))
-        obstacles.append(f"leaves through non-local control flow ({names})")
 
     if hits := types_visitor.types & FLOAT_TYPES:
         names = ", ".join(sorted(hits))

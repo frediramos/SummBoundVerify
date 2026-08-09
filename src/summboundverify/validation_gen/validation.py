@@ -2,7 +2,16 @@ from copy import deepcopy
 from pathlib import Path
 
 from pycparser import c_generator
-from pycparser.c_ast import ID, FuncDef, FileAST, FuncCall, Compound, TypeDecl
+from pycparser.c_ast import (
+    ID,
+    Return,
+    FuncDef,
+    FileAST,
+    FuncCall,
+    Compound,
+    Constant,
+    TypeDecl,
+)
 
 from .utils import *
 from .utils.visitors import FuncCallsVisitor
@@ -321,6 +330,11 @@ class ValidationGenerator(Generator):
 
         # Gen test definitions and calls from main
         test_defs, main_body = self.genTests(args, ret_type)
+
+        # main() is declared int, so it has to return one: without this the
+        # fuzz build warns on every single compile, and a harness that always
+        # warns is a harness whose warnings stop being read.
+        main_body.append(Return(Constant('int', '0')))
 
         # Create main() body
         block = Compound(main_body)

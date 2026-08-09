@@ -117,4 +117,5 @@ void test_1()
 int main()
 {
   test_1();
+  return 0;
 }

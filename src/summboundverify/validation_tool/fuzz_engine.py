@@ -28,6 +28,7 @@ import logging
 import os
 import re
 import shutil
+import struct
 import subprocess as sp
 
 from pathlib import Path
@@ -46,6 +47,18 @@ from summboundverify.validation_gen.concrete import (
 logger = logging.getLogger(__name__)
 
 Arch = Literal['x86', 'x64']
+
+FLOAT_SEEDS = {
+    'zero': 0.0,
+    'neg_zero': -0.0,
+    'one': 1.0,
+    'neg_one': -1.0,
+    'half': 0.5,
+    'two': 2.0,
+    'inf': float('inf'),
+    'neg_inf': float('-inf'),
+    'nan': float('nan'),
+}
 
 AFL_CC = 'afl-clang-fast'
 AFL_FUZZ = 'afl-fuzz'
@@ -185,6 +198,12 @@ class fuzzEngine():
         AFL++ discovers the rest, but starting from all-zero and small-value
         tapes gets past the input assumptions immediately instead of spending
         the first minutes being rejected.
+
+        The float seeds matter for a different reason. Byte-oriented seeds read
+        as doubles are almost all denormal junk (1.18e-303 and the like), so a
+        campaign over a floating-point argument spends its budget nowhere near
+        the values that actually distinguish implementations -- zero, one, the
+        halves, the infinities and the NaNs.
         """
         indir = self.workdir / 'seeds'
         indir.mkdir(parents=True, exist_ok=True)
@@ -196,6 +215,11 @@ class fuzzEngine():
         (indir / 'mixed').write_bytes(
             bytes((i * 7) & 0x0f for i in range(self.tape))
         )
+
+        for name, value in FLOAT_SEEDS.items():
+            tape = struct.pack('<d', value) * (self.tape // 8 + 1)
+            (indir / f'f64_{name}').write_bytes(tape[:self.tape])
+
         return indir
 
     def _afl_env(self) -> dict:
