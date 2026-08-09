@@ -240,13 +240,6 @@ void store_cnstr(char* name, cnstr_t constraint);
 - Stores the given constraint `cnstr` associating it with the key `name`.
 
 ```c
-FILE* sym_var_stream(char* name, size_t len);
-```
-- Returns a readable stream of `len` symbolic bytes, identified by `name`.
-- Used to build stream arguments for the function under test; a summary never calls it. Concretely the stream is rewound between the two calls, so the summary reads the same bytes the concrete function did.
-
-
-```c
 void mem_addr(char* name, void* addr, size_t n);
 ```
 - Marks the `n+1` consecutive memory addresses, starting from `addr`inclusive, to be evaluated by the summary validation tool.

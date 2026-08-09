@@ -22,7 +22,6 @@ validation_api = {
     'sym_var_named':            'symbolic sym_var_named(char* name, size_t size) {return 0;}',
     'sym_var_array':            'symbolic sym_var_array(char* name, size_t index, size_t size) {return 0;}',
     'sym_var_bytes':            'void sym_var_bytes(char* name, void* dst, size_t size) {return;}',
-    'sym_var_stream':           'symbolic sym_var_stream(char* name, size_t len) {return 0;}',
     'mem_addr':                 'void mem_addr(char* name, void* addr, size_t length) {return;}',
     '_ULE_':                    'cnstr_t _ULE_(symbolic var1, symbolic var2) {return 0;}',
     'is_sat':                   'int is_sat(cnstr_t cnstr) {return 0;}',

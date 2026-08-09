@@ -14,11 +14,10 @@ showed a wide one to be wrong:
   symbolic execution while calling `malloc`.
 * File I/O was in here too, on the theory that angr cannot model it, and it
   was removed once measuring showed the real limit was earlier: the test
-  generator could not build a `FILE *` at all, so those targets failed for
-  **both** engines and skipping symbolic execution only handed the work to a
-  fuzzing run that was equally doomed. It is back now that the generator can
-  build one -- backed by fmemopen, which has no symbolic counterpart, so it
-  is genuinely fuzz-only.
+  generator cannot build a `FILE *` at all, so those targets fail for
+  **both** engines and skipping symbolic execution only hands the work to a
+  fuzzing run that is equally doomed. It belongs here the day the generator
+  can build one, and not before.
 * Non-local control flow (`exit`, `abort`, `longjmp`) was listed on the
   reasoning that the symbolic path simply disappears. Measuring killed it too:
   a concrete function calling `exit(1)` terminates the harness process, which
@@ -59,11 +58,6 @@ logger = logging.getLogger(__name__)
 # mint a bitvector no wider than the architecture, so a double is refused
 # outright at -m32. Fuzz-only, therefore.
 FLOAT_TYPES = frozenset({'float', 'double', 'long double'})
-
-# Argument types built by sym_var_stream(). The concrete runtime backs them
-# with a real FILE* over an in-memory buffer; there is nothing to hook on the
-# symbolic side, so the stub would hand the function a null pointer.
-STREAM_TYPES = frozenset({'FILE'})
 
 
 class _Calls(NodeVisitor):
@@ -116,10 +110,6 @@ def se_obstacles(function: Function) -> list[str]:
     if hits := types_visitor.types & FLOAT_TYPES:
         names = ", ".join(sorted(hits))
         obstacles.append(f"takes or returns floating point ({names})")
-
-    if hits := types_visitor.types & STREAM_TYPES:
-        names = ", ".join(sorted(hits))
-        obstacles.append(f"takes a stream argument ({names})")
 
     return obstacles
 
