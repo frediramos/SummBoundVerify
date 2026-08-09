@@ -19,6 +19,7 @@ result_t check_implications(char* constraint1, char* constraint2) {return 0;}
 state_t save_current_state() {return 0;}
 symbolic sym_var_array(char* name, size_t index, size_t size) {return 0;}
 symbolic sym_var_named(char* name, size_t size) {return 0;}
+symbolic sym_var_stream(char* name, size_t len) {return 0;}
 void assume(cnstr_t cnstr) {return;}
 void halt_all(state_t state) {return;}
 void mem_addr(char* name, void* addr, size_t length) {return;}

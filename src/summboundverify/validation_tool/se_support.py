@@ -12,12 +12,13 @@ showed a wide one to be wrong:
 * `malloc` and friends were in here at first. They should not be: angr models
   allocation perfectly well, and `tests/libc/synth/*/strdup` passes under
   symbolic execution while calling `malloc`.
-* File I/O was in here too, on the theory that angr cannot model it. The real
-  limit is earlier and cheaper to see: the *test generator* cannot build a
-  `FILE *` argument (`sizeof(FILE)` does not compile), so those targets fail
-  to build for **both** engines. Skipping symbolic execution there would hand
-  the work to a fuzzing run that is equally doomed, so it is not listed until
-  the generator can build them.
+* File I/O was in here too, on the theory that angr cannot model it, and it
+  was removed once measuring showed the real limit was earlier: the test
+  generator could not build a `FILE *` at all, so those targets failed for
+  **both** engines and skipping symbolic execution only handed the work to a
+  fuzzing run that was equally doomed. It is back now that the generator can
+  build one -- backed by fmemopen, which has no symbolic counterpart, so it
+  is genuinely fuzz-only.
 
 What is left is what the generator *can* build and fuzzing *can* run, but
 symbolic execution cannot: either it never finishes, or the primitive the
@@ -54,6 +55,11 @@ NONLOCAL_FLOW = frozenset({
 # mint a bitvector no wider than the architecture, so a double is refused
 # outright at -m32. Fuzz-only, therefore.
 FLOAT_TYPES = frozenset({'float', 'double', 'long double'})
+
+# Argument types built by sym_var_stream(). The concrete runtime backs them
+# with a real FILE* over an in-memory buffer; there is nothing to hook on the
+# symbolic side, so the stub would hand the function a null pointer.
+STREAM_TYPES = frozenset({'FILE'})
 
 
 class _Calls(NodeVisitor):
@@ -110,6 +116,10 @@ def se_obstacles(function: Function) -> list[str]:
     if hits := types_visitor.types & FLOAT_TYPES:
         names = ", ".join(sorted(hits))
         obstacles.append(f"takes or returns floating point ({names})")
+
+    if hits := types_visitor.types & STREAM_TYPES:
+        names = ", ".join(sorted(hits))
+        obstacles.append(f"takes a stream argument ({names})")
 
     return obstacles
 

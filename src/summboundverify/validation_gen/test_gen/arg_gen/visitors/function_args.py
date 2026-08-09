@@ -10,7 +10,13 @@ from pycparser.c_ast import (
     NodeVisitor
 )
 
-from ..generators.types import ArrayTypeGen, PrimitiveTypeGen, StructTypeGen
+from ..generators.types import (
+    STREAM_TYPES,
+    ArrayTypeGen,
+    PrimitiveTypeGen,
+    StreamTypeGen,
+    StructTypeGen,
+)
 
 
 class ArgVisitor(NodeVisitor):
@@ -89,6 +95,17 @@ class ArgVisitor(NodeVisitor):
                 )
                 self.code = generator.gen(self.default)
 
+            return
+
+        # A stream is a pointer, but not to an array of anything: its size
+        # is opaque, so it is built as a stream over fresh bytes instead.
+        if self.argtype in STREAM_TYPES:
+            generator = StreamTypeGen(
+                argname,
+                self.argtype,
+                self.array_dim[0],
+            )
+            self.code = generator.gen()
             return
 
         # Array or pointer

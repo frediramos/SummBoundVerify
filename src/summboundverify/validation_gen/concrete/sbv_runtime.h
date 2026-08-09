@@ -19,6 +19,10 @@
 #define SBV_RUNTIME_H
 
 #include <stddef.h>
+/* For FILE, which a generated test naming a stream argument needs in
+ * scope. The stub prelude deliberately does not get this: stream targets
+ * are fuzz-only, so the symbolic test is never built for them. */
+#include <stdio.h>
 
 #define INT_SIZE (sizeof(int) * 8)
 #define LONG_SIZE (sizeof(long) * 8)
@@ -54,6 +58,16 @@ symbolic sym_var_array(char *name, size_t index, size_t size);
  * for any width.
  */
 void sym_var_bytes(char *name, void *dst, size_t size);
+
+/*
+ * A readable stream of `len` fresh input bytes.
+ *
+ * A real FILE* over an in-memory buffer, so fgetc/fread/ungetc/feof/ftell all
+ * behave exactly as they would on a file -- nothing here is modelled. The
+ * stream is registered with the runtime, and halt_all() rewinds it, so the
+ * summary reads it from the start just as the concrete function did.
+ */
+FILE *sym_var_stream(char *name, size_t len);
 
 int is_symbolic(symbolic var);
 int is_sat(cnstr_t cnstr);

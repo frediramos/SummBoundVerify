@@ -28,6 +28,8 @@
 #define SBV_ARENA_SIZE (1u << 20)
 #define SBV_REPORT_LEN 512
 #define SBV_MAX_DRAWS 64
+#define SBV_MAX_STREAMS 4
+#define SBV_MAX_STREAM_LEN 256
 #define SBV_INPUTS_LEN 1024
 
 /* ------------------------------------------------------------------ */
@@ -99,6 +101,18 @@ typedef struct {
 } binding_t;
 
 static region_t g_regions[SBV_MAX_REGIONS];
+
+/* A stream argument: the bytes drawn for it, and the FILE* handed to the
+ * function under test. The buffer must outlive the FILE*, hence the table. */
+typedef struct {
+    char name[64];
+    unsigned char data[SBV_MAX_STREAM_LEN];
+    size_t len;
+    FILE *fp;
+} stream_t;
+
+static stream_t g_streams[SBV_MAX_STREAMS];
+static int g_nstreams;
 static int g_nregions;
 
 static snapshot_t g_snapshots[SBV_MAX_SNAPSHOTS];
@@ -290,6 +304,45 @@ static unsigned char tape_byte(void)
 
     g_input_pos++;
     return byte;
+}
+
+FILE *sym_var_stream(char *name, size_t len)
+{
+    stream_t *st;
+    size_t i;
+
+    if (g_nstreams >= SBV_MAX_STREAMS)
+        fail("too many stream arguments");
+
+    if (len > SBV_MAX_STREAM_LEN)
+        len = SBV_MAX_STREAM_LEN;
+
+    st = &g_streams[g_nstreams];
+    sbv_strcpy(st->name, sizeof(st->name), name);
+    st->len = len;
+
+    for (i = 0; i < len; i++)
+        st->data[i] = tape_byte();
+
+    st->fp = fmemopen(st->data, len, "r");
+    if (st->fp == NULL)
+        fail("fmemopen failed for a stream argument");
+
+    g_nstreams++;
+
+    /* Recorded as an array so a counterexample reads str[0]=0x61 ... the way
+     * a char* argument does; the bytes are what the caller needs to see. */
+    for (i = 0; i < len && g_ndraws < SBV_MAX_DRAWS; i++) {
+        draw_t *d = &g_draws[g_ndraws++];
+        sbv_strcpy(d->name, sizeof(d->name), name);
+        d->index = (long)i;
+        d->indexed = 1;
+        d->value = st->data[i];
+        d->bits = 8;
+        d->raw = 0;
+    }
+
+    return st->fp;
 }
 
 void sym_var_bytes(char *name, void *dst, size_t bits)
@@ -652,6 +705,13 @@ void halt_all(state_t state)
     (void)state;
     for (i = 0; i < g_nregions; i++)
         sbv_memcpy(g_regions[i].addr, g_regions[i].orig, g_regions[i].len);
+
+    /* Rewind rather than reopen: it also clears the EOF and error flags, and
+     * keeps the same FILE*, so the summary is handed the very pointer the
+     * concrete function received. */
+    for (i = 0; i < g_nstreams; i++)
+        if (g_streams[i].fp != NULL)
+            rewind(g_streams[i].fp);
 }
 
 cnstr_t get_cnstr(symbolic var, size_t size)
@@ -856,6 +916,14 @@ static void reset(const unsigned char *data, size_t len)
     g_input = data;
     g_input_len = len;
     g_input_pos = 0;
+
+    for (int i = 0; i < g_nstreams; i++) {
+        if (g_streams[i].fp != NULL) {
+            fclose(g_streams[i].fp);
+            g_streams[i].fp = NULL;
+        }
+    }
+    g_nstreams = 0;
 
     g_nregions = 0;
     g_nsnapshots = 0;
