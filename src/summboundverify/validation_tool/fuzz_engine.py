@@ -79,6 +79,7 @@ RESULT_RE = re.compile(
 
 STATS_RE = re.compile(
     r'execs=(?P<execs>\d+)\s+rejected=(?P<rejected>\d+)'
+    r'(?:\s+exited=(?P<exited>\d+))?'
     r'(?:\s+ntests=(?P<ntests>\d+))?'
 )
 AFL_EXECS_RE = re.compile(r'execs_done\s*:\s*(?P<execs>\d+)')
@@ -116,6 +117,9 @@ class fuzzEngine():
         self.timeout = timeout
         self.results_dir = Path(results_dir)
 
+        # Inputs on which the target called exit(); filled in by _stats.
+        self._exited = 0
+
         self.binary = self.testfile.with_suffix('.fuzz')
         self.workdir = self.testfile.parent / f'{self.testfile.stem}.aflwork'
 
@@ -136,6 +140,12 @@ class fuzzEngine():
 
             # The generated test defines main(); the harness owns the real one.
             f'-Dmain={TEST_ENTRY}',
+
+            # And a target calling exit() would take the harness down with it,
+            # leaving the engine to read a process that died without reporting
+            # as a crash. sbv_exit turns it into a rejection instead.
+            # sbv_runtime.c and driver.c #undef this.
+            '-Dexit=sbv_exit',
 
             '-Wno-int-conversion',
             '-Wno-unused-variable',
@@ -302,6 +312,8 @@ class fuzzEngine():
         match = STATS_RE.search(stats.read_text())
         if not match:
             return 0, 0, 1
+
+        self._exited = int(match.group('exited') or 0)
 
         return (
             int(match.group('execs')),
@@ -471,18 +483,32 @@ class fuzzEngine():
                 ce['inputs'] or '(not decoded)', ce['detail'],
             )
         elif parsed['verdict'] == 'starved':
-            logger.warning(
-                "All %d sampled inputs were rejected by assume()/_assert(): "
-                "the summary was never actually compared against the concrete "
-                "function. Widen the input bounds or seed the corpus.",
-                parsed['sampled'],
-            )
+            if self._exited:
+                logger.warning(
+                    "The target called exit() on %d of %d sampled inputs, so "
+                    "the summary was never compared against the concrete "
+                    "function. Differential testing cannot evaluate a function "
+                    "that terminates the process.",
+                    self._exited, parsed['sampled'],
+                )
+            else:
+                logger.warning(
+                    "All %d sampled inputs were rejected by assume()/_assert(): "
+                    "the summary was never actually compared against the "
+                    "concrete function. Widen the input bounds or seed the "
+                    "corpus.",
+                    parsed['sampled'],
+                )
         else:
             sampled = parsed.get('sampled') or 0
             rate = (parsed['rejected'] / sampled) if sampled else 0.0
+            exited = (
+                f", {self._exited} of them by calling exit()"
+                if self._exited else ""
+            )
             logger.info(
                 "No divergence in %d execs (%.0f%% of sampled inputs "
-                "rejected)", parsed['execs'], rate * 100,
+                "rejected%s)", parsed['execs'], rate * 100, exited,
             )
 
         return self._write_results(parsed)

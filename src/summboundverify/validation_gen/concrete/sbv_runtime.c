@@ -15,6 +15,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* The fuzz build compiles everything with -Dexit=sbv_exit; this file
+ * defines the replacement, so it needs the name back. */
+#undef exit
+
 #define SBV_MAX_REGIONS 8
 #define SBV_MAX_REGION_LEN 4096
 #define SBV_MAX_SNAPSHOTS 8
@@ -146,6 +150,11 @@ static unsigned long g_total_rejected;
 
 static jmp_buf g_reject_jmp;
 static int g_rejected;
+
+/* Inputs on which the target called exit(). Counted apart from ordinary
+ * rejections: both mean "not compared", but one is the summary's own
+ * assumptions talking and the other is the target walking out. */
+static unsigned long g_total_exited;
 static int g_diverged_test;
 static int g_ntests;
 static char g_report[SBV_REPORT_LEN];
@@ -467,6 +476,14 @@ void assume(cnstr_t cnstr)
         g_rejected = 1;
         longjmp(g_reject_jmp, 1);
     }
+}
+
+void sbv_exit(int code)
+{
+    (void)code;
+    g_total_exited++;
+    g_rejected = 1;
+    longjmp(g_reject_jmp, 1);
 }
 
 void _assert(int expr)
@@ -1060,6 +1077,7 @@ const char *sbv_fuzz_inputs(void)
 }
 
 unsigned long sbv_fuzz_total_execs(void) { return g_total_execs; }
+unsigned long sbv_fuzz_total_exited(void) { return g_total_exited; }
 unsigned long sbv_fuzz_total_rejected(void) { return g_total_rejected; }
 
 size_t sbv_fuzz_consumed(void)

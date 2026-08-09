@@ -69,6 +69,12 @@ void sym_var_bytes(char *name, void *dst, size_t size);
  */
 FILE *sym_var_stream(char *name, size_t len);
 
+/*
+ * Stand-in for exit(), which the fuzz build redirects here with
+ * -Dexit=sbv_exit.
+ */
+void sbv_exit(int code);
+
 int is_symbolic(symbolic var);
 int is_sat(cnstr_t cnstr);
 int is_certain(cnstr_t cnstr);
@@ -183,5 +189,9 @@ const char *sbv_fuzz_inputs(void);
 /* Totals across every run in this process (persistent-mode aware). */
 unsigned long sbv_fuzz_total_execs(void);
 unsigned long sbv_fuzz_total_rejected(void);
+
+/* Of those, the ones where the target called exit() rather than an
+ * assumption turning the input away. */
+unsigned long sbv_fuzz_total_exited(void);
 
 #endif /* SBV_RUNTIME_H */
