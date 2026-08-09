@@ -32,6 +32,13 @@ and an <index>, denoting a value with <length> bits. Used to fill symbolic array
 
 
 ```c
+void sym_var_bytes(char* name, void* dst, size_t size);
+```
+- Writes a new symbolic variable, identified by `name` and denoting a value with `size` bits, into the memory at `dst`.
+- The counterpart of `sym_var_named` for types a `symbolic` cannot carry. A `symbolic` is a pointer-sized integer, so a floating-point value cannot be returned through one: use this instead.
+
+
+```c
 int is_symbolic(symbolic var);
 ```
 - Checks if variable `var` bits is symbolic.
@@ -231,6 +238,13 @@ cnstr_t get_cnstr(symbolic var, size_t size);
 void store_cnstr(char* name, cnstr_t constraint);
 ```
 - Stores the given constraint `cnstr` associating it with the key `name`.
+
+```c
+FILE* sym_var_stream(char* name, size_t len);
+```
+- Returns a readable stream of `len` symbolic bytes, identified by `name`.
+- Used to build stream arguments for the function under test; a summary never calls it. Concretely the stream is rewound between the two calls, so the summary reads the same bytes the concrete function did.
+
 
 ```c
 void mem_addr(char* name, void* addr, size_t n);

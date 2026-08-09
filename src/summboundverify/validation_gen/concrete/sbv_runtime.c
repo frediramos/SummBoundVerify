@@ -306,6 +306,46 @@ static unsigned char tape_byte(void)
     return byte;
 }
 
+/*
+ * Whether a diverging return should be shown as a float.
+ *
+ * The runtime is not told the return type, so this infers it: the test drew a
+ * floating-point argument through sym_var_bytes(), and the returns are of
+ * float width. A function taking a double and returning a long long would be
+ * rendered wrongly, which is why this is only a display choice -- the
+ * comparison itself never looks at it.
+ */
+static int returns_float(const snapshot_t *a, const snapshot_t *b)
+{
+    int i;
+
+    if (a->ret_len != b->ret_len)
+        return 0;
+
+    if (a->ret_len != sizeof(float) && a->ret_len != sizeof(double))
+        return 0;
+
+    for (i = 0; i < g_ndraws; i++)
+        if (g_draws[i].raw)
+            return 1;
+
+    return 0;
+}
+
+static void render_float(char *out, size_t cap, const unsigned char *bytes,
+                         size_t len)
+{
+    if (len == sizeof(float)) {
+        float f;
+        sbv_memcpy((unsigned char *)&f, bytes, sizeof(f));
+        snprintf(out, cap, "%g", (double)f);
+    } else {
+        double d;
+        sbv_memcpy((unsigned char *)&d, bytes, sizeof(d));
+        snprintf(out, cap, "%g", d);
+    }
+}
+
 FILE *sym_var_stream(char *name, size_t len)
 {
     stream_t *st;
@@ -870,6 +910,21 @@ result_t check_implications(char *constraint1, char *constraint2)
 
         if (alloc < 0) {
             char a[64], b[64];
+
+            /* Returns are compared bit for bit, on purpose: -0.0 and +0.0 are
+             * `==` but tell apart under signbit() and 1/x, so a summary that
+             * confuses them is not observationally equivalent. That is easy to
+             * defend and impossible to read off two hex blobs, so a
+             * float-width return is rendered as a float as well. */
+            if (returns_float(cncrt, summ)) {
+                render_float(a, sizeof(a), cncrt->ret, cncrt->ret_len);
+                render_float(b, sizeof(b), summ->ret, summ->ret_len);
+                snprintf(g_report, sizeof(g_report),
+                         "return value: concrete=%s summary=%s", a, b);
+                g_diverged_test = g_ntests;
+                return 1;
+            }
+
             hexdump(a, sizeof(a), cncrt->ret, cncrt->ret_len);
             hexdump(b, sizeof(b), summ->ret, summ->ret_len);
             snprintf(g_report, sizeof(g_report),

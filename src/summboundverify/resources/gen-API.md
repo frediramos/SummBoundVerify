@@ -32,6 +32,14 @@ and an <index>, denoting a value with <length> bits. Used to fill symbolic array
 
 
 ```c
+void sym_var_bytes(char* name, void* dst, size_t size);
+```
+- Writes a new symbolic variable, identified by `name` and denoting a value with `size` bits, into the memory at `dst`.
+- The counterpart of `sym_var_named` for types a `symbolic` cannot carry. A `symbolic` is a pointer-sized integer, so a floating-point value cannot be returned through one: use this instead.
+- e.g. `double r; sym_var_bytes("r", &r, sizeof(double) * 8);`
+
+
+```c
 int is_symbolic(symbolic var);
 ```
 - Checks if variable `var` bits is symbolic.
