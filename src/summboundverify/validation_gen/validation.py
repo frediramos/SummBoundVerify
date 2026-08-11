@@ -30,8 +30,6 @@ from .api_gen import (
 from .test_gen import TestGen
 from .test_gen.arg_gen.visitors.structs import StructVisitor
 
-from .concrete import RUNTIME_HEADER
-
 
 class ValidationGenerator(Generator):
     def __init__(
@@ -150,11 +148,7 @@ class ValidationGenerator(Generator):
     def gen_headers(self, defs):
 
         if self.engine == 'fuzz':
-            # The concrete backend supplies both the typedefs and real
-            # implementations, so the stub prelude is replaced by its header.
-            # Emitting the stub typedefs here as well would collide with it.
-            headers = [f'#include "{RUNTIME_HEADER.name}"', '']
-            headers += self.gen_summary_prototype(defs)
+            headers = self.gen_summary_prototype(defs)
 
         else:
             # Add core api functions.

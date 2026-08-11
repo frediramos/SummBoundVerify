@@ -28,14 +28,16 @@
 /* The driver owns the real exit(), not the target's stand-in. */
 #undef exit
 
-#include "sbv_runtime.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 /* __AFL_FUZZ_TESTCASE_LEN expands to a read(2) call. */
 #include <unistd.h>
 #include <fcntl.h>
+
+#define SBV_OK 0       /* ran to completion, summary matched the concrete fn */
+#define SBV_REJECTED 1 /* an assume()/_assert() rejected this input          */
+#define SBV_DIVERGED 2 /* summary and concrete function disagreed            */
 
 #define MAX_REPLAY 65536
 

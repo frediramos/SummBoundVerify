@@ -38,8 +38,6 @@ from summboundverify.exceptions import CompilationError, RunError
 
 from summboundverify.validation_gen.concrete import (
     CONCRETE_DIR,
-    RUNTIME_HEADER,
-    RUNTIME_SOURCE,
     DRIVER_SOURCE,
     TEST_ENTRY,
 )
@@ -132,12 +130,6 @@ class fuzzEngine():
             '-O1', '-g',
             '-I', str(CONCRETE_DIR),
 
-            # Force the API declarations into *every* translation unit,
-            # including the summary. Without visible prototypes the calls go
-            # through the default argument promotions and a `char` argument
-            # reaching a wider parameter leaves the upper bits undefined.
-            '-include', str(RUNTIME_HEADER),
-
             # The generated test defines main(); the harness owns the real one.
             f'-Dmain={TEST_ENTRY}',
 
@@ -172,7 +164,6 @@ class fuzzEngine():
             AFL_CC,
             *self._cflags(),
             str(self.testfile),
-            str(RUNTIME_SOURCE),
             str(DRIVER_SOURCE),
             *[str(lib) for lib in self.libs],
             '-o', str(self.binary),
