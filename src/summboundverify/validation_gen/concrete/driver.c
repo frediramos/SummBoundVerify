@@ -1,54 +1,48 @@
 /*
- * AFL++ persistent-mode driver for the concrete backend.
+ * AFL++ persistent-mode driver for the sampling harness.
  *
- * This is the only driver: coverage feedback is not optional here. The
- * generated tests constrain their inputs (`assume(_ULE_(n, MAX_NUM_1))`), and
- * a driver that cannot learn which bytes matter is rejected on nearly every
- * input -- an earlier PRNG loop was turned away on 87% of them where AFL++
- * gets that down to under 60%.
+ * The fuzzer's job here is not to find anything. It is to *generate inputs*:
+ * coverage-guided search over the concrete function, whose queue ends up
+ * holding a small, deduplicated set of tapes that between them reach the
+ * function's distinct behaviours. Checking those samples against the summary
+ * happens later, and elsewhere -- in angr, against the formula the summary's
+ * symbolic run produced.
+ *
+ * So the loop below has no oracle and never abort()s on a finding. Two modes:
+ *
+ *   (default)         run the tape, emit nothing. This is the exploration
+ *                     pass; recording every one of tens of thousands of
+ *                     executions would cost far more than it is worth when
+ *                     AFL++ is about to throw nearly all of them away.
+ *
+ *   --record <tape>   run one saved tape and print its sample. This is the
+ *                     pass that matters, run over the queue AFL++ built.
  *
  * The generated test's main() is renamed to sbv_run_tests by the compiler
  * (-Dmain=sbv_run_tests), so this file can own the real main(). Undo that
  * define here, before anything else.
- *
- * AFL++ hands us a byte tape in shared memory, which is exactly what
- * sbv_fuzz_exec() consumes -- so the runtime is unchanged between this driver
- * and the random one. What AFL++ adds is coverage-guided search: it learns
- * which bytes matter, which matters a great deal here because the generated
- * tests constrain their inputs (`assume(_ULE_(n, MAX_NUM_1))`) and a blind
- * driver spends nearly all its budget getting rejected.
- *
- * A divergence is reported by abort()ing, so AFL++ records the tape that
- * produced it under `crashes/`. The engine then re-runs that tape through
- * --replay to recover the decoded counterexample.
  */
 
 #undef main
 
-/* The driver owns the real exit(), not the target's stand-in. */
-#undef exit
+#include "sbv_sample.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 /* __AFL_FUZZ_TESTCASE_LEN expands to a read(2) call. */
 #include <unistd.h>
 #include <fcntl.h>
 
-#define SBV_OK 0       /* ran to completion, summary matched the concrete fn */
-#define SBV_REJECTED 1 /* an assume()/_assert() rejected this input          */
-#define SBV_DIVERGED 2 /* summary and concrete function disagreed            */
+#define MAX_TAPE 65536
 
-#define MAX_REPLAY 65536
-
-/* Iterations per forked process. Higher is faster but leaks more state
- * between runs; the runtime resets its own state per exec, so this is only
- * bounded by what the summary itself might leak (e.g. the heap). */
+/* Iterations per forked process. The harness resets its own state per exec,
+ * so this is bounded only by what the concrete function itself might leak. */
 #define PERSISTENT_LOOP 1000
 
 int sbv_run_tests(void);
 
-/* Not strcmp(): a summary may be named strcmp and would override libc's. */
+/* Not strcmp(): a concrete function may be named strcmp and would override
+ * libc's. */
 static int arg_is(const char *arg, const char *want)
 {
     size_t i;
@@ -62,41 +56,26 @@ static int arg_is(const char *arg, const char *want)
 
 __AFL_FUZZ_INIT();
 
-static void report(int rc)
-{
-    printf("SBV_FUZZ execs=%lu rejected=%lu ntests=%d verdict=%s",
-           sbv_fuzz_total_execs(), sbv_fuzz_total_rejected(),
-           sbv_fuzz_ntests() > 0 ? sbv_fuzz_ntests() : 1,
-           rc == SBV_DIVERGED ? "diverged"
-               : (rc == SBV_REJECTED ? "rejected" : "passed"));
-
-    if (rc == SBV_DIVERGED)
-        printf(" test=%d inputs=%s report=%s", sbv_fuzz_diverged_test(),
-               sbv_fuzz_inputs(), sbv_fuzz_report());
-
-    printf("\n");
-}
-
 /*
- * Re-run a single saved tape outside AFL++, to turn a crashing input into a
- * readable counterexample.
+ * Run a single saved tape outside AFL++ and print what the concrete function
+ * did with it.
  */
-static int replay(const char *path)
+static int record(const char *path)
 {
-    static unsigned char buf[MAX_REPLAY];
+    static unsigned char buf[MAX_TAPE];
     ssize_t len;
-    int fd, rc;
+    int fd;
 
     /*
-     * open/read rather than fopen/fread: a test's helper library may route
-     * malloc() to mem_alloc() (tests/libc/synth/exact/strdup/lib.c does), and
-     * then stdio's internal buffer is allocated from the runtime's arena but
-     * released with glibc's free() -- "free(): invalid pointer". Anything in
-     * this process that allocates through libc is unsafe for the same reason.
+     * open/read rather than fopen/fread: a test's helper library may redirect
+     * malloc (tests/libc/synth/exact/strdup/lib.c does), and stdio would then
+     * allocate its buffer from wherever that points while releasing it to
+     * glibc. Anything in this process that allocates through libc is unsafe
+     * for the same reason.
      */
     fd = open(path, O_RDONLY);
     if (fd < 0) {
-        fprintf(stderr, "replay: cannot open %s\n", path);
+        fprintf(stderr, "record: cannot open %s\n", path);
         return 2;
     }
 
@@ -106,8 +85,7 @@ static int replay(const char *path)
     if (len < 0)
         len = 0;
 
-    rc = sbv_fuzz_exec(buf, (size_t)len, sbv_run_tests);
-    report(rc);
+    sbv_sample_exec(buf, (size_t)len, sbv_run_tests, 1);
     return 0;
 }
 
@@ -125,10 +103,8 @@ static void write_stats(void)
     if (!f)
         return;
 
-    fprintf(f, "execs=%lu rejected=%lu exited=%lu ntests=%d\n",
-            sbv_fuzz_total_execs(), sbv_fuzz_total_rejected(),
-            sbv_fuzz_total_exited(),
-            sbv_fuzz_ntests() > 0 ? sbv_fuzz_ntests() : 1);
+    fprintf(f, "execs=%lu rejected=%lu\n",
+            sbv_sample_total_execs(), sbv_sample_total_rejected());
     fclose(f);
 }
 
@@ -137,12 +113,12 @@ int main(int argc, char **argv)
     unsigned char *buf;
 
     /* Unbuffered: stdio would otherwise malloc() its buffer, which may come
-     * from the runtime's arena and be freed by glibc. See replay(). */
+     * from wherever the test redirected allocation. See record(). */
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
 
-    if (argc == 3 && arg_is(argv[1], "--replay"))
-        return replay(argv[2]);
+    if (argc == 3 && arg_is(argv[1], "--record"))
+        return record(argv[2]);
 
     atexit(write_stats);
 
@@ -151,20 +127,10 @@ int main(int argc, char **argv)
 
     while (__AFL_LOOP(PERSISTENT_LOOP)) {
         int len = __AFL_FUZZ_TESTCASE_LEN;
-        int rc = sbv_fuzz_exec(buf, (size_t)len, sbv_run_tests);
 
-        if (rc == SBV_DIVERGED) {
-            /* Print before aborting: the stderr text lands in AFL++'s logs,
-             * and the tape itself is saved under crashes/ for --replay. */
-            fprintf(stderr, "SBV_DIVERGED test=%d inputs=%s report=%s\n",
-                    sbv_fuzz_diverged_test(), sbv_fuzz_inputs(),
-                    sbv_fuzz_report());
-            write_stats();
-            abort();
-        }
-
-        /* SBV_REJECTED and SBV_OK both continue: a rejected input is simply
-         * outside the summary's domain, not a finding. */
+        /* A rejected tape is not a finding -- it is simply outside the
+         * test's domain. Keep going; AFL++ learns which bytes matter. */
+        sbv_sample_exec(buf, (size_t)len, sbv_run_tests, 0);
     }
 
     return 0;

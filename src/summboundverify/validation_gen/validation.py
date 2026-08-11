@@ -147,8 +147,12 @@ class ValidationGenerator(Generator):
     # Typedefs, API stubs and Macros
     def gen_headers(self, defs):
 
-        if self.engine == 'fuzz':
-            headers = self.gen_summary_prototype(defs)
+        if self.engine == 'concrete':
+            # No stubs and no typedefs: the sampling harness is compiled
+            # against sbv_sample.h, which declares the handful of primitives a
+            # generated test actually uses with the concrete meanings they
+            # have once the values are concrete.
+            headers = []
 
         else:
             # Add core api functions.
@@ -159,6 +163,13 @@ class ValidationGenerator(Generator):
             if not self.no_api:
                 headers += self.get_api_calls(defs)
                 headers.append('')
+
+            # The summary-only test may not carry the summary's definition --
+            # with `--lib` it is a separate translation unit and all we have
+            # is its name. Declare it rather than let the call fall back to an
+            # implicit int-returning one.
+            if self.engine == 'summary':
+                headers += self.gen_summary_prototype(defs)
 
         # Add macros
         headers.append(defineMacro(POINTER_SIZE_MACRO, self.pointersize))
@@ -198,11 +209,16 @@ class ValidationGenerator(Generator):
         # Number of tests
         tests = max(len(self.maxnum), len(self.arraysize))
 
+        # The sampling harness has no symbolic state to fork or resume: its
+        # tests run one after another off the same tape.
+        symbolic = self.engine != 'concrete'
+
         # Save Multiple fresh states if needed (multiple tests)
-        main_body += [
-            save_current_state(f'fresh_state{i}')
-            for i in range(1, tests)
-        ]
+        if symbolic:
+            main_body += [
+                save_current_state(f'fresh_state{i}')
+                for i in range(1, tests)
+            ]
 
         for i in range(1, tests+1):
             testName = f'test_{i}'
@@ -215,7 +231,7 @@ class ValidationGenerator(Generator):
             main_body.append(FuncCall(ID(testName), ExprList([])))
 
             # Halt to a fresh state in between tests
-            if i < tests:
+            if symbolic and i < tests:
                 main_body.append(halt_all(f'fresh_state{i}'))
 
         return test_defs, main_body
@@ -279,7 +295,8 @@ class ValidationGenerator(Generator):
         gen = TestGen(
             args, ret_type,
             self.cncrt_name, self.summ_name,
-            self.memory, self.maxnames
+            self.memory, self.maxnames,
+            mode=self.engine,
         )
 
         return gen.create_test(
@@ -302,14 +319,31 @@ class ValidationGenerator(Generator):
         self.cncrt_name = parsed.concrete_name
         self.summ_name = parsed.summary_name
 
+        # Which side's code goes into the file. The differential test needs
+        # both; each half of a fuzzing run needs exactly one, and carrying the
+        # other would defeat the point -- the summary calls primitives the
+        # sampling harness does not link, and letting angr see the concrete
+        # function is precisely what running the summary alone avoids.
+        if self.engine == 'summary':
+            functions = parsed.summary_functions
+        elif self.engine == 'concrete':
+            functions = parsed.concrete_functions
+        else:
+            functions = parsed.functions
+
         function_defs = [
             f.definition if f else None
-            for f in parsed.functions
+            for f in functions
         ]
         args = parsed.arguments
         ret_type = parsed.return_type
 
-        header = self.gen_headers(function_defs)
+        # API stubs are chosen from what the code in the file calls, so the
+        # full set has to be visible even when only one side is emitted.
+        header = self.gen_headers([
+            f.definition if f else None
+            for f in parsed.functions
+        ])
 
         # If one the functions is not provided
         if None in function_defs:

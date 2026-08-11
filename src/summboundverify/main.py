@@ -102,20 +102,15 @@ def run_angr(binary: Path, args: Namespace) -> Path:
     return Path(args.results) / f'{binary.name}_result.json'
 
 
-def run_fuzz(test: Path, args: Namespace) -> Path:
+def run_fuzz(summary_test: Path, concrete_test: Path, args: Namespace) -> Path:
 
-    from summboundverify.validation_tool import fuzzEngine
-
-    engine = fuzzEngine(
-        test,
-        libs=args.lib,
-        arch=args.compile or 'x86',
-        execs=args.execs,
-        timeout=args.timeout,
-        results_dir=args.results,
+    raise RunError(
+        "Fuzzing generated both halves but cannot run them yet: the check "
+        "that matches a recorded sample against the summary's path condition "
+        "is not built.\n"
+        f"  symbolic summary: {summary_test}\n"
+        f"  sampling harness: {concrete_test}"
     )
-
-    return engine.run()
 
 
 def run_se(test: Path, args: Namespace) -> Path | None:
@@ -131,12 +126,19 @@ def run_se(test: Path, args: Namespace) -> Path | None:
     return run_angr(binary, args)
 
 
-def fuzz_outputfile(args: Namespace) -> Path:
-    """Keep the two engines' generated tests side by side in a `both` run."""
+def fuzz_outputfiles(args: Namespace) -> tuple[Path, Path]:
+    """The two halves of a fuzzing run: the symbolic summary and the sampler.
+
+    Both are always suffixed, in a `fuzz` run as much as a `both` run. Neither
+    is *the* test -- one is a formula generator and the other draws the
+    samples checked against it -- so naming one of them after the requested
+    output would suggest a primacy it does not have.
+    """
     out = Path(args.o)
-    if args.engine != 'both':
-        return out
-    return out.with_name(f'{out.stem}-fuzz{out.suffix}')
+    return (
+        out.with_name(f'{out.stem}-summary{out.suffix}'),
+        out.with_name(f'{out.stem}-concrete{out.suffix}'),
+    )
 
 
 def load_results(path: Path | None) -> dict:
@@ -151,13 +153,18 @@ def load_results(path: Path | None) -> dict:
 def test_id(key: str) -> str:
     '''Strip the engine's file naming so both sides agree on a test's name.
 
-    A `both` run writes the fuzz test to `<name>-fuzz.c`, so the same test is
-    keyed `<name>.test_1` by one engine and `<name>-fuzz.test_1` by the other.
+    Fuzzing writes its halves to `<name>-summary.c` and `<name>-concrete.c`,
+    so the same test is keyed `<name>.test_1` by symbolic execution and
+    `<name>-summary.test_1` by the other side.
     '''
     name, _, test = key.rpartition('.')
     if not test:
         return key
-    return f"{name.removesuffix('-fuzz')}.{test}"
+
+    for suffix in ('-summary', '-concrete', '-fuzz'):
+        name = name.removesuffix(suffix)
+
+    return f"{name}.{test}"
 
 
 def se_verdict(entry: dict) -> tuple[str, str]:
@@ -318,13 +325,19 @@ def main():
                 results['se'] = run_se(test, args)
 
             else:
-                test = run_validation_gen(
-                    args, engine='fuzz', outputfile=fuzz_outputfile(args)
+                summary_test, concrete_test = fuzz_outputfiles(args)
+
+                run_validation_gen(
+                    args, engine='summary', outputfile=summary_test
                 )
-                # The fuzz engine links the test against the concrete backend
-                # itself, so compilation is part of its run.
+                run_validation_gen(
+                    args, engine='concrete', outputfile=concrete_test
+                )
+
                 if args.run:
-                    results['fuzz'] = run_fuzz(test, args)
+                    results['fuzz'] = run_fuzz(
+                        summary_test, concrete_test, args
+                    )
 
         if len(engines) > 1 and args.run:
             print_summary(results.get('se'), results.get('fuzz'))

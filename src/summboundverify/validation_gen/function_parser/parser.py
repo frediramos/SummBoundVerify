@@ -1,5 +1,5 @@
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from pycparser.c_ast import Node, ParamList
 from pycparser.c_generator import CGenerator
@@ -26,6 +26,9 @@ class ParsedFunctions:
     functions: list[Function | None]
     arguments: ParamList
     return_type: Node
+
+    concrete_functions: list[Function | None] = field(default_factory=list)
+    summary_functions: list[Function | None] = field(default_factory=list)
 
 
 class FunctionParser:
@@ -184,7 +187,9 @@ class FunctionParser:
                 *summary_functions,
             ],
             arguments=arguments,
-            return_type=return_type
+            return_type=return_type,
+            concrete_functions=list(concrete_functions),
+            summary_functions=list(summary_functions),
         )
 
         return parsed

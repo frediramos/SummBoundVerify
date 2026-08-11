@@ -80,6 +80,32 @@ def print_counterexamples(result):
     )
 
 
+def sbv_record(test_name: str, ret_name: str, ret_type, returns_void: bool):
+    """Record this run's return value and tagged memory.
+
+    The sampling counterpart of get_cnstr: same moment, same operands, but it
+    writes down what the concrete function actually produced instead of a
+    formula denoting what it could produce.
+    """
+    if returns_void:
+        args = [Constant('int', str(0)), Constant('int', str(0))]
+
+    else:
+        args = [
+            UnaryOp('&', ID(ret_name)),
+            BinaryOp(
+                op='*',
+                left=FuncCall(ID('sizeof'), ExprList([ret_type])),
+                right=Constant('int', str(8)),
+            ),
+        ]
+
+    return FuncCall(
+        ID('sbv_record'),
+        ExprList([Constant('string', f'"{test_name}"'), *args])
+    )
+
+
 def mem_addr(name, size):
     return FuncCall(
         ID(f'mem_addr'),
