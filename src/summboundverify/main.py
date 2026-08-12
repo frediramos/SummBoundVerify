@@ -84,7 +84,7 @@ def run_validation_gen(args: Namespace, engine: str = 'se',
     return outputfile
 
 
-def run_angr(binary: Path, args: Namespace) -> Path:
+def run_angr(binary: Path, args: Namespace) -> tuple[Path, dict]:
 
     from summboundverify.validation_tool import angrEngine
 
@@ -99,29 +99,43 @@ def run_angr(binary: Path, args: Namespace) -> Path:
     engine.run()
 
     # Written by the print_counterexamples hook, one entry per test.
-    return Path(args.results) / f'{binary.name}_result.json'
+    results = Path(args.results) / f'{binary.name}_result.json'
+
+    return results, engine.constraints
 
 
-def run_fuzz(summary_test: Path, concrete_test: Path, args: Namespace) -> Path:
+def run_fuzz(
+    summary_test: Path | None,
+    concrete_test: Path,
+    constraints: dict,
+    args: Namespace,
+) -> Path:
+
+    summary = (
+        "reused from the symbolic run"
+        if summary_test is None
+        else str(summary_test)
+    )
 
     raise RunError(
-        "Fuzzing generated both halves but cannot run them yet: the check "
-        "that matches a recorded sample against the summary's path condition "
-        "is not built.\n"
-        f"  symbolic summary: {summary_test}\n"
+        "Fuzzing has both halves but cannot run them yet: the check that "
+        "matches a recorded sample against the summary's path condition is "
+        "not built.\n"
+        f"  summary formulas: {summary} "
+        f"({len(constraints)} stored)\n"
         f"  sampling harness: {concrete_test}"
     )
 
 
-def run_se(test: Path, args: Namespace) -> Path | None:
+def run_se(test: Path, args: Namespace) -> tuple[Path | None, dict]:
 
     if not args.compile:
-        return None
+        return None, {}
 
     binary = compile_validation_test(args.compile, test, args.lib)
 
     if not args.run:
-        return None
+        return None, {}
 
     return run_angr(binary, args)
 
@@ -314,6 +328,9 @@ def main():
         engines = plan_engines(args)
         results: dict[str, Path | None] = {}
 
+        # Formulas carried from symbolic execution to fuzzing within one run.
+        se_constraints: dict = {}
+
         for engine in engines:
 
             # A single engine's output is unambiguous on its own.
@@ -322,21 +339,32 @@ def main():
 
             if engine == 'se':
                 test = run_validation_gen(args, engine='se')
-                results['se'] = run_se(test, args)
+                results['se'], se_constraints = run_se(test, args)
 
             else:
                 summary_test, concrete_test = fuzz_outputfiles(args)
 
-                run_validation_gen(
-                    args, engine='summary', outputfile=summary_test
-                )
+                # A `both` run has already executed the summary, and the
+                # formulas it produced are the same ones a summary-only test
+                # would build. Doing it twice buys nothing.
+                if se_constraints:
+                    logger.info(
+                        "Reusing the summary's path conditions from the "
+                        "symbolic run instead of executing it again"
+                    )
+                    summary_test = None
+                else:
+                    run_validation_gen(
+                        args, engine='summary', outputfile=summary_test
+                    )
+
                 run_validation_gen(
                     args, engine='concrete', outputfile=concrete_test
                 )
 
                 if args.run:
                     results['fuzz'] = run_fuzz(
-                        summary_test, concrete_test, args
+                        summary_test, concrete_test, se_constraints, args
                     )
 
         if len(engines) > 1 and args.run:
