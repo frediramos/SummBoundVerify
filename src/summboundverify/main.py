@@ -84,10 +84,46 @@ def run_validation_gen(args: Namespace, engine: str = 'se',
     return outputfile
 
 
-def compare_samples(constraints: list, samples: list) -> None:
-    '''Compare the samples against the constraints.'''
-    import pdb;pdb.set_trace()
-    raise NotImplementedError("Comparison logic not yet implemented")   
+def verify_samples(constraints: dict, samples: list, out: Path) -> Path:
+    '''Check the recorded pairs against the summary's formulas.'''
+    from summboundverify.validation_tool.sample_check import (
+        check_samples, report,
+    )
+
+    try:
+        results = report(check_samples(constraints, samples))
+    except ValueError as e:
+        # A width disagreement is systematic, not a property of one sample:
+        # the two halves were built for different word sizes and nothing they
+        # produce is comparable. Say so once, rather than per sample.
+        raise RunError(str(e))
+
+    for test, entry in results.items():
+        counts = entry['counts']
+
+        if entry['verdict'] == 'passed':
+            logger.info(
+                "%s: %d sample(s) admitted by the summary. Sampling cannot "
+                "certify -- this says no sampled input contradicted it.",
+                test, counts['matched'],
+            )
+        elif entry['verdict'] == 'starved':
+            logger.warning(
+                "%s: nothing was checked. Every sample was turned away or "
+                "the summary constrains nothing observable.", test,
+            )
+        else:
+            first = entry['findings'][0]
+            logger.error(
+                "%s: %s -- %s\n  %s",
+                test, entry['verdict'], first['reason'], first['bindings'],
+            )
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(results, indent=2))
+
+    logger.info("Sample check written to %s", out)
+    return out
 
 
 def sampler_libs(args: Namespace) -> list:
@@ -171,11 +207,12 @@ def run_fuzz(
 
     usable = [s for s in samples if not s.rejected]
     logger.info(
-        "%d summary formula(s) and %d usable sample(s) ready to be checked "
-        "against each other", len(constraints), len(usable),
+        "Checking %d usable sample(s) against %d summary formula(s)",
+        len(usable), len(constraints),
     )
 
-    return compare_samples(constraints['summ_test1'], samples)
+    out = Path(args.results) / f'{concrete_test.stem}_check.json'
+    return verify_samples(constraints, samples, out)
 
 
 def run_angr(binary: Path, args: Namespace) -> tuple[Path, dict]:
