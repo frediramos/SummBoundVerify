@@ -3,19 +3,15 @@ from pathlib import Path
 from pycparser import c_generator
 from pycparser.c_ast import ID, FuncDef, FileAST, FuncCall, Compound
 
+from summboundverify.api import macros, type_stubs, required_stubs, sra_stubs
+
 from .utils import *
 from .utils.visitors import FuncCallsVisitor
 
 from .generator import Generator
 from .function_parser import FunctionParser
+from .api_gen import halt_all, save_current_state
 
-from .api_gen import (
-    halt_all,
-    save_current_state,
-    type_defs,
-    complete_api,
-    validation_api,
-)
 
 from .test_gen import TestGen
 from .test_gen.arg_gen.visitors.structs import StructVisitor
@@ -61,42 +57,39 @@ class ValidationGenerator(Generator):
         self.no_api = no_api
 
     def get_api_calls(self, funcs):
-        fdefs = []
-        fcalls = set()
+        api_calls = set()
 
-        # Always include the validation API
-        fdefs += sorted(validation_api.values())
-        fdefs.append('')
+        complete_api = sra_stubs()
+        required_api = required_stubs()
 
         for i, func in enumerate(funcs, 1):
-
-            # Visit and fetch all function calls
             visitor = FuncCallsVisitor()
             visitor.visit(func)
+
             called = visitor.fcalls()
 
-            if not called and i == len(funcs):
-                called = complete_api.keys()
+            if i == len(funcs) and not called:
+                called = complete_api
 
-            # Filter non API functions
-            called = filter(lambda x: x in complete_api.keys(), called)
+            api_calls.update(
+                c for c in called
+                if c in complete_api and c not in required_api
+            )
 
-            # Filter functions already included with the validation API
-            called = filter(lambda x: x not in validation_api, called)
+        validation_defs = list(required_api.values())
+        api_defs = [
+            complete_api[call]
+            for call in api_calls
+        ]
 
-            fcalls.update(called)
-
-        fdefs += [complete_api[c] for c in sorted(fcalls)]
-
-        return fdefs
+        return sorted(validation_defs + api_defs)
 
     # Gen headers
     # Typedefs, API stubs and Macros
     def gen_headers(self, defs):
 
-        # Add core api functions.
-        headers = list(type_defs)
-        headers.append('')
+        # Add macros and typedefs
+        headers = [macros(), *type_stubs(), '']
 
         # Add API calls
         if not self.no_api:

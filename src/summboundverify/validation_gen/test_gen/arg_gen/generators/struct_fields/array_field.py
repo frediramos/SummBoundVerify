@@ -53,11 +53,11 @@ class ArrayFieldGen(ArrayGen):
         sizes = self.sizes
 
         index = f'{name}_idx_{self.dimension}'
-        for_ast_code = self.For_ast(index, self._size(sizes.pop(0)), stmt)
+        for_ast_code = self.for_ast(index, self._size(sizes.pop(0)), stmt)
 
         for i in range(self.dimension-1, 0, -1):
             index = f'{name}_idx_{i}'
-            for_ast_code = self.For_ast(index, self._size(
+            for_ast_code = self.for_ast(index, self._size(
                 sizes.pop(0)), Compound([for_ast_code]))
 
         code.append(for_ast_code)

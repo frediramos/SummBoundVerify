@@ -1,15 +1,28 @@
-from pycparser.c_ast import *
+from pycparser.c_ast import (
+    ID,
+    FuncCall,
+    ExprList,
+    BinaryOp,
+    Constant,
+    NodeVisitor
+)
 
-from ....utils import ARRAY_SIZE_MACRO, POINTER_SIZE_MACRO, FUEL_MACRO
+from summboundverify.api import api_map
+from summboundverify.validation_gen.utils import (
+    ARRAY_SIZE_MACRO,
+    POINTER_SIZE_MACRO,
+    FUEL_MACRO
+)
 
 
 class DefaultGen(NodeVisitor):
     def __init__(self, name, vartype):
 
         # Size Macros
-        self.sizeMacros = {
+        self.size_macros = {
             'array': ID(ARRAY_SIZE_MACRO),
-            'ptr': ID(POINTER_SIZE_MACRO)}
+            'ptr': ID(POINTER_SIZE_MACRO)
+        }
 
         self.argname = name  # ID node
         self.vartype = vartype  # String
@@ -26,8 +39,9 @@ class DefaultGen(NodeVisitor):
         return BinaryOp(op='*', left=FuncCall(ID('sizeof'), ExprList([ID(vartype)])), right=Constant('int', str(8)))
 
     def symbolic_rvalue(self, name):
+        call = ID(api_map().sym_var_named)
         sizeof = ExprList([name, self.type_size(self.vartype)])
-        rvalue = FuncCall(ID('sym_var_named'), sizeof)
+        rvalue = FuncCall(call, sizeof)
         return rvalue
 
     def const_rvalue(self, const):

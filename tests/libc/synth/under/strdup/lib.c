@@ -16,5 +16,5 @@ size_t strlen(const char *str) {
 }
 
 void* malloc(size_t size){
-    return mem_alloc(size);
+    return __mem_alloc(size);
 }

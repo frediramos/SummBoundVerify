@@ -67,12 +67,14 @@ class angrEngine():
             return [f.strip() for f in implemented]
 
     def _set_hooks(self, p: Project, sm: SimulationManager):
-        self.api = ValidationAPI(p, sm)
-        self.api.hook_api(
-            self.binary_name,
-            self.results_dir,
-            self.convert_ascii
+        self.api = ValidationAPI(
+            project=p,
+            sm=sm,
+            binary=self.binary_name,
+            out=self.results_dir,
+            convert=self.convert_ascii
         )
+        self.api.hook_api()
 
     def _create_entry_state(self, p: Project) -> SimState:
 
@@ -84,7 +86,7 @@ class angrEngine():
 
         state = p.factory.entry_state(mode='symbolic', add_options=opt)
         heap = SimHeapPTMalloc()
-            
+
         state.register_plugin('heap', heap)
 
         state.libc.simple_strtok = False  # type: ignore

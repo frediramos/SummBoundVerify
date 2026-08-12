@@ -49,11 +49,11 @@ class ArrayTypeGen(ArrayGen):
         stmt = Compound([self.gen_array_init()])
 
         index = f'{name}_idx_{self.dimension}'
-        for_ast_code = self.For_ast(index, self._size(self.sizes[-1]), stmt)
+        for_ast_code = self.for_ast(index, self._size(self.sizes[-1]), stmt)
 
         for i in range(self.dimension-2, -1, -1):
             index = f'{name}_idx_{i+1}'
-            for_ast_code = self.For_ast(index, self._size(
+            for_ast_code = self.for_ast(index, self._size(
                 self.sizes[i]), Compound([for_ast_code]))
 
         code.append(for_ast_code)

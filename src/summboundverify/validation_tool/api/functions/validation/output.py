@@ -38,7 +38,7 @@ class ValidationOutput():
         header = (
             "===================== Result =====================\n\n"
             f"==> Concrete Constraints: \n\n\t{cncrt}\n\n"
-            f"==> Concrete Constraints: \n\n\t{summ}\n\n"
+            f"==> Summary Constraints: \n\n\t{summ}\n\n"
             f"==> Existencial Variables: \n\t{ignore}\n\n"
             f"==> Result: {result}\n\n"
         )

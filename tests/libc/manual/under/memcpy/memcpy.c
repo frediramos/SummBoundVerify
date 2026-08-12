@@ -1,11 +1,11 @@
 void* summ_memcpy(void *dest, void *src, size_t n){
 
-	//If length is symbolic maximize and cnstrict to a concrete length
-	if(is_symbolic(n)){
+	//If length is symbolic maximize and constrain to a concrete length
+	if(__is_symbolic(n)){
 
-		size_t max = maximize(n);
-		cnstr_t maximize = _EQ_(n, max);
-		assume(maximize);
+		size_t max = __maximize(n);
+		cnstr_t __maximize = _EQ_(n, max);
+		__assume(__maximize);
 		n = max;
 	}
 	

@@ -1,0 +1,5 @@
+#define NULL ((void*)0)
+#define INT_SIZE (sizeof(int) * 8)
+#define LONG_SIZE (sizeof(long) * 8)
+#define CHAR_SIZE (sizeof(char) * 8)
+#define PTR_SIZE (sizeof(void*) * 8)

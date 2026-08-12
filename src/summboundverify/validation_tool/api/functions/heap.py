@@ -59,7 +59,7 @@ class mallocd(HeapSummary):
         return (ptr in self.ctx.HEAP_CHUNKS)
 
 
-class is_rw(HeapSummary):
+class allocd(HeapSummary):
     """
     Raise if the memory pointed to by `ptr` does not have `r/w` permissions.
     Does **not** need to be a mallocd heap pointer.
@@ -82,12 +82,12 @@ class is_rw(HeapSummary):
             return
 
 
-class allocd(HeapSummary):
-    """
-    Alias of `is_rw`.
-    (For backward compatibility)
-    """
+# class allocd(HeapSummary):
+#     """
+#     Alias of `is_rw`.
+#     (For backward compatibility)
+#     """
 
-    def run(self, ptr, size):
-        helper = is_rw(self.ctx)
-        return helper.run(ptr, size)
+#     def run(self, ptr, size):
+#         helper = is_rw(self.ctx)
+#         return helper.run(ptr, size)

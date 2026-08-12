@@ -5,61 +5,61 @@
 #define LONG_SIZE (sizeof(long) * 8)
 #define CHAR_SIZE (sizeof(char) * 8)
 #define PTR_SIZE (sizeof(void*) * 8)
-typedef void* symbolic;
+
+typedef void *symbolic;
 typedef int state_t;
 typedef unsigned int size_t;
 typedef unsigned int cnstr_t;
 typedef unsigned int result_t;
 typedef unsigned int list_t;
 
-cnstr_t _ULE_(symbolic var1, symbolic var2) {return 0;}
-cnstr_t get_cnstr(symbolic var, size_t size) {return 0;}
-int is_sat(cnstr_t cnstr) {return 0;}
-result_t check_implications(char* constraint1, char* constraint2) {return 0;}
-state_t save_current_state() {return 0;}
-symbolic sym_var_array(char* name, size_t index, size_t size) {return 0;}
-symbolic sym_var_named(char* name, size_t size) {return 0;}
-void assume(cnstr_t cnstr) {return;}
-void halt_all(state_t state) {return;}
-void mem_addr(char* name, void* addr, size_t length) {return;}
-void print_counterexamples(result_t result) {return;}
-void store_cnstr(char* name, cnstr_t constraint) {return;}
-
-cnstr_t _AND_(cnstr_t cnstr1, cnstr_t cnstr2) {return 0;}
-cnstr_t _EQ_(symbolic var1, symbolic var2) {return 0;}
-cnstr_t _GE_(symbolic var1, symbolic var2) {return 0;}
-cnstr_t _GT_(symbolic var1, symbolic var2) {return 0;}
-cnstr_t _ITE_(cnstr_t cnstr1, cnstr_t cnstr2, cnstr_t cnstr3) {return 0;}
-cnstr_t _ITE_VAR_(cnstr_t cnstr1, symbolic var1, symbolic var2) {return 0;}
-cnstr_t _LE_(symbolic var1, symbolic var2) {return 0;}
-cnstr_t _LT_(symbolic var1, symbolic var2) {return 0;}
-cnstr_t _NEQ_(symbolic var1, symbolic var2) {return 0;}
-cnstr_t _NOT_(cnstr_t cnstr) {return 0;}
-cnstr_t _OR_(cnstr_t cnstr1, cnstr_t cnstr2) {return 0;}
-cnstr_t _UGE_(symbolic var1, symbolic var2) {return 0;}
-cnstr_t _UGT_(symbolic var1, symbolic var2) {return 0;}
-cnstr_t _ULT_(symbolic var1, symbolic var2) {return 0;}
-void _assert(int expr){return;}
-void allocd(void* ptr, size_t size) {return;}
-void cond_write(void* ptr, symbolic c, cnstr_t pc) {return;}
-int is_certain(cnstr_t cnstr){return 0;}
-int is_symbolic(symbolic sym_var) {return 0;} 
-list_t lst_cons(symbolic value, list_t lst) {return 0;}
-cnstr_t lst_empty(list_t lst) {return 0;}
-symbolic lst_hd(list_t lst) {return 0;}
-size_t lst_len(list_t lst) {return 0;}
-list_t lst_mk(){return 0;}
-list_t lst_nbytes(char c, size_t n) {return 0;}
-list_t lst_tl(list_t lst) {return 0;}
-list_t lst_zeros(size_t n) {return 0;}
-long maximize(symbolic sym_var){return 0;}
-void* mem_alloc(size_t bytes) {return 0;}
-void  mem_free(void* ptr) {return ;}
-long minimize(symbolic sym_var){return 0;}
-size_t n_allocd(void* ptr) {return 0;}
-void pop_pc(){return;}
-void push_pc(){return;}
-symbolic sym_var(size_t size) {return 0;}
+cnstr_t _AND_(cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
+cnstr_t _EQ_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _GE_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _GT_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _ITE_(cnstr_t cond, cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
+cnstr_t _ITE_VAR_(cnstr_t cond, symbolic var1, symbolic var2) { return 0; }
+cnstr_t _LE_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _LT_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _NEQ_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _NOT_(cnstr_t cnstr) { return 0; }
+cnstr_t _OR_(cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
+cnstr_t _UGE_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _UGT_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _ULE_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _ULT_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t __get_cnstr(symbolic var, size_t size) { return 0; }
+cnstr_t __lst_empty(list_t lst) { return 0; }
+int __is_certain(cnstr_t cnstr) { return 0; }
+int __is_sat(cnstr_t cnstr) { return 0; }
+int __is_symbolic(symbolic var) { return 0; }
+list_t __lst_cons(symbolic value, list_t lst) { return 0; }
+list_t __lst_mk(void) { return 0; }
+list_t __lst_nbytes(char c, size_t n) { return 0; }
+list_t __lst_tl(list_t lst) { return 0; }
+list_t __lst_zeros(size_t n) { return 0; }
+long __maximize(symbolic var) { return 0; }
+long __minimize(symbolic var) { return 0; }
+result_t __check_implications(char *summ, char *cncrt) { return 0; }
+size_t __allocd(void *ptr) { return 0; }
+size_t __lst_len(list_t lst) { return 0; }
+size_t __n_allocd(void *ptr) { return 0; }
+state_t __save_current_state(void) { return 0; }
+symbolic __lst_hd(list_t lst) { return 0; }
+symbolic __sym_var(size_t size) { return 0; }
+symbolic __sym_var_array(char *name, size_t index, size_t size) { return 0; }
+symbolic __sym_var_named(char *name, size_t size) { return 0; }
+void *__mem_alloc(size_t nbytes) { return 0; }
+void __assert(cnstr_t cnstr) { }
+void __assume(cnstr_t cnstr) { }
+void __cond_write(void *ptr, symbolic c, cnstr_t pc) { }
+void __halt_all(state_t state) { }
+void __mem_addr(char *name, void *addr, size_t n) { }
+void __mem_free(void *ptr) { }
+void __pop_pc(void) { }
+void __print_counterexamples(result_t result) { }
+void __push_pc(void) { }
+void __store_cnstr(char *name, cnstr_t constraint) { }
 
 #define POINTER_SIZE 5
 #define FUEL 5
@@ -79,22 +79,22 @@ void test_1()
   char str[ARRAY_SIZE_1];
   for (int str_idx_1 = 0; str_idx_1 < ARRAY_SIZE_1; str_idx_1++)
   {
-    str[str_idx_1] = sym_var_array("str", str_idx_1, sizeof(char) * 8);
+    str[str_idx_1] = __sym_var_array("str", str_idx_1, sizeof(char) * 8);
   }
 
   str[ARRAY_SIZE_1 - 1] = '\0';
-  state_t initial_state = save_current_state();
-  mem_addr("str", str, ARRAY_SIZE_1);
+  state_t initial_state = __save_current_state();
+  __mem_addr("str", str, ARRAY_SIZE_1);
   char * ret1 = concrete_strdup(str);
-  cnstr_t cnstr1 = get_cnstr(&ret1, sizeof(char *) * 8);
-  store_cnstr("cnctr_test1", cnstr1);
-  halt_all(initial_state);
+  cnstr_t cnstr1 = __get_cnstr(&ret1, sizeof(char *) * 8);
+  __store_cnstr("cnctr_test1", cnstr1);
+  __halt_all(initial_state);
   char * ret2 = strdup(str);
-  cnstr_t cnstr2 = get_cnstr(&ret2, sizeof(char *) * 8);
-  store_cnstr("summ_test1", cnstr2);
-  halt_all(NULL);
-  result_t result = check_implications("cnctr_test1", "summ_test1");
-  print_counterexamples(result);
+  cnstr_t cnstr2 = __get_cnstr(&ret2, sizeof(char *) * 8);
+  __store_cnstr("summ_test1", cnstr2);
+  __halt_all(NULL);
+  result_t result = __check_implications("cnctr_test1", "summ_test1");
+  __print_counterexamples(result);
   return ;
 }
 
