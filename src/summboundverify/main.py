@@ -84,6 +84,100 @@ def run_validation_gen(args: Namespace, engine: str = 'se',
     return outputfile
 
 
+def compare_samples(constraints: list, samples: list) -> None:
+    '''Compare the samples against the constraints.'''
+    import pdb;pdb.set_trace()
+    raise NotImplementedError("Comparison logic not yet implemented")   
+
+
+def sampler_libs(args: Namespace) -> list:
+    '''The libraries the sampling harness needs: everything but the summary.
+
+    `--lib` covers two roles at once. It is where the summary comes from when
+    no `-summ` was given, and it is where the concrete function's helpers come
+    from (tests/libc/synth/*/strdup passes both). The sampler must link the
+    second and must not link the first: a summary is written against the
+    symbolic API, and the harness deliberately implements none of it, so
+    linking it fails on push_pc, _ITE_VAR_ and the rest.
+    '''
+    from summboundverify.validation_gen.utils import parse_c_file
+    from summboundverify.validation_gen.function_parser.visitors import (
+        FunctionVisitor,
+    )
+
+    if not args.summname:
+        return list(args.lib or [])
+
+    keep = []
+    for lib in (args.lib or []):
+        path = Path(lib)
+        try:
+            defined = FunctionVisitor(parse_c_file(path), path).functions()
+        except Exception:
+            # Unparseable is not the same as "is the summary". Keeping it is
+            # the recoverable mistake; dropping a helper is a link error.
+            keep.append(lib)
+            continue
+
+        if args.summname in defined:
+            logger.debug("Not linking %s into the sampler: it is the summary",
+                         path.name)
+            continue
+
+        keep.append(lib)
+
+    return keep
+
+
+def run_afl(test: Path, args: Namespace) -> tuple[Path, list]:
+    '''Sample the concrete function, returning the results file and the pairs.
+
+    Takes the harness *source*, not a binary: AFL++ needs its own instrumented
+    build, so the engine compiles with afl-clang-fast itself.
+    '''
+    from summboundverify.validation_tool import aflEngine
+
+    engine = aflEngine(
+        test,
+        libs=sampler_libs(args),
+        arch=args.compile or 'x86',
+        execs=args.execs,
+        timeout=args.timeout,
+        results_dir=args.results,
+    )
+
+    results = engine.run()
+    return results, engine.samples
+
+
+def run_fuzz(
+    summary_test: Path | None,
+    concrete_test: Path,
+    constraints: dict,
+    args: Namespace,
+) -> Path | None:
+    '''Put the two halves together: a formula per summary path, and samples.
+
+    `constraints` arrives already filled when symbolic execution ran in this
+    same invocation; otherwise the summary is executed here, on its own.
+    '''
+    if summary_test is not None:
+        _, constraints = run_se(summary_test, args)
+
+    if not args.run:
+        return None
+
+    _, samples = run_afl(concrete_test, args)
+
+    usable = [s for s in samples if not s.rejected]
+    logger.info(
+        "%d summary formula(s) and %d usable sample(s) ready to be checked "
+        "against each other", len(constraints), len(usable),
+    )
+
+    return compare_samples(constraints['summ_test1'], samples)
+
+
 def run_angr(binary: Path, args: Namespace) -> tuple[Path, dict]:
 
     from summboundverify.validation_tool import angrEngine
@@ -104,34 +198,12 @@ def run_angr(binary: Path, args: Namespace) -> tuple[Path, dict]:
     return results, engine.constraints
 
 
-def run_fuzz(
-    summary_test: Path | None,
-    concrete_test: Path,
-    constraints: dict,
-    args: Namespace,
-) -> Path:
-
-    summary = (
-        "reused from the symbolic run"
-        if summary_test is None
-        else str(summary_test)
-    )
-
-    raise RunError(
-        "Fuzzing has both halves but cannot run them yet: the check that "
-        "matches a recorded sample against the summary's path condition is "
-        "not built.\n"
-        f"  summary formulas: {summary} "
-        f"({len(constraints)} stored)\n"
-        f"  sampling harness: {concrete_test}"
-    )
-
-
 def run_se(test: Path, args: Namespace) -> tuple[Path | None, dict]:
 
     if not args.compile:
         return None, {}
 
+    # angr loads a binary, not a source file.
     binary = compile_validation_test(args.compile, test, args.lib)
 
     if not args.run:

@@ -10,9 +10,9 @@ def __getattr__(name):
         from summboundverify.validation_tool import angrEngine
         return angrEngine
 
-    if name in ('FuzzRunner', 'fuzzEngine'):
-        from summboundverify.validation_tool import fuzzEngine
-        return fuzzEngine
+    if name in ('FuzzRunner', 'aflEngine'):
+        from summboundverify.validation_tool import aflEngine
+        return aflEngine
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

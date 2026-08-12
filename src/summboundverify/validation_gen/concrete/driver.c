@@ -25,6 +25,9 @@
 
 #undef main
 
+/* The driver owns the real exit(), not the target's stand-in. */
+#undef exit
+
 #include "sbv_sample.h"
 
 #include <stdio.h>
@@ -103,8 +106,9 @@ static void write_stats(void)
     if (!f)
         return;
 
-    fprintf(f, "execs=%lu rejected=%lu\n",
-            sbv_sample_total_execs(), sbv_sample_total_rejected());
+    fprintf(f, "execs=%lu rejected=%lu exited=%lu\n",
+            sbv_sample_total_execs(), sbv_sample_total_rejected(),
+            sbv_sample_total_exited());
     fclose(f);
 }
 

@@ -28,10 +28,16 @@
 
 #include <setjmp.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+/* The build redirects the target's exit() here with -Dexit=sbv_exit. This
+ * file defines the stand-in, so it must see the name unredirected. */
+#undef exit
 
 #define SBV_MAX_REGIONS 16
 #define SBV_MAX_REGION_LEN 4096
+#define SBV_MAX_CHUNKS 64
 #define SBV_NAME_LEN 64
 
 /* Input tape ------------------------------------------------------------ */
@@ -42,6 +48,7 @@ static size_t g_input_pos;
 
 static unsigned long g_total_execs;
 static unsigned long g_total_rejected;
+static unsigned long g_total_exited;
 
 static int g_record;
 static jmp_buf g_reject_jmp;
@@ -195,6 +202,13 @@ void _assert(int cnstr)
     assume(cnstr);
 }
 
+void sbv_exit(int code)
+{
+    (void)code;
+    g_total_exited++;
+    longjmp(g_reject_jmp, 1);
+}
+
 int _EQ_(sbv_value a, sbv_value b) { return a == b; }
 int _NEQ_(sbv_value a, sbv_value b) { return a != b; }
 int _LT_(sbv_value a, sbv_value b) { return a < b; }
@@ -225,6 +239,68 @@ int _UGE_(sbv_value a, sbv_value b)
 int _NOT_(int c) { return !c; }
 int _AND_(int a, int b) { return a && b; }
 int _OR_(int a, int b) { return a || b; }
+
+/* Heap ------------------------------------------------------------------ */
+
+/* Sizes of the live allocations, so n_allocd() can answer. Freed slots are
+ * reused; the table only has to outlive one execution. */
+typedef struct {
+    void *ptr;
+    size_t size;
+} chunk_t;
+
+static chunk_t g_chunks[SBV_MAX_CHUNKS];
+
+void *mem_alloc(size_t bytes)
+{
+    void *ptr = malloc(bytes);
+    int i;
+
+    if (ptr == NULL)
+        return NULL;
+
+    for (i = 0; i < SBV_MAX_CHUNKS; i++) {
+        if (g_chunks[i].ptr == NULL) {
+            g_chunks[i].ptr = ptr;
+            g_chunks[i].size = bytes;
+            break;
+        }
+    }
+
+    return ptr;
+}
+
+void mem_free(void *ptr)
+{
+    int i;
+
+    for (i = 0; i < SBV_MAX_CHUNKS; i++) {
+        if (g_chunks[i].ptr == ptr) {
+            g_chunks[i].ptr = NULL;
+            g_chunks[i].size = 0;
+            break;
+        }
+    }
+
+    free(ptr);
+}
+
+size_t n_allocd(void *ptr)
+{
+    int i;
+
+    for (i = 0; i < SBV_MAX_CHUNKS; i++)
+        if (g_chunks[i].ptr == ptr)
+            return g_chunks[i].size;
+
+    return 0;
+}
+
+void allocd(void *ptr, size_t size)
+{
+    (void)size;
+    assume(ptr != NULL);
+}
 
 /* Recording the outcome ------------------------------------------------- */
 
@@ -314,4 +390,9 @@ unsigned long sbv_sample_total_execs(void)
 unsigned long sbv_sample_total_rejected(void)
 {
     return g_total_rejected;
+}
+
+unsigned long sbv_sample_total_exited(void)
+{
+    return g_total_exited;
 }

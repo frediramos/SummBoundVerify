@@ -78,6 +78,16 @@ void assume(int cnstr);
 void _assert(int cnstr);
 
 /*
+ * Stand-in for exit(), which the build redirects here with -Dexit=sbv_exit.
+ *
+ * A concrete function that calls exit() would take the harness down with it,
+ * and AFL++ would read the dead process as a crash -- a finding manufactured
+ * by the harness. There is no return value to record for such a run, so it
+ * is discarded exactly as a rejected one is.
+ */
+void sbv_exit(int code);
+
+/*
  * Concrete readings of the constraint operators.
  *
  * These are only ever applied to values already drawn, so each one is the
@@ -98,6 +108,31 @@ int _UGE_(sbv_value a, sbv_value b);
 int _NOT_(int c);
 int _AND_(int a, int b);
 int _OR_(int a, int b);
+
+/* Heap ------------------------------------------------------------------ */
+
+/*
+ * The allocation primitives, concretely.
+ *
+ * These are here for the same reason assume() and _ULE_() are, and not for
+ * the reason push_pc() is absent: allocating memory means the same thing
+ * whether the pointer is symbolic or not. A concrete function's helper
+ * library routes malloc through mem_alloc so angr can track the region (the
+ * strdup tests do), and that library is linked here too, so the names have to
+ * resolve.
+ */
+void *mem_alloc(size_t bytes);
+void mem_free(void *ptr);
+
+/* How many bytes `ptr` was allocated with. Zero if it did not come from
+ * mem_alloc, which is also what the symbolic side reports for an unknown
+ * pointer. */
+size_t n_allocd(void *ptr);
+
+/* Assert that `size` bytes at `ptr` are readable and writable. Symbolically
+ * this consults the memory permissions; concretely the only thing that can be
+ * checked without inviting a segfault is that the pointer is not null. */
+void allocd(void *ptr, size_t size);
 
 /* Recording the outcome ------------------------------------------------- */
 
@@ -132,8 +167,9 @@ void sbv_record(char *test, void *ret, size_t bits);
 int sbv_sample_exec(const unsigned char *data, size_t len,
                     int (*tests)(void), int record);
 
-/* Executions and rejections since the process started. */
+/* Executions, rejections and exit() calls since the process started. */
 unsigned long sbv_sample_total_execs(void);
 unsigned long sbv_sample_total_rejected(void);
+unsigned long sbv_sample_total_exited(void);
 
 #endif /* SBV_SAMPLE_H */

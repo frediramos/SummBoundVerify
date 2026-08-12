@@ -10,11 +10,11 @@ def __getattr__(name):
         from .engine import angrEngine
         return angrEngine
 
-    if name == 'fuzzEngine':
-        from .fuzz_engine import fuzzEngine
-        return fuzzEngine
+    if name == 'aflEngine':
+        from .fuzz_engine import aflEngine
+        return aflEngine
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = ['angrEngine', 'fuzzEngine']
+__all__ = ['angrEngine', 'aflEngine']
