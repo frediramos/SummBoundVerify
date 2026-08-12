@@ -97,7 +97,7 @@ class is_sat(CSummary):
         self.ret(ret)
 
 
-class _assert(CSummary):
+class __assert(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)
 

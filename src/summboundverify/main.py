@@ -110,9 +110,8 @@ def main():
             if args.run:
                 run_angr(binary, args)
 
-    except Exception as e:
+    except Exception:
         print(traceback.format_exc())
-        print(e)
         return 1
 
     return 0
