@@ -91,6 +91,13 @@ class Value:
     bits: int
     raw: bytes
 
+    # Where this value was drawn from, for inputs: the offset and length of
+    # the tape bytes the harness consumed. A seed generator needs both to put
+    # a chosen value where the draw will pick it up. Zero-length for anything
+    # that did not come off the tape (a return value, a memory region).
+    offset: int = 0
+    length: int = 0
+
     @property
     def value(self) -> int:
         return _le_int(self.raw)
@@ -138,6 +145,7 @@ class aflEngine():
         tape: int = 64,
         timeout: int | None = 30 * 60,
         results_dir: str | Path = '.',
+        constraints: dict | None = None,
     ):
         if not afl_available():
             raise RunError(
@@ -153,6 +161,11 @@ class aflEngine():
         self.tape = tape
         self.timeout = timeout
         self.results_dir = Path(results_dir)
+
+        # The summary's formulas, when they are already known. Used to seed
+        # the campaign at the boundaries the summary actually has, which the
+        # fuzzer cannot see: it measures coverage of the concrete function.
+        self.constraints = constraints or {}
 
         self.binary = self.testfile.with_suffix('.fuzz')
         self.workdir = self.testfile.parent / f'{self.testfile.stem}.aflwork'
@@ -268,7 +281,49 @@ class aflEngine():
             tape = struct.pack('<d', value) * (self.tape // 8 + 1)
             (indir / f'f64_{name}').write_bytes(tape[:self.tape])
 
+        for i, tape in enumerate(self._formula_seeds()):
+            (indir / f'summ_{i:03d}').write_bytes(tape)
+
         return indir
+
+    def _probe(self) -> Sample | None:
+        """One recorded run, to learn where each argument sits on the tape.
+
+        Taken from the harness itself rather than worked out from the
+        generated source: the layout is a property of how the draws execute,
+        and the harness is the thing that executes them.
+        """
+        probe = self.workdir / 'probe'
+        probe.parent.mkdir(parents=True, exist_ok=True)
+        probe.write_bytes(bytes(self.tape))
+
+        samples = self._record(probe)
+        return samples[0] if samples else None
+
+    def _formula_seeds(self) -> list[bytes]:
+        """Seeds aimed at the summary's own branches and boundaries."""
+        if not self.constraints:
+            return []
+
+        from .sample_check import formula_key
+        from .seeding import seed_tapes
+
+        sample = self._probe()
+        if sample is None:
+            logger.debug("Probe recorded nothing; no formula-derived seeds")
+            return []
+
+        formulas = self.constraints.get(formula_key(sample.test or 'test_1'))
+
+        tapes = seed_tapes(formulas or [], sample, self.tape)
+
+        if tapes:
+            logger.info(
+                "Seeded %d input(s) from the summary's path conditions",
+                len(tapes),
+            )
+
+        return tapes
 
     def _afl_env(self) -> dict:
         env = dict(os.environ)
@@ -380,13 +435,15 @@ class aflEngine():
 
             kind, parts = parts[0], parts[1:]
 
-            if kind == 'V' and len(parts) == 4:
-                name, index, bits, raw = parts
+            if kind == 'V' and len(parts) == 6:
+                name, index, bits, offset, length, raw = parts
                 # An indexed draw is one element of an array, and the symbolic
                 # side calls it `<name>_<index>`. Matching that here is what
                 # lets a sample be joined to a formula by name alone.
                 key = name if index == '-' else f'{name}_{index}'
-                current.inputs[key] = Value(int(bits), bytes.fromhex(raw))
+                current.inputs[key] = Value(
+                    int(bits), bytes.fromhex(raw), int(offset), int(length)
+                )
 
             elif kind == 'M' and len(parts) == 3:
                 name, nbytes, raw = parts

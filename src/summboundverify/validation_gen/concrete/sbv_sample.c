@@ -3,7 +3,8 @@
  *
  * Record format, one block per test, on stdout:
  *
- *   V <name> <index|-> <bits> <hex>    one per drawn input
+ *   V <name> <index|-> <bits> <off> <len> <hex>   one per drawn input,
+ *                                       where off/len locate it on the tape
  *   M <name> <nbytes> <hex>            one per tagged region, contents after
  *   R <bits> <hex>                     absent for a void function
  *   E ok <test>                        closes the block and names it
@@ -114,7 +115,8 @@ static void put_hex(const unsigned char *bytes, size_t n)
 }
 
 static void record_draw(const char *name, long index, int indexed,
-                        const unsigned char *bytes, size_t bits)
+                        const unsigned char *bytes, size_t bits,
+                        size_t offset, size_t taken)
 {
     if (!g_record)
         return;
@@ -126,7 +128,14 @@ static void record_draw(const char *name, long index, int indexed,
     else
         printf("- ");
 
-    printf("%lu ", (unsigned long)bits);
+    /* The tape offset and byte count are reported because a seed generator
+     * needs to know where to put a value it wants this draw to produce, and
+     * that layout is a property of the harness, not something worth
+     * re-deriving from the generated source. `taken` is not always bits/8:
+     * a scalar draw is capped at the width of sbv_value. */
+    printf("%lu %lu %lu ",
+           (unsigned long)bits, (unsigned long)offset, (unsigned long)taken);
+
     put_hex(bytes, (bits + 7) / 8);
     putchar('\n');
 }
@@ -137,12 +146,13 @@ static void draw_bytes(char *name, unsigned char *dst, size_t bits,
                        long index, int indexed)
 {
     size_t nbytes = (bits + 7) / 8;
+    size_t offset = g_input_pos;
     size_t i;
 
     for (i = 0; i < nbytes; i++)
         dst[i] = tape_byte();
 
-    record_draw(name, index, indexed, dst, bits);
+    record_draw(name, index, indexed, dst, bits, offset, nbytes);
 }
 
 static sbv_value draw_value(char *name, size_t bits, long index, int indexed)
@@ -150,6 +160,7 @@ static sbv_value draw_value(char *name, size_t bits, long index, int indexed)
     unsigned char bytes[sizeof(sbv_value)];
     sbv_value value = 0;
     size_t nbytes = (bits + 7) / 8;
+    size_t offset = g_input_pos;
     size_t i;
 
     if (nbytes > sizeof(value))
@@ -167,7 +178,7 @@ static sbv_value draw_value(char *name, size_t bits, long index, int indexed)
     for (i = nbytes; i > 0; i--)
         value = (value << 8) | bytes[i - 1];
 
-    record_draw(name, index, indexed, bytes, bits);
+    record_draw(name, index, indexed, bytes, bits, offset, nbytes);
     return value;
 }
 

@@ -165,11 +165,16 @@ def sampler_libs(args: Namespace) -> list:
     return keep
 
 
-def run_afl(test: Path, args: Namespace) -> tuple[Path, list]:
+def run_afl(
+    test: Path, args: Namespace, constraints: dict | None = None,
+) -> tuple[Path, list]:
     '''Sample the concrete function, returning the results file and the pairs.
 
     Takes the harness *source*, not a binary: AFL++ needs its own instrumented
     build, so the engine compiles with afl-clang-fast itself.
+
+    `constraints` lets the campaign start from inputs the summary cares about
+    rather than only from generic tapes.
     '''
     from summboundverify.validation_tool import aflEngine
 
@@ -180,6 +185,7 @@ def run_afl(test: Path, args: Namespace) -> tuple[Path, list]:
         execs=args.execs,
         timeout=args.timeout,
         results_dir=args.results,
+        constraints=constraints,
     )
 
     results = engine.run()
@@ -203,7 +209,7 @@ def run_fuzz(
     if not args.run:
         return None
 
-    _, samples = run_afl(concrete_test, args)
+    _, samples = run_afl(concrete_test, args, constraints)
 
     usable = [s for s in samples if not s.rejected]
     logger.info(
