@@ -1,192 +1,283 @@
 import random
 
-from pycparser.c_ast import *
+from pycparser.c_ast import (
+    ID,
+    For,
+    Decl,
+    PtrDecl,
+    UnaryOp,
+    ArrayRef,
+    BinaryOp,
+    Compound,
+    Constant,
+    DeclList,
+    ExprList,
+    FuncCall,
+    TypeDecl,
+    ArrayDecl,
+    Assignment,
+    IdentifierType,
+)
 
-from ....utils import fill_array
+from summboundverify.api import api_map
+from summboundverify.validation_gen.utils import fill_array
+
 from .default import DefaultGen
 
 
-# Create a symbolic N-dimension array
 class ArrayGen(DefaultGen):
+    """
+    Generate declarations and initialization code for symbolic arrays.
+
+    Supports both stack-allocated C arrays and heap-allocated arrays created
+    through ``malloc``. Multi-dimensional heap arrays are represented as
+    nested pointers, with one allocation loop for each dimension.
+
+    For example, a two-dimensional array::
+
+        int **array = malloc(sizeof(int *) * rows);
+
+        for (int i = 0; i < rows; i++)
+            array[i] = malloc(sizeof(int) * columns);
+    """
+
     def __init__(self, name, vartype, array):
         super().__init__(name, vartype)
 
         self.sizes = array
         self.dimension = len(array)
 
-    def _size(self, val):
-        if val.isnumeric():
-            return Constant('int', val)
-        else:
-            if val in self.sizeMacros.keys():
-                return self.sizeMacros[val]
-            else:
-                return ID(val)
+    def _size(self, value: str):
+        """
+        Convert an array size into a C AST expression.
 
-    # Declare N-dimension array in the stack
-    # e.g array[10][5];
+        Numeric sizes are represented as integer constants. Named sizes are
+        resolved through ``size_macros`` when available; otherwise they are
+        represented as C identifiers.
+        """
+        if value.isnumeric():
+            return Constant("int", value)
+
+        return self.size_macros.get(value, ID(value))
 
     def declare_stack_array(self, const=None):
-        code = []
+        """
+        Generate a stack-allocated N-dimensional array declaration.
+
+        For example, an array with sizes ``[10, 5]`` produces::
+
+            int array[10][5];
+
+        ``const`` is passed directly to the generated ``Decl`` node.
+        """
         name = self.argname.name
+        typedecl = TypeDecl(name, [], None, IdentifierType([self.vartype]))
 
-        typedecl = TypeDecl(
-            name, [], None, IdentifierType(names=[self.vartype]))
+        array = ArrayDecl(typedecl, self._size(self.sizes[-1]), [])
 
-        size = self._size(self.sizes[-1])
-        array = ArrayDecl(typedecl, size, [])
+        for size in reversed(self.sizes[:-1]):
+            array = ArrayDecl(array, self._size(size), [])
 
-        for i in range(self.dimension-2, -1, -1):
-            array = ArrayDecl(array,  self._size(self.sizes[i]), [])
-
-        code.append(Decl(name, [], [], [], [], array, const, None))
-        return code
-
-    # Declare N-dimension array in the heap (uses malloc)
-    # e.g *array = malloc(sizeof(int *) * 10);
+        return [Decl(name, [], [], [], [], array, const, None)]
 
     def declare_heap_array(self):
+        """
+        Generate a heap-allocated N-dimensional array.
 
-        code = []
+        The first dimension is allocated when the array is declared. For
+        additional dimensions, nested ``for`` loops allocate each sub-array.
+
+        For example, a two-dimensional ``int`` array produces code equivalent
+        to::
+
+            int **array = malloc(sizeof(int *) * rows);
+
+            for (int malloc_idx_1 = 0; malloc_idx_1 < rows; malloc_idx_1++)
+                array[malloc_idx_1] =
+                    malloc(sizeof(int) * columns);
+
+        The generated AST uses ``malloc_idx_N`` as the loop variable for
+        dimension ``N``.
+        """
         name = self.argname.name
 
-        typedecl = TypeDecl(
-            name, [], None, IdentifierType(names=[self.vartype]))
+        typedecl = TypeDecl(name, [], None, IdentifierType([self.vartype]))
+        typtr = PtrDecl(
+            [],
+            TypeDecl(name, [], None, IdentifierType([self.vartype])),
+        )
 
-        # sizeof(int *)
-        typtr = PtrDecl([], TypeDecl(
-            name, [], None, IdentifierType([self.vartype])))
-        for _ in range(1, self.dimension-1):
+        for _ in range(1, self.dimension - 1):
             typtr = PtrDecl([], typtr)
-        sizeof = FuncCall(ID('sizeof'), ExprList([typtr]))
 
-        # (sizeof(int *) * 10
-        size = BinaryOp('*', sizeof, self._size(self.sizes[0]))
+        sizeof = FuncCall(ID("sizeof"), ExprList([typtr]))
+        size = BinaryOp("*", sizeof, self._size(self.sizes[0]))
+        rvalue = FuncCall(ID("malloc"), ExprList([size]))
 
-        # malloc(sizeof(int *) * 10);
-        rvalue = FuncCall(ID('malloc'), ExprList([size]))
-
-        # int **array
         arrptr = PtrDecl([], typedecl)
         for _ in range(1, self.dimension):
             arrptr = PtrDecl([], arrptr)
 
-        # int **array = malloc(sizeof(int) * 10);
-        code.append(Decl(name, [], [], [], [], arrptr, rvalue, None))
+        code: list = [Decl(name, [], [], [], [], arrptr, rvalue, None)]
 
-        # For 2+ dimensions (e.g array[][])
-        if self.dimension > 1:
+        if self.dimension == 1:
+            return code
 
-            typtr = IdentifierType([self.vartype])
-            sizeof = FuncCall(ID('sizeof'), ExprList([typtr]))
+        # Allocate the innermost dimension.
+        typtr = IdentifierType([self.vartype])
+        sizeof = FuncCall(ID("sizeof"), ExprList([typtr]))
 
-            index = f'malloc_idx_1'
+        index = "malloc_idx_1"
+        arrayref = ArrayRef(ID(name), ID(index))
+
+        for i in range(2, self.dimension):
+            index = f"malloc_idx_{i}"
+            arrayref = ArrayRef(arrayref, ID(index))
+
+        size = BinaryOp("*", sizeof, self._size(self.sizes[-1]))
+        stmt = Assignment(
+            "=",
+            arrayref,
+            FuncCall(ID("malloc"), ExprList([size])),
+        )
+
+        decls = self.for_ast(
+            index,
+            self._size(self.sizes[-2]),
+            Compound([stmt]),
+        )
+
+        # Each outer dimension points to an array of the type constructed
+        # for the dimension immediately inside it.
+        typtr = PtrDecl([], TypeDecl(name, [], None, typtr))
+
+        for i in range(self.dimension - 2, 0, -1):
+            index = "malloc_idx_1"
             arrayref = ArrayRef(ID(name), ID(index))
-            for i in range(2, self.dimension):
-                index = f'malloc_idx_{i}'
+
+            for j in range(2, i + 1):
+                index = f"malloc_idx_{j}"
                 arrayref = ArrayRef(arrayref, ID(index))
 
-            binop = BinaryOp('*', sizeof, self._size(self.sizes[-1]))
-            stmt = Assignment('=', arrayref, FuncCall(
-                ID('malloc'), ExprList([binop])))
-            decls = self.For_ast(index, self._size(
-                self.sizes[-2]), Compound([stmt]))
+            sizeof = FuncCall(ID("sizeof"), ExprList([typtr]))
+            size = BinaryOp("*", sizeof, self._size(self.sizes[i]))
 
-            typtr = PtrDecl([], TypeDecl(name, [], None, typtr))
+            stmt = Assignment(
+                "=",
+                arrayref,
+                FuncCall(ID("malloc"), ExprList([size])),
+            )
 
-            # For 3+ dimensions (e.g array[0][1][2])
-            for i in range(self.dimension-2, 0, -1):
+            decls = self.for_ast(
+                index,
+                self._size(self.sizes[i - 1]),
+                Compound([stmt, decls]),
+            )
 
-                index = f'malloc_idx_1'
-                arrayref = ArrayRef(ID(name), ID(index))
-                for j in range(2, i+1):
-                    index = f'malloc_idx_{j}'
-                    arrayref = ArrayRef(arrayref, ID(index))
+            typtr = PtrDecl([], typtr)
 
-                sizeof = FuncCall(ID('sizeof'), ExprList([typtr]))
-                binop = BinaryOp('*', sizeof, self._size(self.sizes[i]))
-                stmt = Assignment('=', arrayref, FuncCall(
-                    ID('malloc'), ExprList([binop])))
-                decls = self.For_ast(index, self._size(
-                    self.sizes[i-1]), Compound([stmt, decls]))
-
-                typtr = PtrDecl([], typtr)
-
-            code.append(decls)
-
+        code.append(decls)
         return code
 
     def gen_array_decl(self, const=None):
-        ampersand = '&'
+        """
+        Generate the appropriate array declaration.
 
-        if const is not None:
+        Without ``const``, a stack-allocated array is generated. Otherwise,
+        the array is represented as a pointer declaration initialized with
+        the provided constant value.
 
-            if const == ampersand:
-                self.dimension -= 1
+        The special ``&`` value indicates that the generated declaration
+        represents a pointer to the array rather than the array itself.
+        """
 
-            name = self.argname.name
-            typedecl = TypeDecl(
-                name, [], None, IdentifierType(names=[self.vartype]))
-            ptr = PtrDecl([], typedecl)
-            for _ in range(1, self.dimension):
-                ptr = PtrDecl([], ptr)
+        if const is None:
+            return self.declare_stack_array()
 
-            if const == ampersand:
-                rvalue = None
-            else:
-                rvalue = self.const_rvalue(const)
+        if const == "&":
+            self.dimension -= 1
+            rvalue = None
+        else:
+            rvalue = self.const_rvalue(const)
 
-            decl = Decl(name, [], [], [], [], ptr, rvalue, None)
-            return [decl]
+        name = self.argname.name
+        typedecl = TypeDecl(name, [], None, IdentifierType([self.vartype]))
 
-        return self.declare_stack_array()
+        ptr = PtrDecl([], typedecl)
 
-    # Standard 'for' loop to fill array
+        for _ in range(1, self.dimension):
+            ptr = PtrDecl([], ptr)
 
-    def For_ast(self, index, size, stmt):
+        return [Decl(name, [], [], [], [], ptr, rvalue, None)]
 
-        # For-init
-        typedecl = TypeDecl(index, [], None, IdentifierType(names=['int']))
-        decl = Decl(index, [], [], [], [], typedecl,
-                    Constant('int', str(0)), None)
+    def for_ast(self, index, size, stmt):
+        """Create a C ``for`` loop over an array dimension.
+
+        The generated loop has the form::
+
+            for (int index = 0; index < size; index++)
+                stmt;
+        """
+        typedecl = TypeDecl(index, [], None, IdentifierType(["int"]))
+        zero = Constant("int", "0")
+        decl = Decl(index, [], [], [], [], typedecl, zero, None)
         init = DeclList(decls=[decl])
 
-        # For-condition
-        cond = BinaryOp(op='<', left=ID(index), right=size)
+        cond = BinaryOp("<", ID(index), size)
+        nxt = UnaryOp("p++", ID(index))
 
-        # For-next
-        nxt = UnaryOp(op='p++', expr=ID(index))
-
-        # Create the For node
         return For(init, cond, nxt, stmt)
 
     def symbolic_rvalue_array(self, name, index, vartype):
+        """
+        Generate an expression for a symbolic array element.
 
-        # Multiply sizeof by 8bits
-        multiply = BinaryOp(op='*', left=FuncCall(ID('sizeof'),
-                            ExprList([ID(vartype)])), right=Constant('int', str(8)))
+        The generated call invokes ``sym_var_array`` with the array name,
+        element index, and element size in bits.
 
-        # Create Rvalue
-        sizeof = ExprList([name, index, multiply])
-        rvalue = FuncCall(ID('sym_var_array'), sizeof)
+        The element size is calculated as::
 
-        return rvalue
+            sizeof(vartype) * 8
+        """
+        call = ID(api_map().sym_var_array)
 
-    def fill_concrete(self, lvalue, const: list, size):
-        char = Constant('char', '\'1\'')
+        sizeof = FuncCall(ID("sizeof"), ExprList([ID(vartype)]))
+        size = BinaryOp("*", sizeof, Constant("int", "8"))
+
+        return FuncCall(call, ExprList([name, index, size]))
+
+    def fill_concrete(self, lvalue, const, size):
+        """
+        Generate statements that initialize concrete array elements.
+
+        If ``const`` is a string, its first character determines how many
+        elements are initialized at pseudo-random indices. If ``const`` is a
+        list, its values are interpreted as explicit element indices.
+
+        All initialized elements receive the character value ``'1'``.
+        """
+        char = Constant("char", "'1'")
 
         if isinstance(const, str):
-            code = []
-            n = int(const[0])
-            for _ in range(n):
-                index = random.randint(10, 20)
-                index = BinaryOp('%', Constant('int', str(index)), size)
-                code.append(fill_array(lvalue, char, index))
+            count = int(const[0])
 
-            return code
+            return [
+                fill_array(
+                    lvalue,
+                    char,
+                    BinaryOp(
+                        "%",
+                        Constant("int", str(random.randint(10, 20))),
+                        size,
+                    ),
+                )
+                for _ in range(count)
+            ]
 
-        elif isinstance(const, list):
-            return [fill_array(lvalue, char, Constant('int', str(index))) for index in const]
+        if isinstance(const, list):
+            return [
+                fill_array(lvalue, char, Constant("int", str(index)))
+                for index in const
+            ]
 
-        else:
-            return []
+        return []

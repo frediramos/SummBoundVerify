@@ -2,16 +2,15 @@ import os
 import json
 
 from pathlib import Path
-from urllib.parse import urlparse
 from tempfile import mkstemp, gettempdir
 
 
-def current_file(__file__: str) -> Path:
-    return Path(__file__).resolve()
+def current_file(file: str | Path) -> Path:
+    return Path(file).resolve()
 
 
-def current_dir(__file__: str) -> Path:
-    return current_file(__file__).parent
+def current_dir(file: str | Path) -> Path:
+    return current_file(file).parent
 
 
 def read_file(path: str | Path) -> str:

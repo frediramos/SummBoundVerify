@@ -90,7 +90,7 @@ class MemoryPermissionsError(RunError):
 
 
 class FileParseError(GenError):
-    def __init__(self, file: Path, pycparser_error: ParseError):
+    def __init__(self, file: str | Path, pycparser_error: ParseError):
         self.file = file
         err = str(pycparser_error)
         message = (
