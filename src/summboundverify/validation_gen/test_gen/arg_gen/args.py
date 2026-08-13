@@ -90,29 +90,33 @@ class SymbolicArgs:
         for index, arg in enumerate(self._args, start=1):
             default_value = default.get(index)
 
+            size_macro = next(self._size_values, None)
+            null = next(self._null_values, None)
+            concrete_arr = concrete.get(index)
+
             visitor = ArgVisitor(
-                next(self._size_values, None),
-                self._max_macro,
-                next(self._null_values, None),
-                self._max_args,
-                default_value,
-                concrete.get(index),
+                size_macro=size_macro,
+                max_macro=self._max_macro,
+                null=null,
+                max_args=self._max_args,
+                default=default_value,
+                concrete_arr=concrete_arr,
             )
 
             visitor.visit(arg)
 
-            argument = visitor.argname
-            assert argument is not None
+            argname = visitor.argname
+            assert argname is not None
 
             if default_value == "&":
-                argument = f"&{argument}"
+                argname = f"&{argname}"
 
             arg_type = visitor.get_type()
 
-            self._call_args.append(argument)
+            self._call_args.append(argname)
             self._code.extend(visitor.gen_code())
             self._types.extend(arg_type)
-            self._arg_types[argument] = arg_type
+            self._arg_types[argname] = arg_type
 
         return self._code
 

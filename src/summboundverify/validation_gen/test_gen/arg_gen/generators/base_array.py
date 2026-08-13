@@ -1,22 +1,22 @@
 import random
 
 from pycparser.c_ast import (
-    ID,
-    For,
-    Decl,
-    PtrDecl,
-    UnaryOp,
+    ArrayDecl,
     ArrayRef,
+    Assignment,
     BinaryOp,
     Compound,
     Constant,
+    Decl,
     DeclList,
     ExprList,
+    For,
     FuncCall,
-    TypeDecl,
-    ArrayDecl,
-    Assignment,
+    ID,
     IdentifierType,
+    PtrDecl,
+    TypeDecl,
+    UnaryOp,
 )
 
 from summboundverify.api import api_map
@@ -26,19 +26,21 @@ from .default import DefaultGen
 
 
 class ArrayGen(DefaultGen):
-    """
-    Generate declarations and initialization code for symbolic arrays.
+    """Generate declarations and initialization code for symbolic arrays.
 
     Supports both stack-allocated C arrays and heap-allocated arrays created
-    through ``malloc``. Multi-dimensional heap arrays are represented as
-    nested pointers, with one allocation loop for each dimension.
+    through ``malloc``.
 
-    For example, a two-dimensional array::
+    A two-dimensional stack array produces:
+
+        int array[rows][columns];
+
+    A two-dimensional heap array produces:
 
         int **array = malloc(sizeof(int *) * rows);
 
-        for (int i = 0; i < rows; i++)
-            array[i] = malloc(sizeof(int) * columns);
+        for (int malloc_idx_1 = 0; malloc_idx_1 < rows; malloc_idx_1++)
+            array[malloc_idx_1] = malloc(sizeof(int) * columns);
     """
 
     def __init__(self, name, vartype, array):
@@ -48,12 +50,16 @@ class ArrayGen(DefaultGen):
         self.dimension = len(array)
 
     def _size(self, value: str):
-        """
-        Convert an array size into a C AST expression.
+        """Convert an array size into a C AST expression.
 
-        Numeric sizes are represented as integer constants. Named sizes are
-        resolved through ``size_macros`` when available; otherwise they are
-        represented as C identifiers.
+        Numeric sizes produce integer constants. Named sizes are resolved
+        through ``size_macros`` when available.
+
+        For example:
+
+            "10"         -> 10
+            "array"      -> ARRAY_SIZE_MACRO
+            "my_size"    -> my_size
         """
         if value.isnumeric():
             return Constant("int", value)
@@ -61,14 +67,11 @@ class ArrayGen(DefaultGen):
         return self.size_macros.get(value, ID(value))
 
     def declare_stack_array(self, const=None):
-        """
-        Generate a stack-allocated N-dimensional array declaration.
+        """Generate a stack-allocated N-dimensional array declaration.
 
-        For example, an array with sizes ``[10, 5]`` produces::
+        For sizes ``[10, 5]``, produces:
 
             int array[10][5];
-
-        ``const`` is passed directly to the generated ``Decl`` node.
         """
         name = self.argname.name
         typedecl = TypeDecl(name, [], None, IdentifierType([self.vartype]))
@@ -81,31 +84,19 @@ class ArrayGen(DefaultGen):
         return [Decl(name, [], [], [], [], array, const, None)]
 
     def declare_heap_array(self):
-        """
-        Generate a heap-allocated N-dimensional array.
+        """Generate a heap-allocated N-dimensional array.
 
-        The first dimension is allocated when the array is declared. For
-        additional dimensions, nested ``for`` loops allocate each sub-array.
-
-        For example, a two-dimensional ``int`` array produces code equivalent
-        to::
+        For ``int array[rows][columns]``, produces:
 
             int **array = malloc(sizeof(int *) * rows);
 
             for (int malloc_idx_1 = 0; malloc_idx_1 < rows; malloc_idx_1++)
-                array[malloc_idx_1] =
-                    malloc(sizeof(int) * columns);
-
-        The generated AST uses ``malloc_idx_N`` as the loop variable for
-        dimension ``N``.
+                array[malloc_idx_1] = malloc(sizeof(int) * columns);
         """
         name = self.argname.name
 
         typedecl = TypeDecl(name, [], None, IdentifierType([self.vartype]))
-        typtr = PtrDecl(
-            [],
-            TypeDecl(name, [], None, IdentifierType([self.vartype])),
-        )
+        typtr = PtrDecl([], typedecl)
 
         for _ in range(1, self.dimension - 1):
             typtr = PtrDecl([], typtr)
@@ -130,8 +121,8 @@ class ArrayGen(DefaultGen):
         index = "malloc_idx_1"
         arrayref = ArrayRef(ID(name), ID(index))
 
-        for i in range(2, self.dimension):
-            index = f"malloc_idx_{i}"
+        for dimension in range(2, self.dimension):
+            index = f"malloc_idx_{dimension}"
             arrayref = ArrayRef(arrayref, ID(index))
 
         size = BinaryOp("*", sizeof, self._size(self.sizes[-1]))
@@ -144,23 +135,22 @@ class ArrayGen(DefaultGen):
         decls = self.for_ast(
             index,
             self._size(self.sizes[-2]),
-            Compound([stmt]),
+            Compound([stmt])
         )
 
-        # Each outer dimension points to an array of the type constructed
-        # for the dimension immediately inside it.
+        # Allocate each outer dimension.
         typtr = PtrDecl([], TypeDecl(name, [], None, typtr))
 
-        for i in range(self.dimension - 2, 0, -1):
+        for dimension in range(self.dimension - 2, 0, -1):
             index = "malloc_idx_1"
             arrayref = ArrayRef(ID(name), ID(index))
 
-            for j in range(2, i + 1):
-                index = f"malloc_idx_{j}"
+            for inner in range(2, dimension + 1):
+                index = f"malloc_idx_{inner}"
                 arrayref = ArrayRef(arrayref, ID(index))
 
             sizeof = FuncCall(ID("sizeof"), ExprList([typtr]))
-            size = BinaryOp("*", sizeof, self._size(self.sizes[i]))
+            size = BinaryOp("*", sizeof, self._size(self.sizes[dimension]))
 
             stmt = Assignment(
                 "=",
@@ -170,7 +160,7 @@ class ArrayGen(DefaultGen):
 
             decls = self.for_ast(
                 index,
-                self._size(self.sizes[i - 1]),
+                self._size(self.sizes[dimension - 1]),
                 Compound([stmt, decls]),
             )
 
@@ -180,32 +170,32 @@ class ArrayGen(DefaultGen):
         return code
 
     def gen_array_decl(self, const=None):
+        """Generate an array or pointer declaration.
+
+        With no constant, produces a stack-allocated array:
+
+            int array[10][5];
+
+        With a constant, produces a pointer declaration initialized with
+        that value.
+
+        The special ``&`` value does not initialize the array and removes a '*' level.
         """
-        Generate the appropriate array declaration.
-
-        Without ``const``, a stack-allocated array is generated. Otherwise,
-        the array is represented as a pointer declaration initialized with
-        the provided constant value.
-
-        The special ``&`` value indicates that the generated declaration
-        represents a pointer to the array rather than the array itself.
-        """
-
         if const is None:
             return self.declare_stack_array()
 
         if const == "&":
-            self.dimension -= 1
+            dimension = self.dimension - 1
             rvalue = None
         else:
+            dimension = self.dimension
             rvalue = self.const_rvalue(const)
 
         name = self.argname.name
         typedecl = TypeDecl(name, [], None, IdentifierType([self.vartype]))
-
         ptr = PtrDecl([], typedecl)
 
-        for _ in range(1, self.dimension):
+        for _ in range(1, dimension):
             ptr = PtrDecl([], ptr)
 
         return [Decl(name, [], [], [], [], ptr, rvalue, None)]
@@ -213,7 +203,7 @@ class ArrayGen(DefaultGen):
     def for_ast(self, index, size, stmt):
         """Create a C ``for`` loop over an array dimension.
 
-        The generated loop has the form::
+        Produces:
 
             for (int index = 0; index < size; index++)
                 stmt;
@@ -229,32 +219,31 @@ class ArrayGen(DefaultGen):
         return For(init, cond, nxt, stmt)
 
     def symbolic_rvalue_array(self, name, index, vartype):
-        """
-        Generate an expression for a symbolic array element.
+        """Generate a symbolic array-element expression.
 
-        The generated call invokes ``sym_var_array`` with the array name,
-        element index, and element size in bits.
+        Produces a call equivalent to:
 
-        The element size is calculated as::
-
-            sizeof(vartype) * 8
+            sym_var_array(name, index, sizeof(vartype) * 8);
         """
         call = ID(api_map().sym_var_array)
-
         sizeof = FuncCall(ID("sizeof"), ExprList([ID(vartype)]))
         size = BinaryOp("*", sizeof, Constant("int", "8"))
 
         return FuncCall(call, ExprList([name, index, size]))
 
     def fill_concrete(self, lvalue, const, size):
-        """
-        Generate statements that initialize concrete array elements.
+        """Generate statements that initialize concrete array elements.
 
-        If ``const`` is a string, its first character determines how many
-        elements are initialized at pseudo-random indices. If ``const`` is a
-        list, its values are interpreted as explicit element indices.
+        A string uses its first character as the number of elements to fill
+        at random indices. A list specifies the indices explicitly.
 
-        All initialized elements receive the character value ``'1'``.
+        Every selected element receives ``'1'``.
+
+        For example, ``const=[0, 2, 5]`` produces assignments equivalent to:
+
+            array[0] = '1';
+            array[2] = '1';
+            array[5] = '1';
         """
         char = Constant("char", "'1'")
 
