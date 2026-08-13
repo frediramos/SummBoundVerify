@@ -1,23 +1,34 @@
-from pycparser.c_ast import *
-from ..default import DefaultGen
+from pycparser.c_ast import Decl, ExprList, FuncCall, ID, IdentifierType, TypeDecl
 
-# Create a symbolic struct (call respective function)
+from ..default import DefaultGen
 
 
 class StructTypeGen(DefaultGen):
-    def __init__(self, name, vartype):
-        super().__init__(name, vartype)
+    """Generate a symbolic struct variable.
+
+    For example, for ``name="x"`` and ``vartype="struct foo"``, generates:
+
+        struct foo x = create_struct_foo(fuel);
+    """
 
     def gen(self):
+        """Generate the declaration of the symbolic struct variable.
 
+        The struct is initialized by calling its corresponding
+        ``create_<struct>`` function with the current fuel value.
+        """
         name = self.argname.name
-        fname = self.vartype.replace(' ', '_')
+        struct_type = self.vartype.replace(" ", "_")
 
-        # Declare Variable
-        lvalue = TypeDecl(name, [], None, IdentifierType(names=[self.vartype]))
-        rvalue = FuncCall(ID(f'create_{fname}'), ExprList([self.fuel]))
+        # Declare the variable using its struct type.
+        type_decl = TypeDecl(
+            name, [], None, IdentifierType(names=[self.vartype])
+        )
 
-        # Assemble declaration
-        decl = Decl(name, [], [], [], [], lvalue, rvalue, None)
+        # Initialize it using the generated struct constructor.
+        rvalue = FuncCall(
+            ID(f"create_{struct_type}"),
+            ExprList([self.fuel]),
+        )
 
-        return [decl]
+        return [Decl(name, [], [], [], [], type_decl, rvalue, None)]

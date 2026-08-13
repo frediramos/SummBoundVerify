@@ -9,12 +9,8 @@ from summboundverify.exceptions import (
 from pycparser.c_ast import Decl, FuncDecl, FuncDef, NodeVisitor
 
 
-"""
-Visit the ASt to separate each elemenet of interest function definitions; defined structs; and Typedefs
-"""
-
-
 class ReturnTypeVisior(NodeVisitor):
+
     def __init__(self):
         self.name: str
         self.ptr = 0
@@ -64,6 +60,9 @@ class Function:
 
 
 class FunctionVisitor(NodeVisitor):
+    """
+    Visit the ASt to separate each elemenet of interest function definitions; defined structs; and Typedefs
+    """
 
     def __init__(self, ast, filename):
 
