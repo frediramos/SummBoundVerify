@@ -6,8 +6,9 @@ from pycparser.c_ast import Node
 from .visitors.function_args import ArgVisitor
 
 
-class SymbolicArgs:
-    """Generates the symbolic variables required to call a function.
+class SymbolicArgGen:
+    """
+    Generates the symbolic variables required to call a function.
 
     The class visits each function argument using ``ArgVisitor`` and collects:
 

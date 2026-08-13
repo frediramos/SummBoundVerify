@@ -10,10 +10,10 @@ from summboundverify.exceptions import (
     ReturnMismatchError,
 )
 from summboundverify.utils.summary import FunctionType
+from summboundverify.utils.visitors import FunctionVisitor, Function
 
-from .visitors import FunctionVisitor, Function
-from ..test_gen.arg_gen import SymbolicArgs
-from ..utils import parse_file
+from .test.args import SymbolicArgGen
+from .utils import parse_file
 
 _CGEN = CGenerator()
 
@@ -73,7 +73,7 @@ class FunctionParser:
         return name, function, list(functions.values())
 
     def _args(self, function: Function) -> list[str]:
-        visitor = SymbolicArgs(function.args)
+        visitor = SymbolicArgGen(function.args)
         return visitor.types
 
     def arguments(self, concrete: Function | None, summary: Function | None) -> ParamList:

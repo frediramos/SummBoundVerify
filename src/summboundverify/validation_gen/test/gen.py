@@ -12,10 +12,19 @@ from pycparser.c_ast import (
     TypeDecl,
     IdentifierType,
 )
+from .args import SymbolicArgGen
 
-from ..api_gen.gen import *
+from ..api import (
+    mem_addr,
+    save_current_state,
+    get_cnstr,
+    store_cnstr,
+    halt_all,
+    check_implications,
+    print_counterexamples
+)
+
 from ..utils import return_value
-from .arg_gen import SymbolicArgs
 
 
 class TestGen:
@@ -80,7 +89,7 @@ class TestGen:
         test_id: int,
     ) -> FuncDef:
         """Generate a validation test."""
-        sym_args = SymbolicArgs(
+        sym_args = SymbolicArgGen(
             self.args, size_macro, null_bytes, max_macro, self.max_args
         )
 

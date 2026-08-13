@@ -66,3 +66,11 @@ def tmp_dir() -> Path:
 def dump_json(file: str | Path, obj, indent=2):
     json_str = json.dumps(obj, indent=indent, ensure_ascii=False)
     write_file(file, json_str)
+
+
+def fake_libc_path():
+    path = current_dir(__file__) / "fake_libc_include"
+    if not path.is_dir():
+        err = "Could not locate pycparser fake_libc_include"
+        raise RuntimeError(err)
+    return path

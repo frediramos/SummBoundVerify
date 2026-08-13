@@ -13,7 +13,7 @@ from pycparser.c_ast import (
 )
 from pycparser.c_parser import ParseError
 
-from summboundverify.utils.files import current_dir
+from summboundverify.utils.files import fake_libc_path
 from summboundverify.exceptions import FileParseError
 
 SIZE_MACRO = 'SIZE'
@@ -21,14 +21,6 @@ FUEL_MACRO = 'FUEL'
 MAX_MACRO = 'MAX_NUM'
 ARRAY_SIZE_MACRO = 'ARRAY_SIZE'
 POINTER_SIZE_MACRO = 'POINTER_SIZE'
-
-
-def fake_libc_path():
-    path = current_dir(__file__) / "fake_libc_include"
-    if not path.is_dir():
-        err = "Could not locate pycparser fake_libc_include"
-        raise RuntimeError(err)
-    return path
 
 
 def parse_file(file):

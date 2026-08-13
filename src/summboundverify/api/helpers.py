@@ -13,11 +13,13 @@ from pycparser.c_ast import (
     TypeDecl,
 )
 
+from summboundverify.utils.files import fake_libc_path
+from summboundverify.utils.visitors import FunctionVisitor
+
 from summboundverify.exceptions import FileParseError
 
 
 def parse_api(sra: Path, *includes: Path) -> FileAST:
-    from summboundverify.validation_gen.utils import fake_libc_path
 
     fakelib = str(fake_libc_path())
     include_list = [f'-include{i}' for i in includes]
@@ -65,7 +67,6 @@ def _make_stub(function) -> str:
 
 
 def get_stubs(file: Path, types: Path) -> dict[str, str]:
-    from summboundverify.validation_gen.function_parser import FunctionVisitor
 
     stubs = {}
     ast = parse_api(file, types)
