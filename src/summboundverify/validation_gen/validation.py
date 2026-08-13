@@ -4,17 +4,16 @@ from pycparser import c_generator
 from pycparser.c_ast import ID, FuncDef, FileAST, FuncCall, Compound
 
 from summboundverify.api import macros, type_stubs, required_stubs, sra_stubs
+from summboundverify.utils.visitors import FuncCallsVisitor
 
 from .utils import *
-from .utils.visitors import FuncCallsVisitor
-
 from .generator import Generator
-from .function_parser import FunctionParser
-from .api_gen import halt_all, save_current_state
+from .parser import FunctionParser
+from .api import halt_all, save_current_state
 
 
-from .test_gen import TestGen
-from .test_gen.arg_gen.visitors.structs import StructVisitor
+from .test import TestGen
+from .test.args.visitors.structs import StructVisitor
 
 
 class ValidationGenerator(Generator):
