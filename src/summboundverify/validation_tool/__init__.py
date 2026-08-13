@@ -14,7 +14,14 @@ def __getattr__(name):
         from .fuzz_engine import aflEngine
         return aflEngine
 
+    if name in ('summary_formulas', 'validate_by_sampling', 'log_report'):
+        from . import sampling
+        return getattr(sampling, name)
+
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = ['angrEngine', 'aflEngine']
+__all__ = [
+    'angrEngine', 'aflEngine',
+    'summary_formulas', 'validate_by_sampling', 'log_report',
+]

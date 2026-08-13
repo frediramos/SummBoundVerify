@@ -93,23 +93,34 @@ static int record(const char *path)
 }
 
 /* Dump totals where the engine can find them; the persistent loop means the
- * process may be restarted many times, so last writer wins. */
+ * process may be restarted many times, so last writer wins.
+ *
+ * open/write rather than fopen/fprintf, for the same reason record() reads
+ * that way: stdio allocates its buffer through malloc, a target's helper
+ * library may have routed malloc to mem_alloc, and fclose would then hand an
+ * arena pointer to glibc's free(). That aborts with "free(): invalid
+ * pointer" -- at exit, where AFL++ reads it as a crash. */
 static void write_stats(void)
 {
     const char *path = getenv("SBV_STATS_FILE");
-    FILE *f;
+    char line[128];
+    int fd, n;
 
     if (!path)
         return;
 
-    f = fopen(path, "w");
-    if (!f)
+    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0)
         return;
 
-    fprintf(f, "execs=%lu rejected=%lu exited=%lu\n",
-            sbv_sample_total_execs(), sbv_sample_total_rejected(),
-            sbv_sample_total_exited());
-    fclose(f);
+    n = snprintf(line, sizeof(line), "execs=%lu rejected=%lu exited=%lu\n",
+                 sbv_sample_total_execs(), sbv_sample_total_rejected(),
+                 sbv_sample_total_exited());
+
+    if (n > 0)
+        (void)!write(fd, line, (size_t)n);
+
+    close(fd);
 }
 
 int main(int argc, char **argv)

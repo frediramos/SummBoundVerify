@@ -6,7 +6,7 @@
  *   V <name> <index|-> <bits> <off> <len> <hex>   one per drawn input,
  *                                       where off/len locate it on the tape
  *   M <name> <nbytes> <hex>            one per tagged region, contents after
- *   R <bits> <hex>                     absent for a void function
+ *   R <bits> <is_pointer> <hex>        absent for a void function
  *   E ok <test>                        closes the block and names it
  *
  * and, for a run the test's own assumptions turned away:
@@ -29,7 +29,6 @@
 
 #include <setjmp.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 /* The build redirects the target's exit() here with -Dexit=sbv_exit. This
@@ -39,6 +38,7 @@
 #define SBV_MAX_REGIONS 16
 #define SBV_MAX_REGION_LEN 4096
 #define SBV_MAX_CHUNKS 64
+#define SBV_ARENA_SIZE (1u << 20)
 #define SBV_NAME_LEN 64
 
 /* Input tape ------------------------------------------------------------ */
@@ -253,8 +253,37 @@ int _OR_(int a, int b) { return a || b; }
 
 /* Heap ------------------------------------------------------------------ */
 
-/* Sizes of the live allocations, so n_allocd() can answer. Freed slots are
- * reused; the table only has to outlive one execution. */
+/*
+ * Abandon this run.
+ *
+ * Not an abort: the harness dying is what AFL++ reads as a crash, and a
+ * crash the harness caused itself would be reported as a finding about the
+ * function under test. Discarded like a rejected input instead.
+ */
+static void fail(const char *why)
+{
+    fprintf(stderr, "sbv: %s\n", why);
+    g_total_rejected++;
+    longjmp(g_reject_jmp, 1);
+}
+
+/*
+ * A private arena, rather than libc's allocator.
+ *
+ * This is not an optimisation, it is the only way this can work. A concrete
+ * function's helper library routes malloc through mem_alloc so angr can track
+ * the region, and that override applies to the whole program:
+ *
+ *     lib.c:   void *malloc(size_t n) { return mem_alloc(n); }
+ *
+ * so a mem_alloc that called malloc would call straight back into itself.
+ * Confirmed as the cause of the strdup harness dying with SIGSEGV. The damage
+ * is wider than it looks, too: every libc routine that allocates internally
+ * -- printf among them -- enters the same cycle.
+ *
+ * Bump allocation, reset per execution. Nothing here needs to reuse freed
+ * space: a run draws a bounded input and ends.
+ */
 typedef struct {
     void *ptr;
     size_t size;
@@ -262,13 +291,25 @@ typedef struct {
 
 static chunk_t g_chunks[SBV_MAX_CHUNKS];
 
+static unsigned char g_arena[SBV_ARENA_SIZE];
+static size_t g_arena_pos;
+
 void *mem_alloc(size_t bytes)
 {
-    void *ptr = malloc(bytes);
+    unsigned char *ptr;
+    size_t aligned = (bytes + 7u) & ~(size_t)7u;
     int i;
 
-    if (ptr == NULL)
+    if (aligned == 0)
+        aligned = 8;
+
+    if (g_arena_pos + aligned > sizeof(g_arena)) {
+        fail("the sampling arena is exhausted");
         return NULL;
+    }
+
+    ptr = &g_arena[g_arena_pos];
+    g_arena_pos += aligned;
 
     for (i = 0; i < SBV_MAX_CHUNKS; i++) {
         if (g_chunks[i].ptr == NULL) {
@@ -285,6 +326,8 @@ void mem_free(void *ptr)
 {
     int i;
 
+    /* Forgotten, not reclaimed: the arena is rewound wholesale when the next
+     * execution starts, and a run is far too short for reuse to matter. */
     for (i = 0; i < SBV_MAX_CHUNKS; i++) {
         if (g_chunks[i].ptr == ptr) {
             g_chunks[i].ptr = NULL;
@@ -292,8 +335,6 @@ void mem_free(void *ptr)
             break;
         }
     }
-
-    free(ptr);
 }
 
 size_t n_allocd(void *ptr)
@@ -331,7 +372,20 @@ void mem_addr(char *name, void *addr, size_t len)
     r->len = len;
 }
 
-void sbv_record(char *test, void *ret, size_t bits)
+/*
+ * Returning an address is different in kind from returning a value.
+ *
+ * The number itself carries no meaning across runs: symbolically it is
+ * wherever angr laid the buffer out, concretely it is wherever the loader
+ * did, and neither says anything about the other. Comparing them produced a
+ * confident counterexample for a memcpy summary that is perfectly correct.
+ *
+ * So the flag travels with the value and the checker declines to compare it.
+ * What a pointer return *does* mean -- which of the arguments it aliases --
+ * would need the addresses of those arguments recorded on both sides, and
+ * the symbolic side only knows them when regions are tagged with mem_addr.
+ */
+void sbv_record(char *test, void *ret, size_t bits, int is_pointer)
 {
     int i;
 
@@ -356,7 +410,7 @@ void sbv_record(char *test, void *ret, size_t bits)
 
         sbv_memcpy(bytes, (const unsigned char *)ret, nbytes);
 
-        printf("R %lu ", (unsigned long)bits);
+        printf("R %lu %d ", (unsigned long)bits, is_pointer ? 1 : 0);
         put_hex(bytes, nbytes);
         putchar('\n');
     }
@@ -375,6 +429,14 @@ static void reset(const unsigned char *data, size_t len, int record)
 
     g_nregions = 0;
     g_record = record;
+
+    /* Rewind the arena wholesale: each execution allocates from scratch, and
+     * the persistent loop would otherwise exhaust it after enough runs. */
+    g_arena_pos = 0;
+    for (int i = 0; i < SBV_MAX_CHUNKS; i++) {
+        g_chunks[i].ptr = NULL;
+        g_chunks[i].size = 0;
+    }
 }
 
 int sbv_sample_exec(const unsigned char *data, size_t len,

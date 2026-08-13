@@ -1,38 +1,41 @@
 """Whether symbolic execution can say anything useful about a target.
 
-angr *executes* the generated test, so a concrete function it cannot follow
-does not yield a weaker verdict -- it yields none at all, usually by running
-until the timeout. This refuses those targets up front and names the reason,
-overriding an explicit `--engine se`, because fuzzing can still validate them
-and a run that hangs for the full timeout helps nobody.
+Symbolic execution runs *both* the summary and the concrete function, and the
+concrete function is the hard one: it is ordinary C with loops, allocation and
+recursion, and when angr cannot follow it the result is not a weaker verdict
+but none at all, usually by running until the timeout. This refuses those
+targets up front and names the reason, overriding an explicit `--engine se`.
+
+Sampling has no such problem, and that asymmetry is the whole reason this
+module exists. It never executes the concrete function symbolically -- it runs
+it natively under AFL++ and only reasons about the summary, which is written
+against the API and is loop-free by construction. So a target refused here is
+not a target that cannot be validated; it is one that goes to the other
+engine.
 
 The criterion is deliberately narrow, and it is narrow because measuring it
-showed a wide one to be wrong:
+showed a wide one to be wrong. Four rules have been added on plausible
+reasoning and removed on evidence:
 
-* `malloc` and friends were in here at first. They should not be: angr models
-  allocation perfectly well, and `tests/libc/synth/*/strdup` passes under
-  symbolic execution while calling `malloc`.
-* File I/O was in here too, on the theory that angr cannot model it, and it
-  was removed once measuring showed the real limit was earlier: the test
-  generator cannot build a `FILE *` at all, so those targets fail for
-  **both** engines and skipping symbolic execution only hands the work to a
-  fuzzing run that is equally doomed. It belongs here the day the generator
-  can build one, and not before.
-* Non-local control flow (`exit`, `abort`, `longjmp`) was listed on the
-  reasoning that the symbolic path simply disappears. Measuring killed it too:
-  a concrete function calling `exit(1)` terminates the harness process, which
-  AFL++ records as a crash, so fuzzing reports a confident `crashed` verdict
-  for a summary that is not wrong at all. Handing the target to fuzzing is
-  worse than not skipping, because a fabricated finding costs more than a
-  missing one.
+* `malloc` and friends. angr models allocation perfectly well, and the strdup
+  tests pass under symbolic execution while calling it.
+* File I/O, on the theory that angr cannot model it. The real limit was
+  earlier: the generator cannot build a `FILE *` at all, so those targets fail
+  for **both** engines and skipping symbolic execution only hands the work to
+  a run that is equally doomed.
+* Non-local control flow (`exit`, `abort`, `longjmp`), on the reasoning that
+  the symbolic path disappears. A concrete function calling `exit(1)`
+  terminates the harness, which AFL++ records as a crash -- so handing the
+  target to sampling was *worse* than not skipping, because it manufactured a
+  finding. Fixed at the source instead, with `sbv_exit`.
+* Floating point, because `sym_var` refused a bitvector wider than the
+  architecture. That was a restriction on the wrong primitive: `sym_var_bytes`
+  writes through a pointer and never returns the value in a register, so a
+  64-bit double is fine at -m32. Lifted.
 
-The rule that survives all of this: only skip symbolic execution when fuzzing
+The rule that survives all of this: only skip symbolic execution when sampling
 can genuinely take over. Anything else trades a missing verdict for a false
 one.
-
-What is left is what the generator *can* build and fuzzing *can* run, but
-symbolic execution cannot: either it never finishes, or the primitive the
-argument needs has no symbolic counterpart at this word size.
 """
 
 import logging
@@ -53,10 +56,6 @@ from summboundverify.validation_gen.function_parser.visitors import (
 logger = logging.getLogger(__name__)
 
 
-# Argument types drawn through sym_var_bytes(). The concrete runtime fills
-# them byte by byte, which works at any width; the symbolic backend has to
-# mint a bitvector no wider than the architecture, so a double is refused
-# outright at -m32. Fuzz-only, therefore.
 FLOAT_TYPES = frozenset({'float', 'double', 'long double'})
 
 

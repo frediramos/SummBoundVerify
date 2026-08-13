@@ -79,6 +79,22 @@ def _le_int(raw: bytes) -> int:
     return int.from_bytes(raw, byteorder='little', signed=False)
 
 
+def sample_key(sample) -> tuple:
+    """What makes two samples the same observation.
+
+    The input, and nothing else. The function under test is deterministic, so
+    a repeated input can only produce a repeated output: keeping it would
+    inflate the sample count without checking the summary anywhere new.
+    """
+    return (
+        sample.test,
+        sample.rejected,
+        tuple(sorted(
+            (name, value.raw) for name, value in sample.inputs.items()
+        )),
+    )
+
+
 @dataclass
 class Value:
     """One named quantity, kept as bytes first and a number second.
@@ -123,6 +139,10 @@ class Sample:
     memory: dict[str, Value] = field(default_factory=dict)
     ret: Value | None = None
 
+    # An address, rather than a value. The number is meaningless across runs,
+    # so it is recorded but not compared.
+    ret_is_pointer: bool = False
+
     def as_dict(self) -> dict:
         return {
             'test': self.test,
@@ -131,6 +151,7 @@ class Sample:
             'inputs': {k: v.as_dict() for k, v in self.inputs.items()},
             'memory': {k: v.as_dict() for k, v in self.memory.items()},
             'ret': self.ret.as_dict() if self.ret else None,
+            'ret_is_pointer': self.ret_is_pointer,
         }
 
 
@@ -451,9 +472,10 @@ class aflEngine():
                     int(nbytes) * 8, bytes.fromhex(raw)
                 )
 
-            elif kind == 'R' and len(parts) == 2:
-                bits, raw = parts
+            elif kind == 'R' and len(parts) == 3:
+                bits, pointer, raw = parts
                 current.ret = Value(int(bits), bytes.fromhex(raw))
+                current.ret_is_pointer = pointer == '1'
 
             elif kind == 'E':
                 if parts and parts[0] == 'rejected':
@@ -466,29 +488,33 @@ class aflEngine():
 
         return samples
 
+    def sample_tape(self, data: bytes, name: str) -> list[Sample]:
+        """Run one constructed tape, outside the campaign.
+
+        The campaign picks inputs by coverage of the concrete function; this is
+        how an input picked for a different reason -- a path of the *summary*
+        that nothing reached -- gets executed and recorded. The tape is kept on
+        disk next to the queue so a finding can be replayed by hand.
+        """
+        tape = self.workdir / 'guided' / name
+        tape.parent.mkdir(parents=True, exist_ok=True)
+        tape.write_bytes(data)
+
+        return self._record(tape)
+
     def collect(self, queue: Path) -> list[Sample]:
         """Replay every tape and keep the distinct pairs.
 
         Different tapes routinely draw the same arguments -- AFL++ keeps an
         input for the coverage it reaches, and the float seeds all begin with
-        zero bytes, so a plain replay of the queue is mostly repeats. The
-        function under test is deterministic, so a repeated input can only
-        produce a repeated output: keeping it would inflate the sample count
-        without checking the summary anywhere new.
+        zero bytes, so a plain replay of the queue is mostly repeats.
         """
         samples: list[Sample] = []
         seen: set[tuple] = set()
 
         for tape in self._tapes(queue):
             for sample in self._record(tape):
-                key = (
-                    sample.test,
-                    sample.rejected,
-                    tuple(sorted(
-                        (name, value.raw)
-                        for name, value in sample.inputs.items()
-                    )),
-                )
+                key = sample_key(sample)
 
                 if key in seen:
                     continue
@@ -534,8 +560,12 @@ class aflEngine():
         match = AFL_EXECS_RE.search(stats.read_text())
         return int(match.group('execs')) if match else 0
 
-    def _write_results(self) -> Path:
+    def write_results(self) -> Path:
         """Emit the samples, grouped by the test that produced them.
+
+        Public because it is called again after guided sampling adds inputs the
+        campaign never produced, so the dump on disk is the set that was
+        actually checked rather than the campaign's alone.
 
         Keyed like the symbolic engine's results so a `both` run can line the
         two up, and carrying the counts a reader needs to judge how much the
@@ -604,4 +634,4 @@ class aflEngine():
                 len(self.crashes),
             )
 
-        return self._write_results()
+        return self.write_results()

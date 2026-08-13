@@ -148,8 +148,12 @@ void mem_addr(char *name, void *addr, size_t len);
  * Close the record for one test: the return value at `ret` (`bits` wide, or
  * 0/NULL for a void function) plus the current contents of every region
  * registered since the last record.
+ *
+ * `is_pointer` is passed on rather than inferred, because the bytes of an
+ * address look exactly like the bytes of an integer and the two cannot be
+ * checked the same way -- see the note in sbv_sample.c.
  */
-void sbv_record(char *test, void *ret, size_t bits);
+void sbv_record(char *test, void *ret, size_t bits, int is_pointer);
 
 /* Driver interface ------------------------------------------------------ */
 

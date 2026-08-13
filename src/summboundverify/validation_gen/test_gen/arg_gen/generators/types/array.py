@@ -14,6 +14,31 @@ class ArrayTypeGen(ArrayGen):
 
     # Array[i][j] = symbolic();
 
+    def _flat_index(self):
+        """The element's position counted across the whole array.
+
+        Each element has to be identified by something unique, because the
+        name it is drawn under -- `g_<index>` -- is what both engines use to
+        refer to it. Using only the innermost loop variable made `g[0][2]` and
+        `g[1][2]` the same name, and therefore, symbolically, the same
+        variable: two elements the summary was forced to treat as equal.
+
+        Row-major, so for `g[2][3]` the index is `g_idx_1 * 3 + g_idx_2`. For
+        a one-dimensional array it degenerates to the loop variable itself,
+        leaving those tests exactly as they were.
+        """
+        name = self.argname.name
+        index = ID(f'{name}_idx_1')
+
+        for i in range(2, self.dimension + 1):
+            index = BinaryOp(
+                '+',
+                BinaryOp('*', index, self._size(self.sizes[i - 1])),
+                ID(f'{name}_idx_{i}'),
+            )
+
+        return index
+
     def gen_array_init(self):
         name = self.argname.name
 
@@ -29,7 +54,10 @@ class ArrayTypeGen(ArrayGen):
             rvalue = self.init_struct_rvalue(self.vartype)
         else:
             rvalue = self.symbolic_rvalue_array(
-                Constant('string', f'\"{name}\"'), ID(index), self.vartype)
+                Constant('string', f'\"{name}\"'),
+                self._flat_index(),
+                self.vartype,
+            )
 
         return Assignment(op='=', lvalue=lvalue, rvalue=rvalue)
 

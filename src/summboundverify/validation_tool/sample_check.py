@@ -56,7 +56,7 @@ def summary_formula(formulas: list) -> BoolRef | None:
     return Or(formulas)
 
 
-def _declared(formula: ExprRef) -> dict[str, ExprRef]:
+def declared_vars(formula: ExprRef) -> dict[str, ExprRef]:
     """The formula's free variables, by name.
 
     Taken from the formula rather than rebuilt from the sample, so the widths
@@ -66,6 +66,15 @@ def _declared(formula: ExprRef) -> dict[str, ExprRef]:
     just quietly leave the real one unconstrained.
     """
     return {v.decl().name(): v for v in get_vars(formula)}
+
+
+def is_input(name: str) -> bool:
+    """Whether a formula variable stands for something the harness draws.
+
+    `Ret` and the `mem_*` bytes are outputs: they are what the summary claims
+    about a run, not what the run was given.
+    """
+    return name != 'Ret' and not name.startswith('mem_')
 
 
 def _bind(var: ExprRef, value: int, bits: int, name: str) -> BoolRef | None:
@@ -88,6 +97,29 @@ def _bind(var: ExprRef, value: int, bits: int, name: str) -> BoolRef | None:
     # unsigned reading the sample carries wraps to the same bits the target
     # had in memory.
     return var == value
+
+
+def input_bindings(declared: dict, sample) -> tuple[list, dict]:
+    """Pin the sample's arguments to the formula's own variables.
+
+    Returns the constraints and, separately, the values behind them, because a
+    finding is only actionable if it says which input produced it.
+
+    An argument the formula never mentions is dropped rather than reported: a
+    summary may legitimately ignore an input the concrete function draws.
+    """
+    bindings = []
+    values = {}
+
+    for name, value in sample.inputs.items():
+        var = declared.get(name)
+        if var is None:
+            continue
+
+        bindings.append(_bind(var, value.value, value.bits, name))
+        values[name] = value.value
+
+    return bindings, values
 
 
 def _memory_bindings(sample, declared: dict) -> list:
@@ -117,20 +149,8 @@ def check_sample(formula: BoolRef, sample) -> Check:
             "the test's own assumptions turned this input away",
         )
 
-    declared = _declared(formula)
-
-    inputs = []
-    bindings = {}
-
-    for name, value in sample.inputs.items():
-        var = declared.get(name)
-        if var is None:
-            # The summary never reads this argument. Not a finding: a summary
-            # may legitimately ignore an input the concrete function draws.
-            continue
-
-        inputs.append(_bind(var, value.value, value.bits, name))
-        bindings[name] = value.value
+    declared = declared_vars(formula)
+    inputs, bindings = input_bindings(declared, sample)
 
     solver = Solver()
     solver.add(formula)
@@ -151,17 +171,27 @@ def check_sample(formula: BoolRef, sample) -> Check:
     outputs = _memory_bindings(sample, declared)
 
     ret = declared.get('Ret')
-    if sample.ret is not None and ret is not None:
+    pointer_return = getattr(sample, 'ret_is_pointer', False)
+
+    if sample.ret is not None and ret is not None and not pointer_return:
         outputs.append(_bind(ret, sample.ret.value, sample.ret.bits, 'Ret'))
         bindings['Ret'] = sample.ret.value
 
     if not outputs:
         solver.pop()
-        return Check(
-            Verdict.skipped, sample,
-            "the summary constrains nothing observable for this input",
-            bindings,
+
+        # A pointer return with nothing tagged leaves nothing comparable, and
+        # saying so is the whole point: reporting a pass here would claim the
+        # summary survived a check that never happened.
+        reason = (
+            "the function returns an address, which means nothing across "
+            "runs, and no memory was tagged to compare instead -- run with "
+            "-memory to check what it wrote"
+            if pointer_return else
+            "the summary constrains nothing observable for this input"
         )
+
+        return Check(Verdict.skipped, sample, reason, bindings)
 
     solver.add(outputs)
     result = solver.check()

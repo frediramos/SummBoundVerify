@@ -141,7 +141,28 @@ class ValidationGenerator(Generator):
             inner.declname = self.summ_name
 
         generator = c_generator.CGenerator()
-        return [f'extern {generator.visit(decl)};', '']
+
+        # A struct parameter needs its tag already visible at file scope.
+        # Without this the tag in the parameter list declares a *new*,
+        # incomplete type scoped to the prototype, and the call below fails
+        # with "type of formal parameter 1 is incomplete" -- the struct's real
+        # definition is emitted further down, after the headers.
+        forward = [f'struct {tag};' for tag in self.struct_tags()]
+
+        return [*forward, f'extern {generator.visit(decl)};', '']
+
+    def struct_tags(self) -> list[str]:
+        """Tags of the structs the test will define, in a stable order."""
+        tags = []
+
+        for file in (self.tmp_concrete, self.tmp_summary):
+            if not file:
+                continue
+            for tag in StructVisitor(file).structs:
+                if tag not in tags:
+                    tags.append(tag)
+
+        return tags
 
     # Gen headers
     # Typedefs, API stubs and Macros

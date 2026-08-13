@@ -9,6 +9,7 @@ from pycparser.c_ast import (
     ExprList,
     FuncCall,
     FuncDecl,
+    PtrDecl,
     TypeDecl,
     IdentifierType,
 )
@@ -57,6 +58,17 @@ class TestGen:
 
     def _returns_void(self, node):
         return isinstance(node, TypeDecl) and node.type.names == ["void"]
+
+    def _returns_pointer(self, node):
+        """Whether the function under test hands back an address.
+
+        Worth telling the sampler about, because an address is the one kind of
+        return whose *value* means nothing outside the run that produced it:
+        the symbolic side has whatever address angr laid the buffer out at,
+        the concrete side has whatever the loader gave it, and neither number
+        says anything about the other.
+        """
+        return isinstance(node, PtrDecl)
 
     def call_function(
         self,
@@ -140,6 +152,7 @@ class TestGen:
             sbv_record(
                 f"test_{test_id}", "ret", self.ret,
                 self._returns_void(self.ret),
+                self._returns_pointer(self.ret),
             ),
         ]
 

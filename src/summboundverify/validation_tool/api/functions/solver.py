@@ -156,10 +156,10 @@ class sym_var_bytes(CSummary):
     registered under its name exactly as sym_var_named() does, so a
     counterexample names it the same way.
 
-    Note that self.sym_var refuses a length wider than the architecture, so a
-    64-bit double is rejected here at -m32. That is a real limit of the
-    symbolic backend rather than an oversight: those targets are the ones
-    `validation_tool.se_support` routes to fuzzing instead.
+    The variable is written to memory rather than returned, so it is not
+    bounded by the architecture's word size the way sym_var_named is: a
+    64-bit double is minted here at -m32 without trouble, which is the whole
+    point of drawing it through a pointer.
     """
 
     def __init__(self, ctx: ValidationCTX):
@@ -172,7 +172,7 @@ class sym_var_bytes(CSummary):
         if name in self.ctx.SYM_VARS.keys():
             raise DuplicateSymbolicVariableError(name)
 
-        sym_var = self.sym_var(length, name)
+        sym_var = self.sym_var(length, name, arch_bounded=False)
         self.ctx.SYM_VARS[name] = [sym_var]
 
         self.store(dst, sym_var, length // 8)

@@ -216,6 +216,6 @@ size_t n_allocd(void* ptr);
 - Returns the number of allocated bytes pointed to by `ptr`. The pointer must have been returned by `mem_alloc`.
 
 ```c
-size_t allocd(void* ptr);
+void allocd(void* ptr, size_t size);
 ```
-- Throws and exception if the memory pointed to by `ptr` does not have `r/w` permissions. The input `ptr` does **not** need to be a mallocd heap pointer.
+- Throws an exception if the `size` bytes from `ptr` do not have `r/w` permissions. The input `ptr` does **not** need to be a mallocd heap pointer.

@@ -84,46 +84,6 @@ def run_validation_gen(args: Namespace, engine: str = 'se',
     return outputfile
 
 
-def verify_samples(constraints: dict, samples: list, out: Path) -> Path:
-    '''Check the recorded pairs against the summary's formulas.'''
-    from summboundverify.validation_tool.sample_check import (
-        check_samples, report,
-    )
-
-    try:
-        results = report(check_samples(constraints, samples))
-    except ValueError as e:
-        # A width disagreement is systematic, not a property of one sample:
-        # the two halves were built for different word sizes and nothing they
-        # produce is comparable. Say so once, rather than per sample.
-        raise RunError(str(e))
-
-    for test, entry in results.items():
-        counts = entry['counts']
-
-        if entry['verdict'] == 'passed':
-            logger.info(
-                "%s: %d sample(s) admitted by the summary. Sampling cannot "
-                "certify -- this says no sampled input contradicted it.",
-                test, counts['matched'],
-            )
-        elif entry['verdict'] == 'starved':
-            logger.warning(
-                "%s: nothing was checked. Every sample was turned away or "
-                "the summary constrains nothing observable.", test,
-            )
-        else:
-            first = entry['findings'][0]
-            logger.error(
-                "%s: %s -- %s\n  %s",
-                test, entry['verdict'], first['reason'], first['bindings'],
-            )
-
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(results, indent=2))
-
-    logger.info("Sample check written to %s", out)
-    return out
 
 
 def sampler_libs(args: Namespace) -> list:
@@ -165,31 +125,6 @@ def sampler_libs(args: Namespace) -> list:
     return keep
 
 
-def run_afl(
-    test: Path, args: Namespace, constraints: dict | None = None,
-) -> tuple[Path, list]:
-    '''Sample the concrete function, returning the results file and the pairs.
-
-    Takes the harness *source*, not a binary: AFL++ needs its own instrumented
-    build, so the engine compiles with afl-clang-fast itself.
-
-    `constraints` lets the campaign start from inputs the summary cares about
-    rather than only from generic tapes.
-    '''
-    from summboundverify.validation_tool import aflEngine
-
-    engine = aflEngine(
-        test,
-        libs=sampler_libs(args),
-        arch=args.compile or 'x86',
-        execs=args.execs,
-        timeout=args.timeout,
-        results_dir=args.results,
-        constraints=constraints,
-    )
-
-    results = engine.run()
-    return results, engine.samples
 
 
 def run_fuzz(
@@ -203,22 +138,38 @@ def run_fuzz(
     `constraints` arrives already filled when symbolic execution ran in this
     same invocation; otherwise the summary is executed here, on its own.
     '''
+    from summboundverify.validation_tool import sampling
+
+    arch = args.compile or 'x86'
+
     if summary_test is not None:
-        _, constraints = run_se(summary_test, args)
+        constraints = sampling.summary_formulas(
+            summary_test, libs=args.lib, arch=arch,
+            timeout=args.timeout, results_dir=args.results,
+        )
 
     if not args.run:
         return None
 
-    _, samples = run_afl(concrete_test, args, constraints)
+    try:
+        results, _ = sampling.validate_by_sampling(
+            concrete_test, constraints,
+            libs=sampler_libs(args), arch=arch, execs=args.execs,
+            timeout=args.timeout, results_dir=args.results,
+        )
+    except ValueError as e:
+        # A width disagreement is systematic, not a property of one sample:
+        # the two halves were built for different word sizes and nothing they
+        # produce is comparable. Say so once, rather than per sample.
+        raise RunError(str(e))
 
-    usable = [s for s in samples if not s.rejected]
-    logger.info(
-        "Checking %d usable sample(s) against %d summary formula(s)",
-        len(usable), len(constraints),
-    )
+    sampling.log_report(results)
 
     out = Path(args.results) / f'{concrete_test.stem}_check.json'
-    return verify_samples(constraints, samples, out)
+    sampling.write_report(results, out)
+    logger.info("Sample check written to %s", out)
+
+    return out
 
 
 def run_angr(binary: Path, args: Namespace) -> tuple[Path, dict]:
@@ -280,20 +231,15 @@ def load_results(path: Path | None) -> dict:
 
 
 def test_id(key: str) -> str:
-    '''Strip the engine's file naming so both sides agree on a test's name.
+    '''The bare test name, so both engines' results line up.
 
-    Fuzzing writes its halves to `<name>-summary.c` and `<name>-concrete.c`,
-    so the same test is keyed `<name>.test_1` by symbolic execution and
-    `<name>-summary.test_1` by the other side.
+    Symbolic execution keys its results by binary (`<name>.test_1`); the
+    sample check keys them by test alone (`test_1`), because it is written
+    from a report that already belongs to one target. Reducing both to the
+    last component is what lets them be shown side by side.
     '''
-    name, _, test = key.rpartition('.')
-    if not test:
-        return key
-
-    for suffix in ('-summary', '-concrete', '-fuzz'):
-        name = name.removesuffix(suffix)
-
-    return f"{name}.{test}"
+    _, _, test = key.rpartition('.')
+    return test or key
 
 
 def se_verdict(entry: dict) -> tuple[str, str]:
@@ -303,16 +249,32 @@ def se_verdict(entry: dict) -> tuple[str, str]:
 
 
 def fuzz_verdict(entry: dict) -> tuple[str, str]:
+    '''One line for what sampling established about a test.
+
+    Reads the sample check, not the raw sample dump: the counts are what a
+    reader needs, since "passed" over three samples and "passed" over thirty
+    are different claims.
+    '''
     verdict = entry.get('verdict', 'unknown')
-    execs = entry.get('execs')
+    checked = entry.get('checked') or 0
 
-    detail = f' in {execs} execs' if execs else ''
+    detail = f' ({checked} sample(s))' if checked else ''
 
-    if verdict in ('diverged', 'crashed'):
-        counterexample = entry.get('counterexample') or {}
-        inputs = counterexample.get('inputs')
-        detail += f' [{inputs}]' if inputs else ''
+    if verdict == 'mismatched':
+        findings = entry.get('findings') or []
+        bindings = findings[0].get('bindings') if findings else None
+        if bindings:
+            detail += ' [{}]'.format(
+                ', '.join(f'{k}={v}' for k, v in bindings.items())
+            )
         color = Colors.red
+
+    elif verdict == 'uncovered':
+        # Not a refutation: the summary is silent about an input the function
+        # handles, which is what an under-approximation is.
+        missed = (entry.get('counts') or {}).get('uncovered', 0)
+        detail += f' [{missed} not covered]'
+        color = Colors.yellow
 
     elif verdict == 'starved':
         color = Colors.yellow
@@ -336,10 +298,10 @@ def print_summary(se_results: Path | None, fuzz_results: Path | None):
     for key, entry in se.items():
         rows.setdefault(test_id(key), {})['se'] = se_verdict(entry)
 
+    # The check report is already one entry per test, not nested under a
+    # per-engine key the way the raw sample dump is.
     for key, entry in fuzz.items():
-        rows.setdefault(test_id(key), {})['fuzz'] = fuzz_verdict(
-            entry.get('fuzz', {})
-        )
+        rows.setdefault(test_id(key), {})['fuzz'] = fuzz_verdict(entry)
 
     unknown = ('not run', Colors.white)
     width = max(len(name) for name in rows)
@@ -357,20 +319,30 @@ def print_summary(se_results: Path | None, fuzz_results: Path | None):
             file=sys.stderr,
         )
 
-        # The engines only contradict each other in one direction: fuzzing
+        # The engines only contradict each other in one direction: sampling
         # found a concrete input the symbolic result says cannot exist. The
-        # opposite (SE reports a bug, fuzzing does not) is expected -- a
-        # bounded campaign simply may not have reached it.
-        if se_text == 'exact' and fz_text.startswith(('diverged', 'crashed')):
+        # opposite (SE reports a bug, sampling does not) is expected -- a
+        # bounded set of samples simply may not have reached it.
+        if se_text == 'exact' and fz_text.startswith('mismatched'):
             print(
                 f"  {Colors.red}the engines disagree: one of them is wrong"
                 f"{Colors.reset}",
                 file=sys.stderr,
             )
 
+        # An under-approximation is a verdict symbolic execution reaches on
+        # its own, so the two agreeing here is confirmation rather than
+        # conflict -- worth saying, because `uncovered` reads like a failure.
+        if se_text == 'under' and fz_text.startswith('uncovered'):
+            print(
+                f"  {Colors.white}both engines agree the summary is "
+                f"under-approximating{Colors.reset}",
+                file=sys.stderr,
+            )
+
         if fz_text.startswith('starved'):
             print(
-                f"  {Colors.yellow}fuzzing compared nothing; its verdict "
+                f"  {Colors.yellow}sampling checked nothing; its verdict "
                 f"carries no weight{Colors.reset}",
                 file=sys.stderr,
             )
