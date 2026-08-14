@@ -86,6 +86,15 @@ class MemoryPermissionsError(RunError):
         )
         super().__init__(message)
 
+
+class ReportError(RunError):
+    def __init__(self, file, line, msg):
+        message = (
+            f"Runtime error detected in '{file}' at line {line}:\n"
+            f"{msg}"
+        )
+        super().__init__(message)
+
 # ---
 
 

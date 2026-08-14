@@ -31,6 +31,15 @@ class is_symbolic(CSummary):
         self.ret(ret)
 
 
+class concretize(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
+
+    def run(self, var):
+        value = self.concretize(var)
+        self.ret(value)
+
+
 class maximize(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)
@@ -97,17 +106,6 @@ class is_sat(CSummary):
         self.ret(ret)
 
 
-class __assert(CSummary):
-    def __init__(self, ctx: ValidationCTX):
-        super().__init__(ctx)
-
-    def run(self, cnstr: BitVector):
-        cnstr_id = self.state.solver.eval(cnstr)
-        cnstr = self.ctx.CNSTR_MAP[cnstr_id]
-        self._assert(cnstr)
-        self.ret()
-
-
 class push_pc(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)
@@ -134,9 +132,8 @@ class sym_var_named(CSummary):
         length = self.state.solver.eval(length_bv)
 
         name = get_name(self.state, name_addr)
-        # A duplicate name would silently overwrite the earlier variable; report
-        # it as a RunError so the caller can surface it (and the refinement loop
-        # can act on it) instead of crashing with a bare AssertionError.
+
+        # Catch duplicate symvar names
         if name in self.ctx.SYM_VARS.keys():
             raise DuplicateSymbolicVariableError(name)
 
@@ -169,3 +166,29 @@ class sym_var_array(CSummary):
         sym_var = sym_var.zero_extend(self.state.arch.bits - length)
 
         self.ret(sym_var)
+
+
+class __assert(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
+
+    def run(self, cnstr: BitVector):
+        cnstr_id = self.state.solver.eval(cnstr)
+        cnstr = self.ctx.CNSTR_MAP[cnstr_id]
+        self.__assert(cnstr)
+        self.ret()
+
+
+class report_error(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
+
+    def run(self, fname_bv: BitVector, line_bv: BitVector, message_bv: BitVector):
+        fname_addr = self.state.solver.eval_one(fname_bv)
+        line = self.state.solver.eval_one(line_bv)
+        message_addr = self.state.solver.eval_one(message_bv)
+
+        fname = get_name(self.state, fname_addr)
+        message = get_name(self.state, message_addr)
+
+        self.report_error(fname, line, message)
