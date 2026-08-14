@@ -5,6 +5,7 @@
   <a href="#bare-metal-installation">Installation</a> •
   <a href="#docker-container">Docker</a> •
   <a href="#examples">Examples</a> •
+  <a href="#validation-engines">Engines</a> •
   <a href="#documentation">Docs</a> •
   <a href="#license">License</a>
 </p>
@@ -269,6 +270,72 @@ The output indicates:
 <br>
 <br>
 
+# Validation Engines
+
+A summary can be validated in two ways, selected with `--engine`:
+
+```sh
+summbv -config config.txt --engine se     # symbolic execution (default)
+summbv -config config.txt --engine fuzz   # fuzzing
+summbv -config config.txt --engine both   # both, side by side
+```
+
+**`se`** runs *both* the summary and the concrete implementation under `angr`
+and proves an implication between them. It is the stronger result — it grades
+the summary as *exact*, *under-* or *over-approximating* — and it is what the
+examples above use.
+
+**`fuzz`** executes only the **summary** symbolically, keeping one formula per
+path. The concrete function is compiled and run **natively** under AFL++, at
+full speed, and each `(input, result)` pair it produces is checked against
+those formulas. The summary is executed symbolically in either engine; what
+changes is whether the concrete function is.
+
+That difference is the point. The concrete function is the hard half — loops,
+allocation, recursion — and when `angr` cannot follow it, symbolic execution
+does not return a weaker verdict, it returns none at all. Sampling never
+executes it symbolically, so it handles precisely the targets `se` refuses.
+
+The trade is that sampling **cannot prove a summary correct**. It is a
+falsification test: it either produces a real input the summary gets wrong, or
+it says nothing was found.
+
+### Verdicts
+
+Written to `<test>_check.json` and printed at the end of the run:
+
+| verdict      | meaning |
+|--------------|---------|
+| `passed`     | every sample was admitted by the summary. Provisional, never a proof |
+| `uncovered`  | some sampled input has no path in the summary at all — it under-approximates |
+| `mismatched` | a refutation: a real input on which the summary cannot produce the real result |
+| `starved`    | nothing was checked; the verdict carries no weight |
+
+### Requirements
+
+Sampling needs **AFL++** (`apt install afl++`) and a **32-bit toolchain**
+(`gcc-multilib`, `libc6-dev-i386`). The generated API stubs `typedef unsigned
+int size_t`, so the symbolic side is 32-bit whatever the host is, and only a
+32-bit sampler produces comparable values.
+
+### Relevant flags
+
+```
+--engine se | fuzz | both   // which engine to run (default: se)
+--execs 10000               // inputs to try when sampling (default: 10000)
+--timeout 1800              // seconds, per engine
+```
+
+Symbolic execution is skipped automatically — *even when asked for
+explicitly* — on targets `angr` cannot finish, currently recursive functions
+and floating point. The substitution is announced rather than made quietly.
+
+See [docs/SAMPLING.md](docs/SAMPLING.md) for the architecture, the harness
+contract, how inputs are chosen, and the known limits.
+
+<br>
+<br>
+
 # Documentation
 To obtain a full description of our test generation tool one can use the flag `-h`
 ```sh
@@ -381,6 +448,10 @@ maxnames len              // --maxnames       (Numeric value names to be constra
 concretearray {1:[0]}     // --concretearray  (Place concrete values in selected array indexes)
 lib lib.c                 // --lib            (Path to external files required for compilation)
 compile x86               // --compile        (Compile the generated test)
+memory true               // -memory          (Evaluate memory side-effects)
+engine se | fuzz | both   // --engine         (Validation engine (default: se))
+execs 10000               // --execs          (Inputs to try when sampling)
+timeout 1800              // -timeout         (Execution timeout, in seconds)
 ```
 
 ## Special Configurations
