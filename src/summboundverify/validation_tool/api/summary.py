@@ -9,7 +9,8 @@ from summboundverify.exceptions import (
     InvalidSymbolicVariableSizeError,
     InvalidArchVariableSizeError,
     ClaripyConstraintError,
-    UnsatConstraintError
+    UnsatConstraintError,
+    ReportError,
 )
 
 from ..macros import SYM_VAR
@@ -63,6 +64,11 @@ class CSummary(SimProcedure):
     def is_symbolic(self, var):
         return self.state.solver.symbolic(var)
 
+    def concretize(self, var):
+        constraints = tuple(self.state.solver.constraints)
+        concrete = self.state.solver.eval(var, extra_constraints=(constraints))
+        return concrete
+
     def maximize(self, var):
         constraints = tuple(self.state.solver.constraints)
         max_val = self.state.solver.max(var, extra_constraints=(constraints))
@@ -85,8 +91,8 @@ class CSummary(SimProcedure):
     def is_sat(self, cnstr):
         return self.state.solver.satisfiable(extra_constraints=(cnstr,))
 
-    def _assert(self, cnstr):
-        if not self.is_certain(cnstr):
+    def __assert(self, cnstr):
+        if not self.state.solver.satisfiable(extra_constraints=(cnstr,)):
             raise UnsatConstraintError("_assert", cnstr)
 
     def push_pc(self):
@@ -113,3 +119,6 @@ class CSummary(SimProcedure):
             fname = op.__name__
             raise ClaripyConstraintError(fname, e)
         return result
+
+    def report_error(self, filename: str, line: int, message: str):
+        raise ReportError(filename, line, message)
