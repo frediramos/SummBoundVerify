@@ -58,12 +58,22 @@ class UnsatConstraintError(RunError):
 
 
 class ClaripyConstraintError(RunError):
-    def __init__(self, function: str, claripy_exception: ClaripyError):
-        message = (
-            f"Error in constraint function '{function}'.\n"
-            f"The Claripy backend errored with the following message:\n"
+    def __init__(
+        self,
+        claripy_function: str,
+        claripy_exception: ClaripyError,
+        caller: str | None = None,
+    ):
+        message = f"Error in Claripy function '{claripy_function}'.\n"
+
+        if caller:
+            message += f"Called from C function '{caller}'.\n"
+
+        message += (
+            "The Claripy backend reported the following error:\n"
             f"{claripy_exception}"
         )
+
         super().__init__(message)
 
 

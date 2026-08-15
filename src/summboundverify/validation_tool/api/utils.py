@@ -1,4 +1,15 @@
+import claripy
+
+from typing import Callable, Any
+
+from claripy import ClaripyError
+
+from claripy.ast import Bool, false
 from claripy.ast.bv import BV as BitVector
+
+from summboundverify.exceptions import (
+    ClaripyConstraintError
+)
 
 
 class SymbString:
@@ -82,3 +93,27 @@ class SymbString:
             return NotImplemented
 
         return self
+
+
+def constraint(op: Callable[..., Any], *args, **kwargs) -> Bool:
+    try:
+        result = op(*args)
+    except ClaripyError as e:
+        opname = op.__name__
+        fname = kwargs.get("caller", None)
+        raise ClaripyConstraintError(opname, e, fname)
+    return result
+
+
+def eq_strings(s1: SymbString, s2: SymbString) -> Bool:
+    if len(s1) != len(s2):
+        return false()
+
+    cnstrs = []
+    for c1, c2 in zip(s1, s2):
+        def eq(): return c1 == c2
+        e = constraint(eq)
+        cnstrs.append(e)
+
+    expr = constraint(claripy.And, *cnstrs)
+    return expr

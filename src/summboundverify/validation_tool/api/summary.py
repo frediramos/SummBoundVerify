@@ -123,7 +123,7 @@ class CSummary(SimProcedure):
     def is_sat(self, cnstr):
         return self.state.solver.satisfiable(extra_constraints=(cnstr,))
 
-    def __assert(self, cnstr):
+    def assert_constraint(self, cnstr):
         if not self.state.solver.satisfiable(extra_constraints=(cnstr,)):
             raise UnsatConstraintError("_assert", cnstr)
 
@@ -143,14 +143,6 @@ class CSummary(SimProcedure):
 
         c = self.state.globals['pc_stack'].pop()  # type: ignore
         self.state.solver.reload_solver(c)
-
-    def constraint(self, op: Callable[..., Any], *args):
-        try:
-            result = op(*args)
-        except ClaripyError as e:
-            fname = op.__name__
-            raise ClaripyConstraintError(fname, e)
-        return result
 
     def report_error(self, filename: str, line: int, message: str):
         raise ReportError(filename, line, message)
