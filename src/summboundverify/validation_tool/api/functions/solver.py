@@ -173,7 +173,7 @@ class __assert(CSummary):
     def run(self, cnstr: BitVector):
         cnstr_id = self.state.solver.eval(cnstr)
         cnstr = self.ctx.CNSTR_MAP[cnstr_id]
-        self.__assert(cnstr)
+        self.assert_constraint(cnstr)
         self.ret()
 
 
