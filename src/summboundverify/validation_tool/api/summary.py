@@ -3,7 +3,9 @@ import claripy
 from typing import Callable, Any
 
 from angr import SimProcedure
+
 from claripy import ClaripyError
+from claripy.ast.bv import BV as BitVector
 
 from summboundverify.exceptions import (
     InvalidSymbolicVariableSizeError,
@@ -14,7 +16,8 @@ from summboundverify.exceptions import (
 )
 
 from ..macros import SYM_VAR
-from . context import ValidationCTX
+from .context import ValidationCTX
+from .utils import SymbString
 
 
 class CSummary(SimProcedure):
@@ -36,6 +39,35 @@ class CSummary(SimProcedure):
             addr, n,
             endness=self.state.arch.memory_endness
         )
+
+    def load_string(self, addr: int) -> SymbString:
+        """
+        Load a null-terminated string from memory.
+        Can be symbolic.
+        """
+        i = 0
+        chars = []
+        endness = self.state.arch.memory_endness
+
+        while True:
+            byte: BitVector = self.state.memory.load(
+                addr + i,
+                1,
+                endness=endness
+            )
+            if not self.is_symbolic(byte):
+                code = self.state.solver.eval(byte)
+                if code == 0:
+                    break
+                char = chr(code)
+
+            else:
+                char = byte
+
+            chars.append(char)
+            i += 1
+
+        return SymbString(chars)
 
     def store(self, addr, value, n=1):
         self.state.memory.store(
