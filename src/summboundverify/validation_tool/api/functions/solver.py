@@ -5,8 +5,6 @@ from summboundverify.exceptions import DuplicateSymbolicVariableError
 from ..summary import CSummary
 from ..context import ValidationCTX
 
-from .utils import get_name
-
 
 class sym_var(CSummary):
     def __init__(self, ctx: ValidationCTX):
@@ -131,7 +129,7 @@ class sym_var_named(CSummary):
     def run(self, name_addr, length_bv: BitVector):
         length = self.state.solver.eval(length_bv)
 
-        name = get_name(self.state, name_addr)
+        name = str(self.load_string(name_addr))
 
         # Catch duplicate symvar names
         if name in self.ctx.SYM_VARS.keys():
@@ -154,7 +152,7 @@ class sym_var_array(CSummary):
         length = self.state.solver.eval(length_bv)
         index = self.state.solver.eval(index)
 
-        name = get_name(self.state, name_addr)
+        name = str(self.load_string(name_addr))
         bvname = f'{name}_{index}'
 
         sym_var = self.sym_var(length, bvname)
@@ -188,7 +186,7 @@ class report_error(CSummary):
         line = self.state.solver.eval_one(line_bv)
         message_addr = self.state.solver.eval_one(message_bv)
 
-        fname = get_name(self.state, fname_addr)
-        message = get_name(self.state, message_addr)
+        fname = str(self.load_string(fname_addr))
+        message = str(self.load_string(message_addr))
 
         self.report_error(fname, line, message)
