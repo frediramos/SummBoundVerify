@@ -3,7 +3,6 @@ import claripy
 from typing import Callable, Any
 
 from claripy import ClaripyError
-
 from claripy.ast import Bool, false
 from claripy.ast.bv import BV as BitVector
 
@@ -37,6 +36,13 @@ class SymbString:
                     f"Invalid character type: {type(char).__name__}")
 
         return ''.join(chars)
+
+    def is_symbolic(self):
+        try:
+            self.__str__()
+        except:
+            return False
+        return True
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self._string!r})"
@@ -105,15 +111,28 @@ def constraint(op: Callable[..., Any], *args, **kwargs) -> Bool:
     return result
 
 
-def eq_strings(s1: SymbString, s2: SymbString) -> Bool:
+type String = str | SymbString
+
+
+def compare_strings(
+    s1: str | SymbString,
+    s2: str | SymbString,
+    compare: Callable[[object, object], bool],
+) -> Bool:
     if len(s1) != len(s2):
         return false()
 
-    cnstrs = []
-    for c1, c2 in zip(s1, s2):
-        def eq(): return c1 == c2
-        e = constraint(eq)
-        cnstrs.append(e)
+    constraints = [
+        constraint(compare, c1, c2)
+        for c1, c2 in zip(s1, s2)
+    ]
 
-    expr = constraint(claripy.And, *cnstrs)
-    return expr
+    return constraint(claripy.And, *constraints)
+
+
+def eq_strings(s1: str | SymbString, s2: str | SymbString) -> Bool:
+    return compare_strings(s1, s2, lambda c1, c2: c1 == c2)
+
+
+def neq_strings(s1: str | SymbString, s2: str | SymbString) -> Bool:
+    return compare_strings(s1, s2, lambda c1, c2: c1 != c2)

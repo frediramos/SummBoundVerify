@@ -19,7 +19,9 @@ from angr import (
 from summboundverify.exceptions import TimeoutError
 
 from .macros import SYM_VAR
+
 from .api import ValidationAPI
+from .api.functions.files.fs import SymbFileSystem
 
 from .utils import (
     truncate,
@@ -84,15 +86,24 @@ class angrEngine():
             options.ZERO_FILL_UNCONSTRAINED_REGISTERS
         }
 
-        state = p.factory.entry_state(mode='symbolic', add_options=opt)
+        state = p.factory.entry_state(
+            mode='symbolic',
+            add_options=opt
+        )
         heap = SimHeapPTMalloc()
 
         state.register_plugin('heap', heap)
-
         state.libc.simple_strtok = False  # type: ignore
 
         if self.stats_dir:
-            state.inspect.b('call', when=BP_AFTER, action=self._count_fcall)
+            state.inspect.b(
+                'call',
+                when=BP_AFTER,
+                action=self._count_fcall
+            )
+
+        fs = SymbFileSystem()
+        state.globals["fs"] = fs  # type: ignore
 
         return state
 

@@ -55,12 +55,12 @@ class CSummary(SimProcedure):
                 1,
                 endness=endness
             )
+
             if not self.is_symbolic(byte):
                 code = self.state.solver.eval(byte)
                 if code == 0:
                     break
                 char = chr(code)
-
             else:
                 char = byte
 
