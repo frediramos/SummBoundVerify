@@ -12,7 +12,9 @@ from .functions import constraints
 from .functions import lists
 from .functions import solver
 from .functions import heap
-from .functions.validation import functions
+from .functions.files import functions as files
+from .functions.validation import functions as validation
+
 from .functions.validation.functions import halt_all, print_counterexamples
 
 
@@ -54,7 +56,7 @@ class ValidationAPI:
     @cache
     def _implemented(self):
         impl = {}
-        for module in (solver, functions, heap, constraints, lists):
+        for module in (solver, validation, heap, constraints, lists, files):
             for name, cls in inspect.getmembers(module, inspect.isclass):
                 if cls.__module__ != module.__name__:
                     continue

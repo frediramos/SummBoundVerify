@@ -24,26 +24,17 @@ void __assert(cnstr_t cnstr);
  */
 void __report_error(const char* filename, unsigned int line, const char* message);
 
-/**
- * Creates a new file named `name` and returns its file descriptor.
+
+/* ============================================================================
+ *** File Functions (WIP) ***
+ * ========================================================================== */
+
+ /**
+ * Creates a new file named `name`. 
  *
- * Returns `-1` if the file could not be created.
+ * Returns `1` on success and`-1` if the file could not be created.
  */
 int __file_create(const char* name);
-
-/**
- * Closes the file associated with file descriptor `fd`.
- *
- * Returns `0` on success and `-1` on failure.
- */
-int __file_close(int fd);
-
-/**
- * Deletes the file associated with file descriptor `fd`.
- *
- * Returns `1` on success and `-1` on failure.
- */
-int __file_delete(int fd);
 
 /**
  * Opens the file named `name` and returns its file descriptor.
@@ -53,18 +44,44 @@ int __file_delete(int fd);
 int __file_open(const char* name);
 
 /**
- * Returns the `FILE*` associated with file descriptor `fd`.
- *
- * Returns `NULL` if `fd` is invalid.
+ * Returns `1` if the file named `name` exists and `0` otherwise.
  */
-FILE* __FILE_from_fd(int fd);
+int __file_exists(const char* name);
 
 /**
- * Returns the file descriptor associated with the file pointer `fp`.
+ * Deletes the file associated with name `name`.
  *
- * Returns `-1` if `fp` is invalid.
+ * Returns `1` on success and `-1` on failure.
  */
-int __fd_from_FILE(FILE* fp);
+int __file_delete(const char* name);
+
+/**
+ * Closes the file associated with file descriptor `fd`.
+ *
+ * Returns `0` on success and `-1` on failure.
+ */
+int __file_close(int fd);
+
+/**
+ * Reads up to `count` bytes from the file associated with file descriptor
+ * `fd` into `buffer`.
+ *
+ * Returns the number of bytes read, which may be less than `count`.
+ * Advances the file offset by the number of bytes read.
+ * Returns `0` if the end of the file has been reached.
+ * Returns `-1` on error.
+ */
+ssize_t __file_read(int fd, void* buffer, size_t count);
+
+/**
+ * Writes up to `count` bytes from `buffer` to the file associated with file
+ * descriptor `fd`.
+ *
+ * Returns the number of bytes written, which may be less than `count`.
+ * Advances the file offset by the number of bytes written.
+ * Returns `-1` on error.
+ */
+ssize_t __file_write(int fd, void* buffer, size_t count);
 
 /**
  * Returns the size, in bytes, of the file associated with file descriptor
@@ -133,27 +150,6 @@ int __file_mode(int fd, mode_t* mode);
 int __file_flags(int fd);
 
 /**
- * Reads up to `count` bytes from the file associated with file descriptor
- * `fd` into `buffer`.
- *
- * Returns the number of bytes read, which may be less than `count`.
- * Advances the file offset by the number of bytes read.
- * Returns `0` if the end of the file has been reached.
- * Returns `-1` on error.
- */
-ssize_t __file_read(int fd, void* buffer, size_t count);
-
-/**
- * Writes up to `count` bytes from `buffer` to the file associated with file
- * descriptor `fd`.
- *
- * Returns the number of bytes written, which may be less than `count`.
- * Advances the file offset by the number of bytes written.
- * Returns `-1` on error.
- */
-ssize_t __file_write(int fd, void* buffer, size_t count);
-
-/**
  * Creates a duplicate of the file descriptor `oldfd`.
  *
  * The duplicate refers to the same open file description as `oldfd`; both
@@ -173,3 +169,17 @@ int __file_dup(int oldfd);
  * Returns `newfd` on success, or `-1` on failure.
  */
 int __file_dup2(int oldfd, int newfd);
+
+/**
+ * Returns the `FILE*` associated with file descriptor `fd`.
+ *
+ * Returns `NULL` if `fd` is invalid.
+ */
+FILE* __FILE_from_fd(int fd);
+
+/**
+ * Returns the file descriptor associated with the file pointer `fp`.
+ *
+ * Returns `-1` if `fp` is invalid.
+ */
+int __fd_from_FILE(FILE* fp);
