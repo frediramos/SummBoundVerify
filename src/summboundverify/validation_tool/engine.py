@@ -102,7 +102,7 @@ class angrEngine():
                 action=self._count_fcall
             )
 
-        fs = SymbFileSystem()
+        fs = SymbFileSystem(state)
         state.globals["fs"] = fs  # type: ignore
 
         return state

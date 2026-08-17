@@ -2,6 +2,7 @@ import claripy
 
 from typing import Callable, Any
 
+
 from claripy import ClaripyError
 from claripy.ast import Bool, false
 from claripy.ast.bv import BV as BitVector
@@ -19,6 +20,9 @@ class SymbString:
 
     def __init__(self, init: str | list | None = None):
         self._string = [] if init is None else list(init)
+
+    def __copy__(self) -> "SymbString":
+        return type(self)(self._string.copy())
 
     def __str__(self) -> str:
         chars = []
@@ -41,8 +45,8 @@ class SymbString:
         try:
             self.__str__()
         except:
-            return False
-        return True
+            return True
+        return False
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self._string!r})"
