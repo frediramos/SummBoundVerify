@@ -37,6 +37,7 @@ class file_create(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr)
         fd = self.fs.create_file(filename)
+        print("Create fd: ", fd)
         return fd
 
 
@@ -44,6 +45,7 @@ class file_close(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr)
         status = self.fs.close_file(filename)
+        print("Close status: ", status)
         return status
 
 
@@ -51,4 +53,12 @@ class file_open(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr)
         fd = self.fs.open_file(filename)
+        print("Open fd: ", fd)
         return fd
+
+class file_delete(FileSummary):
+    def run(self, filename_addr):
+        filename = self.load_string(filename_addr)
+        status = self.fs.delete_file(filename)
+        print("Delete status: ", status)
+        return status
