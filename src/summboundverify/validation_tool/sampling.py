@@ -19,12 +19,14 @@ import logging
 from pathlib import Path
 from typing import Literal
 
+from z3 import simplify
+
 from summboundverify.validation_gen import CCompiler
 
 from .engine import angrEngine
 from .fuzz_engine import aflEngine
 from .guided import MAX_ROUNDS, top_up
-from .sample_check import check_samples, report
+from .sample_check import check_samples, report, test_name
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +54,57 @@ def summary_formulas(
     )
     engine.run()
 
+    log_constraints(engine.constraints)
+
     return engine.constraints
+
+
+def format_constraints(constraints: dict) -> str:
+    """The summary's path conditions, laid out one path at a time.
+
+    Symbolic execution prints the equivalent as part of its verdict ("Summary
+    Constraints"); sampling checks every sample against these same formulas
+    and showed none of them, which leaves a finding hard to act on -- the
+    input that broke the summary is reported, but not what the summary
+    claimed about it.
+
+    Per path rather than as their disjunction, because that is the
+    granularity the rest of the run works at: seeding aims at one path, and
+    guided sampling counts the paths nothing reached.
+    """
+    blocks = []
+
+    for key, formulas in constraints.items():
+        if not formulas:
+            continue
+
+        paths = [
+            '\t[{}] {}'.format(
+                index, str(simplify(formula)).replace('\n', '\n\t    ')
+            )
+            for index, formula in enumerate(formulas, start=1)
+        ]
+
+        blocks.append(
+            f'==> Summary Constraints ({test_name(key)}, '
+            f'{len(formulas)} path(s)):\n\n' + '\n\n'.join(paths)
+        )
+
+    return '\n\n'.join(blocks)
+
+
+def log_constraints(constraints: dict) -> None:
+    """Show what the summary says, before anything is checked against it."""
+    text = format_constraints(constraints)
+
+    if not text:
+        logger.warning(
+            "The summary's symbolic run stored no path condition: there is "
+            "nothing for the samples to be checked against."
+        )
+        return
+
+    logger.info('\n' + text)
 
 
 def validate_by_sampling(

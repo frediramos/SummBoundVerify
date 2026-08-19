@@ -291,6 +291,11 @@ full speed, and each `(input, result)` pair it produces is checked against
 those formulas. The summary is executed symbolically in either engine; what
 changes is whether the concrete function is.
 
+The formulas are printed before the campaign starts, one per summary path,
+under `==> Summary Constraints` — the same thing `se` shows as part of its
+verdict. They are what every sample is checked against, so a `mismatched` or
+`uncovered` verdict can be read next to the claim it refutes.
+
 That difference is the point. The concrete function is the hard half — loops,
 allocation, recursion — and when `angr` cannot follow it, symbolic execution
 does not return a weaker verdict, it returns none at all. Sampling never

@@ -218,6 +218,21 @@ def formula_key(test: str) -> str:
     return f'summ_{test.replace("_", "")}'
 
 
+def test_name(key: str) -> str:
+    """The test as the sampler spells it, from the store's name for it.
+
+    Inverse of `formula_key`, for output alone: the sample dump and the check
+    report are both keyed `test_1`, so printing a formula under `summ_test1`
+    next to them would read as a different test.
+    """
+    stem = key.removeprefix('summ_')
+
+    if not stem.startswith('test'):
+        return stem
+
+    return f'test_{stem.removeprefix("test")}'
+
+
 def check_samples(constraints: dict, samples: list) -> dict[str, list[Check]]:
     """Check every sample against the formulas of the test that produced it.
 
