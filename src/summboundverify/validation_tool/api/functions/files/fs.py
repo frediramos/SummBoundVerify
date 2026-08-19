@@ -9,16 +9,19 @@ from claripy import BVV, true
 from claripy.ast import Bool, BV
 
 from ...utils import (
-    String,
     SymbString,
     constraint,
     eq_strings,
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class File:
+    """State of an open file."""
+
     fd: int
+    size: int = 0
+    offset: int = 0
 
 
 type ConcrFileEntry = dict[str, File | None]
@@ -26,6 +29,13 @@ type ConcrFileEntry = dict[str, File | None]
 
 @dataclass(frozen=True, slots=True)
 class SymbFileEntry:
+    """
+    A file whose name is represented by a symbolic string.
+
+    A `None` file represents a deleted file.
+    A `File` with `fd = -1` represents a closed file.
+    """
+
     filename: SymbString
     file: File | None
 
@@ -33,25 +43,23 @@ class SymbFileEntry:
 type FileEntry = ConcrFileEntry | SymbFileEntry
 
 
-class SymbFileSystem():
-    """Symbolic File System Modelling"""
+class SymbFileSystem:
+    """Model of a file system with concrete and symbolic file names."""
 
     def __init__(self, state: SimState) -> None:
-        """
-        Initialize an empty file system.
+        """Initialize an empty file system.
 
-        File descriptor allocation starts at `3`.
-
-        File descriptors `0`, `1`, and `2` are reserved
-        for `stdin`, `stdout`, and `stderr`, repectively.
+        File descriptor allocation starts at 3. Descriptors 0, 1, and 2
+        are reserved for stdin, stdout, and stderr, respectively.
         """
         self.state = state
-
         self.fd = 3
         self.entries: list[FileEntry] = []
 
     def clone(self, state: SimState) -> "SymbFileSystem":
-        """Create a copy associated with the given state."""
+        """
+        Create an independent copy of the file system for `state`.
+        """
         fs = type(self)(state)
         fs.fd = self.fd
         fs.entries = [
@@ -62,6 +70,7 @@ class SymbFileSystem():
         return fs
 
     def _bvv_int(self, value: int):
+        """Create a bit-vector containing a C `int` value."""
         int_bits = self.state.arch.sizeof["int"]
         return BVV(value, int_bits)
 
@@ -71,34 +80,39 @@ class SymbFileSystem():
         return fd
 
     def _closed(self) -> File:
+        """Return a file object representing a closed file."""
         return File(fd=-1)
 
     def is_concrete(self, entry):
-        """Return whether an entry represents concrete files."""
+        """Return whether `entry` contains concrete file names."""
         return isinstance(entry, dict)
 
     def is_symbolic(self, entry):
-        """Return whether an entry represents a symbolic file."""
+        """Return whether `entry` contains a symbolic file name."""
         return isinstance(entry, SymbFileEntry)
 
     def is_sat(self, cnstr):
+        """Return whether `cnstr` is satisfiable under the current path condition."""
         return self.state.solver.satisfiable(extra_constraints=(cnstr,))
 
     def is_certain(self, cnstr):
+        """Return whether `cnstr` is necessarily true under the current path condition."""
         neg_cnstr = claripy.Not(cnstr)
-        return not self.state.solver.satisfiable(extra_constraints=(neg_cnstr,))
+        return not self.state.solver.satisfiable(
+            extra_constraints=(neg_cnstr,)
+        )
 
     def is_emtpy(self):
         """Return whether the file system contains no entries."""
         return len(self.entries) == 0
 
     def add(self, entry: FileEntry):
-        """Add a file entry to the file system."""
+        """Append an entry to the file system."""
         self.entries.append(entry)
 
     @property
     def current(self):
-        """Return the most recently added file entry, or None if empty."""
+        """Return the most recently added entry, or `None` if empty."""
         if self.is_emtpy():
             return None
         return self.entries[-1]
@@ -116,7 +130,7 @@ class SymbFileSystem():
                 files = [(entry.filename, entry.file)]
 
             for name, file in files:
-                if file is None:
+                if file is None:  # Deleted file
                     continue
 
                 condition = eq_strings(filename, name)
@@ -129,12 +143,12 @@ class SymbFileSystem():
         return constraint(claripy.Or, *cases)
 
     def file_not_exists(self, filename: str | SymbString) -> Bool:
+        """Return a constraint indicating that `filename` does not exist."""
         exists = self.file_exists(filename)
-        not_exits = claripy.Not(exists)
-        return not_exits
+        return claripy.Not(exists)
 
     def search_filename(self, name: str | SymbString) -> BV:
-        """Return the file descriptor associated with `name`, or -1 if not found."""
+        """Return the file descriptor for `name`, or -1 if it is not found."""
         cases = []
 
         for entry in reversed(self.entries):
@@ -157,16 +171,15 @@ class SymbFileSystem():
         return claripy.ite_cases(cases, self._bvv_int(-1))
 
     def _set_concrete(self, filename: str, file: File | None):
+        """Add a concrete file entry, reusing the current concrete entry when possible."""
         if self.is_concrete(self.current):
             assert isinstance(self.current, dict)
             self.current[filename] = file
         else:
-            entry = {}
-            entry[filename] = file
-
-        self.add(entry)
+            self.add({filename: file})
 
     def _set_symbolic(self, filename: SymbString, file: File | None):
+        """Add a symbolic file entry."""
         entry = SymbFileEntry(filename, file)
         self.add(entry)
 
@@ -183,84 +196,93 @@ class SymbFileSystem():
         return fd
 
     def create_concrete(self, filename: str) -> int:
-        """Create a concrete file and return its file descriptor."""
+        """Create a concrete file.
+
+        Returns its file descriptor, or -1 if the file already exists or
+        the required path condition is unsatisfiable.
+        """
         if self.is_emtpy():
             return self._create_concrete(filename)
 
         if self.is_concrete(self.current):
             assert isinstance(self.current, dict)
             if (
-                filename in self.current and
-                # None -> file was deleted before
-                self.current[filename] is not None
+                filename in self.current
+                and self.current[filename] is not None
             ):
                 return -1
 
-        # File not exists constraint
-        constraint = self.file_not_exists(filename)
+        # Creating the file requires the filename not to already exist.
+        cnstr = self.file_not_exists(filename)
 
-        if self.is_sat(constraint):
-            self.state.add_constraints(constraint)
+        if self.is_sat(cnstr):
+            self.state.add_constraints(cnstr)
             return self._create_concrete(filename)
 
         return -1
 
     def create_symbolic(self, filename: SymbString) -> int:
-        """Create a symbolic file and return its file descriptor."""
+        """Create a symbolic file.
+
+        Returns its file descriptor, or -1 if the file already exists or
+        the required path condition is unsatisfiable.
+        """
         if self.is_emtpy():
             return self._create_symbolic(filename)
 
-        constraint = self.file_not_exists(filename)
+        cnstr = self.file_not_exists(filename)
 
-        if self.is_sat(constraint):
-            self.state.add_constraints(constraint)
+        if self.is_sat(cnstr):
+            self.state.add_constraints(cnstr)
             return self._create_symbolic(filename)
 
         return -1
 
     def create_file(self, filename: str | SymbString) -> int:
         """
-        Create a file and return its descriptor.
-        Returns `-1` on error.
+        Create a file and return its file descriptor.
 
-        Adds the required constraints to the path condition
+        Returns `-1` on failure. When necessary, the constraints required
+        to establish that the file does not already exist are added to
+        the current path condition.
         """
         if isinstance(filename, str):
             return self.create_concrete(filename)
-        else:
-            assert isinstance(filename, SymbString)
-            return self.create_symbolic(filename)
+
+        assert isinstance(filename, SymbString)
+        return self.create_symbolic(filename)
 
     def close_concrete(self, filename: str) -> int:
+        """Close a concrete file and return 1 on success or -1 on failure."""
         if self.is_emtpy():
             return -1
 
         if self.is_concrete(self.current):
             assert isinstance(self.current, dict)
             if (
-                filename in self.current and
-                # None -> file was deleted before
-                self.current[filename] is not None
+                filename in self.current
+                and self.current[filename] is not None
             ):
-                self.current[filename] = File(fd=-1)
+                self.current[filename] = self._closed()
 
-        constraint = self.file_exists(filename)
+        cnstr = self.file_exists(filename)
 
-        if self.is_sat(constraint):
-            self.state.add_constraints(constraint)
+        if self.is_sat(cnstr):
+            self.state.add_constraints(cnstr)
             self._set_concrete(filename, self._closed())
             return 1
 
         return -1
 
-    def close_symbolic(self, filename:  SymbString) -> int:
+    def close_symbolic(self, filename: SymbString) -> int:
+        """Close a symbolic file and return 1 on success or -1 on failure."""
         if self.is_emtpy():
             return -1
 
-        constraint = self.file_exists(filename)
+        cnstr = self.file_exists(filename)
 
-        if self.is_sat(constraint):
-            self.state.add_constraints(constraint)
+        if self.is_sat(cnstr):
+            self.state.add_constraints(cnstr)
             self._set_symbolic(filename, self._closed())
             return 1
 
@@ -268,17 +290,16 @@ class SymbFileSystem():
 
     def close_file(self, filename: str | SymbString) -> int:
         """
-        Closes a file.
-        Returns `1` on success.
-        Returns `-1` on error.
+        Close a file.
 
-        Adds the required constraints to the path condition
+        Returns `1` on success and `-1` on failure. When necessary, the
+        required existence constraint is added to the path condition.
         """
         if isinstance(filename, str):
             return self.close_concrete(filename)
-        else:
-            assert isinstance(filename, SymbString)
-            return self.close_symbolic(filename)
+
+        assert isinstance(filename, SymbString)
+        return self.close_symbolic(filename)
 
     def open_concrete(self, filename: str) -> int | BV:
         """Open a concrete file name and return its file descriptor."""
@@ -292,32 +313,29 @@ class SymbFileSystem():
                 if file is not None:
                     return file.fd
 
-        fd = self.search_filename(filename)
-
-        return fd
+        return self.search_filename(filename)
 
     def open_symbolic(self, filename: SymbString) -> int | BV:
-        """Open a symbolic file and return its file descriptor."""
+        """Open a symbolic file name and return its file descriptor."""
         if self.is_emtpy():
             return -1
 
-        fd = self.search_filename(filename)
-
-        return fd
+        return self.search_filename(filename)
 
     def open_file(self, filename: str | SymbString) -> int | BV:
         """
-        Opens a file and return its descriptor. Return can be symbolic.
-        Returns `-1` on error.
+        Open a file and return its descriptor, which may be symbolic.
+
+        Returns `-1` if the file system is empty or the file cannot be found.
         """
         if isinstance(filename, str):
             return self.open_concrete(filename)
-        else:
-            assert isinstance(filename, SymbString)
-            ret = self.open_symbolic(filename)
-            return ret
+
+        assert isinstance(filename, SymbString)
+        return self.open_symbolic(filename)
 
     def delete_concrete(self, filename: str) -> int:
+        """Delete a concrete file and return 1 on success or -1 on failure."""
         if self.is_emtpy():
             return -1
 
@@ -327,23 +345,24 @@ class SymbFileSystem():
                 del self.current[filename]
                 return 1
 
-        constraint = self.file_exists(filename)
+        cnstr = self.file_exists(filename)
 
-        if self.is_sat(constraint):
-            self.state.add_constraints(constraint)
+        if self.is_sat(cnstr):
+            self.state.add_constraints(cnstr)
             self._set_concrete(filename, None)
             return 1
 
         return -1
 
     def delete_symbolic(self, filename: SymbString) -> int:
+        """Delete a symbolic file and return 1 on success or -1 on failure."""
         if self.is_emtpy():
             return -1
 
-        constraint = self.file_exists(filename)
+        cnstr = self.file_exists(filename)
 
-        if self.is_sat(constraint):
-            self.state.add_constraints(constraint)
+        if self.is_sat(cnstr):
+            self.state.add_constraints(cnstr)
             self._set_symbolic(filename, None)
             return 1
 
@@ -351,14 +370,13 @@ class SymbFileSystem():
 
     def delete_file(self, filename: str | SymbString) -> int | BV:
         """
-        Deletes a file.
-        Returns `1` on success.
-        Returns `-1` on error.
+        Delete a file.
 
-        Adds the required constraints to the path condition
+        Returns `1` on success and `-1` on failure. When necessary, the
+        required existence constraint is added to the path condition.
         """
         if isinstance(filename, str):
             return self.delete_concrete(filename)
-        else:
-            assert isinstance(filename, SymbString)
-            return self.delete_symbolic(filename)
+
+        assert isinstance(filename, SymbString)
+        return self.delete_symbolic(filename)
