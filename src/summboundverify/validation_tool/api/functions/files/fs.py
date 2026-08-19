@@ -1,9 +1,11 @@
+import angr
 import claripy
 
 from copy import copy
 from dataclasses import dataclass
 
 from angr import SimState
+from cle.backends.externs.simdata.io_file import io_file_data_for_arch
 
 from claripy import BVV, true
 from claripy.ast import Bool, BV
@@ -12,6 +14,7 @@ from ...utils import (
     SymbString,
     constraint,
     eq_strings,
+    neq_strings
 )
 
 
@@ -20,6 +23,7 @@ class File:
     """State of an open file."""
 
     fd: int
+    fp: int
     size: int = 0
     offset: int = 0
 
@@ -69,19 +73,15 @@ class SymbFileSystem:
         ]
         return fs
 
-    def _bvv_int(self, value: int):
+    def bvv_int(self, value: int):
         """Create a bit-vector containing a C `int` value."""
         int_bits = self.state.arch.sizeof["int"]
         return BVV(value, int_bits)
 
-    def _incr_fd(self) -> int:
+    def incr_fd(self) -> int:
         fd = self.fd
         self.fd += 1
         return fd
-
-    def _closed(self) -> File:
-        """Return a file object representing a closed file."""
-        return File(fd=-1)
 
     def is_concrete(self, entry):
         """Return whether `entry` contains concrete file names."""
@@ -94,6 +94,14 @@ class SymbFileSystem:
     def is_sat(self, cnstr):
         """Return whether `cnstr` is satisfiable under the current path condition."""
         return self.state.solver.satisfiable(extra_constraints=(cnstr,))
+
+    def call_simproc(self, procedure, *args, **kwargs):
+        e_args = [
+            claripy.BVV(a, self.state.arch.bits)
+            if isinstance(a, int) else a for a in args
+        ]
+        p = procedure(project=self.state.project, **kwargs)
+        return p.execute(self.state, None, arguments=e_args)
 
     def is_certain(self, cnstr):
         """Return whether `cnstr` is necessarily true under the current path condition."""
@@ -117,6 +125,33 @@ class SymbFileSystem:
             return None
         return self.entries[-1]
 
+    def _create_fp(self, fd: int):
+        malloc = angr.SIM_PROCEDURES["libc"]["malloc"]
+        io_file_data = io_file_data_for_arch(self.state.arch)
+        fp = self.call_simproc(malloc, io_file_data["size"]).ret_expr
+        size = self.state.arch.sizeof["int"]
+
+        # Write the fd
+        self.state.memory.store(
+            fp + io_file_data["fd"],
+            fd,
+            size=size,
+            endness=self.state.arch.memory_endness
+        )
+        return fp
+
+    def _create_file(self, fd: int | None = None):
+        if fd is None:
+            fd = self.incr_fd()
+        fp = self._create_fp(fd)
+        file = File(fd=fd, fp=fp)
+        return file
+
+    def _closed_file(self) -> File:
+        """Return a file object representing a closed file."""
+        file = self._create_file(-1)
+        return file
+
     def file_exists(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating whether `filename` exists."""
         cases = []
@@ -138,7 +173,8 @@ class SymbFileSystem:
                 if self.is_certain(condition):
                     return true()
 
-                cases.append(condition)
+                if self.is_sat(condition):
+                    cases.append(condition)
 
         return constraint(claripy.Or, *cases)
 
@@ -147,8 +183,13 @@ class SymbFileSystem:
         exists = self.file_exists(filename)
         return claripy.Not(exists)
 
-    def search_filename(self, name: str | SymbString) -> BV:
-        """Return the file descriptor for `name`, or -1 if it is not found."""
+    def search_by_filename(
+        self,
+        name: str | SymbString
+    ) -> list[tuple[Bool, File | None]]:
+        """
+        Return possible files matching `name` and their conditions.
+        """
         cases = []
 
         for entry in reversed(self.entries):
@@ -161,14 +202,64 @@ class SymbFileSystem:
 
             for filename, file in files:
                 condition = eq_strings(name, filename)
-                fd = self._bvv_int(-1 if file is None else file.fd)
 
                 if self.is_certain(condition):
-                    return fd
+                    cases.append((true(), file))
+                    return cases
 
-                cases.append((condition, fd))
+                cases.append((condition, file))
 
-        return claripy.ite_cases(cases, self._bvv_int(-1))
+        return cases
+
+    def search_by_fd(
+        self,
+        fd: int | BV
+    ) -> list[tuple[Bool, File | None]]:
+        """
+        Return possible files matching `fd` and their conditions.
+        """
+        cases = []
+        deleted = []
+
+        for entry in reversed(self.entries):
+            if self.is_concrete(entry):
+                assert isinstance(entry, dict)
+                files = entry.items()
+            else:
+                assert isinstance(entry, SymbFileEntry)
+                files = [(entry.filename, entry.file)]
+
+            for filename, file in files:
+                if file is None or file.fd == -1:
+                    deleted.append(filename)
+                    continue
+
+                neq = constraint(
+                    claripy.And,
+                    *[neq_strings(filename, d) for d in deleted]
+                )
+
+                condition = claripy.And((fd == file.fd), neq)
+
+                if self.is_certain(condition):
+                    cases.append((true(), file))
+                    return cases
+
+                cases.append((condition, file))
+
+        return cases
+
+    def search_fd(self, name: str | SymbString) -> BV:
+        """Return the file descriptor for `name`, or -1 if not found."""
+
+        def fd(file: File | None) -> BV:
+            return self.bvv_int(-1 if file is None else file.fd)
+
+        minus_one = self.bvv_int(-1)
+        cases = self.search_by_filename(name)
+        mapped = ((condition, fd(file)) for condition, file in cases)
+
+        return claripy.ite_cases(mapped, minus_one)
 
     def _set_concrete(self, filename: str, file: File | None):
         """Add a concrete file entry, reusing the current concrete entry when possible."""
@@ -184,14 +275,14 @@ class SymbFileSystem:
         self.add(entry)
 
     def _create_concrete(self, filename: str) -> int:
-        fd = self._incr_fd()
-        file = File(fd)
+        file = self._create_file()
+        fd = file.fd
         self._set_concrete(filename, file)
         return fd
 
     def _create_symbolic(self, filename: SymbString):
-        fd = self._incr_fd()
-        file = File(fd)
+        file = self._create_file()
+        fd = file.fd
         self._set_symbolic(filename, file)
         return fd
 
@@ -263,13 +354,13 @@ class SymbFileSystem:
                 filename in self.current
                 and self.current[filename] is not None
             ):
-                self.current[filename] = self._closed()
+                self.current[filename] = self._closed_file()
 
         cnstr = self.file_exists(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
-            self._set_concrete(filename, self._closed())
+            self._set_concrete(filename, self._closed_file())
             return 1
 
         return -1
@@ -283,7 +374,7 @@ class SymbFileSystem:
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
-            self._set_symbolic(filename, self._closed())
+            self._set_symbolic(filename, self._closed_file())
             return 1
 
         return -1
@@ -313,14 +404,14 @@ class SymbFileSystem:
                 if file is not None:
                     return file.fd
 
-        return self.search_filename(filename)
+        return self.search_fd(filename)
 
     def open_symbolic(self, filename: SymbString) -> int | BV:
         """Open a symbolic file name and return its file descriptor."""
         if self.is_emtpy():
             return -1
 
-        return self.search_filename(filename)
+        return self.search_fd(filename)
 
     def open_file(self, filename: str | SymbString) -> int | BV:
         """

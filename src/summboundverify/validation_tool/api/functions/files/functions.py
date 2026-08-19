@@ -56,6 +56,7 @@ class file_open(FileSummary):
         print("Open fd: ", fd)
         return fd
 
+
 class file_delete(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr)
