@@ -63,3 +63,11 @@ class file_delete(FileSummary):
         status = self.fs.delete_file(filename)
         print("Delete status: ", status)
         return status
+
+
+class file_exists(FileSummary):
+    def run(self, filename_addr):
+        filename = self.load_string(filename_addr)
+        status = self.fs.exists_file(filename)
+        print("Exists status: ", status)
+        return status

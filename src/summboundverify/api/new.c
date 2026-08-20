@@ -53,6 +53,11 @@ int __file_delete(int fd);
 int __file_open(const char* name);
 
 /**
+ * Returns `1` if the file named `name` exists and `0` otherwise.
+ */
+int __file_exists(const char* name);
+
+/**
  * Returns the `FILE*` associated with file descriptor `fd`.
  *
  * Returns `NULL` if `fd` is invalid.

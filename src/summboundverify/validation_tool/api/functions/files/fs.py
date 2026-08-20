@@ -152,7 +152,7 @@ class SymbFileSystem:
         file = self._create_file(-1)
         return file
 
-    def file_exists(self, filename: str | SymbString) -> Bool:
+    def file_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating whether `filename` exists."""
         cases = []
 
@@ -178,9 +178,9 @@ class SymbFileSystem:
 
         return constraint(claripy.Or, *cases)
 
-    def file_not_exists(self, filename: str | SymbString) -> Bool:
+    def file_not_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating that `filename` does not exist."""
-        exists = self.file_exists(filename)
+        exists = self.file_exists_constraint(filename)
         return claripy.Not(exists)
 
     def search_by_filename(
@@ -210,6 +210,30 @@ class SymbFileSystem:
                 cases.append((condition, file))
 
         return cases
+
+    def search_fd(self, name: str | SymbString) -> BV:
+        """Return the file descriptor for `name`, or -1 if not found."""
+
+        def fd(file: File | None) -> BV:
+            return self.bvv_int(-1 if file is None else file.fd)
+
+        minus_one = self.bvv_int(-1)
+        cases = self.search_by_filename(name)
+        mapped = ((condition, fd(file)) for condition, file in cases)
+
+        return claripy.ite_cases(mapped, minus_one)
+
+    def search_exists(self, name: str | SymbString) -> BV:
+        """Return `1` if file `name` exists, or `0` otherwise."""
+
+        def exists(file: File | None) -> BV:
+            return self.bvv_int(0 if (file is None or file.fd == -1) else 1)
+
+        zero = self.bvv_int(0)
+        cases = self.search_by_filename(name)
+        mapped = ((condition, exists(file)) for condition, file in cases)
+
+        return claripy.ite_cases(mapped, zero)
 
     def search_by_fd(
         self,
@@ -248,18 +272,6 @@ class SymbFileSystem:
                 cases.append((condition, file))
 
         return cases
-
-    def search_fd(self, name: str | SymbString) -> BV:
-        """Return the file descriptor for `name`, or -1 if not found."""
-
-        def fd(file: File | None) -> BV:
-            return self.bvv_int(-1 if file is None else file.fd)
-
-        minus_one = self.bvv_int(-1)
-        cases = self.search_by_filename(name)
-        mapped = ((condition, fd(file)) for condition, file in cases)
-
-        return claripy.ite_cases(mapped, minus_one)
 
     def _set_concrete(self, filename: str, file: File | None):
         """Add a concrete file entry, reusing the current concrete entry when possible."""
@@ -304,7 +316,7 @@ class SymbFileSystem:
                 return -1
 
         # Creating the file requires the filename not to already exist.
-        cnstr = self.file_not_exists(filename)
+        cnstr = self.file_not_exists_constraint(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
@@ -321,7 +333,7 @@ class SymbFileSystem:
         if self.is_emtpy():
             return self._create_symbolic(filename)
 
-        cnstr = self.file_not_exists(filename)
+        cnstr = self.file_not_exists_constraint(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
@@ -356,7 +368,7 @@ class SymbFileSystem:
             ):
                 self.current[filename] = self._closed_file()
 
-        cnstr = self.file_exists(filename)
+        cnstr = self.file_exists_constraint(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
@@ -370,7 +382,7 @@ class SymbFileSystem:
         if self.is_emtpy():
             return -1
 
-        cnstr = self.file_exists(filename)
+        cnstr = self.file_exists_constraint(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
@@ -436,7 +448,7 @@ class SymbFileSystem:
                 del self.current[filename]
                 return 1
 
-        cnstr = self.file_exists(filename)
+        cnstr = self.file_exists_constraint(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
@@ -450,7 +462,7 @@ class SymbFileSystem:
         if self.is_emtpy():
             return -1
 
-        cnstr = self.file_exists(filename)
+        cnstr = self.file_exists_constraint(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
@@ -471,3 +483,34 @@ class SymbFileSystem:
 
         assert isinstance(filename, SymbString)
         return self.delete_symbolic(filename)
+
+    def exists_concrete(self, filename: str) -> int | BV:
+        """Return 1 if a concrete file exists, otherwise 0."""
+        if self.is_emtpy():
+            return 0
+
+        if self.is_concrete(self.current):
+            assert isinstance(self.current, dict)
+            if filename in self.current:
+                file = self.current[filename]
+                if file is not None:
+                    return 1
+
+        return self.search_exists(filename)
+
+    def exists_symbolic(self, filename: SymbString) -> int | BV:
+        """Return 1 if a symbolic file exists, otherwise 0."""
+        if self.is_emtpy():
+            return 0
+
+        return self.search_exists(filename)
+
+    def exists_file(self, filename: str | SymbString) -> int | BV:
+        """
+        Returns whether a file exists, possibly as a symbolic value.
+        """
+        if isinstance(filename, str):
+            return self.exists_concrete(filename)
+
+        assert isinstance(filename, SymbString)
+        return self.exists_symbolic(filename)
