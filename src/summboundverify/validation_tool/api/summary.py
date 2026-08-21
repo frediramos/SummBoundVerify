@@ -1,16 +1,12 @@
 import claripy
 
-from typing import Callable, Any
-
 from angr import SimProcedure
 
-from claripy import ClaripyError
 from claripy.ast.bv import BV as BitVector
 
 from summboundverify.exceptions import (
     InvalidSymbolicVariableSizeError,
     InvalidArchVariableSizeError,
-    ClaripyConstraintError,
     UnsatConstraintError,
     ReportError,
 )
@@ -40,7 +36,7 @@ class CSummary(SimProcedure):
             endness=self.state.arch.memory_endness
         )
 
-    def load_string(self, addr: int) -> SymbString:
+    def load_string(self, addr) -> SymbString:
         """
         Load a null-terminated string from memory.
         Can be symbolic.

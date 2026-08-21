@@ -1,7 +1,6 @@
-import claripy
-
 from abc import ABC, abstractmethod
 
+from claripy.ast.bv import BV as BitVector
 from angr.state_plugins import SimStateGlobals
 
 from .fs import SymbFileSystem
@@ -27,6 +26,11 @@ class FileSummary(CSummary, ABC):
             plugin["fs"] = fs
 
         return fs
+
+    def load_int(self, v: BitVector):
+        if not self.is_symbolic(v):
+            return self.state.solver.eval(v)
+        return v
 
     @abstractmethod
     def run(self):
@@ -71,3 +75,19 @@ class file_exists(FileSummary):
         status = self.fs.exists_file(filename)
         print("Exists status: ", status)
         return status
+
+
+class FILE_from_fd(FileSummary):
+    def run(self, fd_: BitVector):
+        fd = self.load_int(fd_)
+        fp = self.fs.FILE_from_fd(fd)
+        print("FILE pointer: ", fp)
+        return fp
+
+
+class fd_from_FILE(FileSummary):
+    def run(self, fp_: BitVector):
+        fp = self.load_int(fp_)
+        fd = self.fs.fd_from_FILE(fp)
+        print("File descriptor: ", fd)
+        return fd

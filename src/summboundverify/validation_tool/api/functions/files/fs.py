@@ -2,6 +2,7 @@ import angr
 import claripy
 
 from copy import copy
+from typing import Callable
 from dataclasses import dataclass
 
 from angr import SimState
@@ -20,6 +21,7 @@ from ...utils import (
 
 @dataclass(slots=True)
 class File:
+
     """State of an open file."""
 
     fd: int
@@ -33,6 +35,7 @@ type ConcrFileEntry = dict[str, File | None]
 
 @dataclass(frozen=True, slots=True)
 class SymbFileEntry:
+
     """
     A file whose name is represented by a symbolic string.
 
@@ -152,6 +155,31 @@ class SymbFileSystem:
         file = self._create_file(-1)
         return file
 
+    def _set_concrete(self, filename: str, file: File | None):
+        """Add a concrete file entry, reusing the current concrete entry when possible."""
+        if self.is_concrete(self.current):
+            assert isinstance(self.current, dict)
+            self.current[filename] = file
+        else:
+            self.add({filename: file})
+
+    def _set_symbolic(self, filename: SymbString, file: File | None):
+        """Add a symbolic file entry."""
+        entry = SymbFileEntry(filename, file)
+        self.add(entry)
+
+    def _create_concrete(self, filename: str) -> int:
+        file = self._create_file()
+        fd = file.fd
+        self._set_concrete(filename, file)
+        return fd
+
+    def _create_symbolic(self, filename: SymbString):
+        file = self._create_file()
+        fd = file.fd
+        self._set_symbolic(filename, file)
+        return fd
+
     def file_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating whether `filename` exists."""
         cases = []
@@ -207,11 +235,12 @@ class SymbFileSystem:
                     cases.append((true(), file))
                     return cases
 
-                cases.append((condition, file))
+                if self.is_sat(condition):
+                    cases.append((condition, file))
 
         return cases
 
-    def search_fd(self, name: str | SymbString) -> BV:
+    def get_fd_by_name(self, name: str | SymbString) -> BV:
         """Return the file descriptor for `name`, or -1 if not found."""
 
         def fd(file: File | None) -> BV:
@@ -235,12 +264,13 @@ class SymbFileSystem:
 
         return claripy.ite_cases(mapped, zero)
 
-    def search_by_fd(
+    def search_by_field(
         self,
-        fd: int | BV
+        value: int | BV,
+        getter: Callable[[File], int | BV],
     ) -> list[tuple[Bool, File | None]]:
         """
-        Return possible files matching `fd` and their conditions.
+        Return possible files matching `value` for the given `field`.
         """
         cases = []
         deleted = []
@@ -263,40 +293,47 @@ class SymbFileSystem:
                     *[neq_strings(filename, d) for d in deleted]
                 )
 
-                condition = claripy.And((fd == file.fd), neq)
+                v = getter(file)
+                condition = claripy.And(value == v, neq)
 
                 if self.is_certain(condition):
                     cases.append((true(), file))
                     return cases
 
-                cases.append((condition, file))
+                if self.is_sat(condition):
+                    cases.append((condition, file))
 
         return cases
 
-    def _set_concrete(self, filename: str, file: File | None):
-        """Add a concrete file entry, reusing the current concrete entry when possible."""
-        if self.is_concrete(self.current):
-            assert isinstance(self.current, dict)
-            self.current[filename] = file
-        else:
-            self.add({filename: file})
+    def get_fp_from_fd(self, fd: int | BV):
+        def getter(file: File): return file.fd
 
-    def _set_symbolic(self, filename: SymbString, file: File | None):
-        """Add a symbolic file entry."""
-        entry = SymbFileEntry(filename, file)
-        self.add(entry)
+        def fp(file: File | None) -> BV:
+            return self.bvv_int(
+                0 if (file is None or file.fd == -1)
+                else file.fp
+            )
 
-    def _create_concrete(self, filename: str) -> int:
-        file = self._create_file()
-        fd = file.fd
-        self._set_concrete(filename, file)
-        return fd
+        zero = self.bvv_int(0)
+        cases = self.search_by_field(fd, getter)
+        mapped = ((condition, fp(file)) for condition, file in cases)
 
-    def _create_symbolic(self, filename: SymbString):
-        file = self._create_file()
-        fd = file.fd
-        self._set_symbolic(filename, file)
-        return fd
+        return claripy.ite_cases(mapped, zero)
+
+    def get_fd_from_fp(self, fp: int | BV):
+        def getter(file: File): return file.fp
+
+        def fd(file: File | None) -> BV:
+            return self.bvv_int(
+                -1 if (file is None or file.fp == -1)
+                else file.fd
+            )
+
+        zero = self.bvv_int(0)
+        cases = self.search_by_field(fp, getter)
+        mapped = ((condition, fd(file)) for condition, file in cases)
+
+        return claripy.ite_cases(mapped, zero)
 
     def create_concrete(self, filename: str) -> int:
         """Create a concrete file.
@@ -416,14 +453,14 @@ class SymbFileSystem:
                 if file is not None:
                     return file.fd
 
-        return self.search_fd(filename)
+        return self.get_fd_by_name(filename)
 
     def open_symbolic(self, filename: SymbString) -> int | BV:
         """Open a symbolic file name and return its file descriptor."""
         if self.is_emtpy():
             return -1
 
-        return self.search_fd(filename)
+        return self.get_fd_by_name(filename)
 
     def open_file(self, filename: str | SymbString) -> int | BV:
         """
@@ -514,3 +551,53 @@ class SymbFileSystem:
 
         assert isinstance(filename, SymbString)
         return self.exists_symbolic(filename)
+
+    def FILE_from_fd_concrete(self, fd: int) -> int | BV:
+        if self.is_emtpy():
+            return -1
+
+        if self.is_concrete(self.current):
+            assert isinstance(self.current, dict)
+            for file in self.current.values():
+                if file is not None and file.fd == fd:
+                    return file.fp
+
+        return self.get_fp_from_fd(fd)
+
+    def FILE_from_fd_symbolic(self, fd: BV) -> int | BV:
+        if self.is_emtpy():
+            return -1
+
+        return self.get_fp_from_fd(fd)
+
+    def FILE_from_fd(self, fd: int | BV) -> int | BV:
+        if isinstance(fd, int):
+            return self.FILE_from_fd_concrete(fd)
+
+        assert isinstance(fd, BV)
+        return self.FILE_from_fd_symbolic(fd)
+
+    def fd_from_FILE_concrete(self, fp: int) -> int | BV:
+        if self.is_emtpy():
+            return -1
+
+        if self.is_concrete(self.current):
+            assert isinstance(self.current, dict)
+            for file in self.current.values():
+                if file is not None and file.fp == fp:
+                    return file.fp
+
+        return self.get_fd_from_fp(fp)
+
+    def fd_from_FILE_symbolic(self, fp: BV) -> int | BV:
+        if self.is_emtpy():
+            return -1
+
+        return self.get_fd_from_fp(fp)
+
+    def fd_from_FILE(self, fp: int | BV) -> int | BV:
+        if isinstance(fp, int):
+            return self.fd_from_FILE_concrete(fp)
+
+        assert isinstance(fp, BV)
+        return self.fd_from_FILE_symbolic(fp)
