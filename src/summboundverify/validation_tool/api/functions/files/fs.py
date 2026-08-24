@@ -193,6 +193,9 @@ class SymbFileSystem:
         fd_entry = self._create_fd_entry(file)
         return fd_entry
 
+    def _is_closed_or_deleted(self, file):
+        return file is None or file.fp == -1
+
     def _set_concrete_fname(self, filename: str, fd_entry: FdEntry | None):
         """Add a concrete file entry, reusing the current concrete entry when possible."""
         entry = [fd_entry] if fd_entry is not None else None
@@ -366,36 +369,6 @@ class SymbFileSystem:
                     cases.append((condition, file))
 
         return cases
-
-    def get_fp_from_fd(self, fd: int | BV):
-        def getter(file: File): return file.fd
-
-        def fp(file: File | None) -> BV:
-            return self.bvv_int(
-                0 if (file is None or file.fd == -1)
-                else file.fp
-            )
-
-        null = self.bvv_int(0)
-        cases = self.search_by_field(fd, getter)
-        mapped = ((condition, fp(file)) for condition, file in cases)
-
-        return claripy.ite_cases(mapped, null)
-
-    def get_fd_from_fp(self, fp: int | BV):
-        def getter(file: File): return file.fp
-
-        def fd(file: File | None) -> BV:
-            return self.bvv_int(
-                -1 if (file is None or file.fp == -1)
-                else file.fd
-            )
-
-        err = self.bvv_int(-1)
-        cases = self.search_by_field(fp, getter)
-        mapped = ((condition, fd(file)) for condition, file in cases)
-
-        return claripy.ite_cases(mapped, err)
 
     def create_concrete(self, filename: str) -> int:
         """Create a concrete file.
@@ -619,6 +592,23 @@ class SymbFileSystem:
         assert isinstance(filename, SymbString)
         return self.exists_symbolic(filename)
 
+    def get_fp_from_fd(self, fd: int | BV):
+        def field(file: File): return file.fd
+
+        def fp(file: File | None) -> BV:
+            if self._is_closed_or_deleted(file):
+                ret = 0
+            else:
+                assert file is not None
+                ret = file.fp
+            return self.bvv_int(ret)
+
+        null = self.bvv_int(0)
+        cases = self.search_by_field(fd, field)
+        mapped = ((condition, fp(file)) for condition, file in cases)
+
+        return claripy.ite_cases(mapped, null)
+
     def FILE_from_fd_concrete(self, fd: int) -> int | BV:
         if self.is_emtpy():
             return -1
@@ -646,6 +636,23 @@ class SymbFileSystem:
         assert isinstance(fd, BV)
         return self.FILE_from_fd_symbolic(fd)
 
+    def get_fd_from_fp(self, fp: int | BV):
+        def field(file: File): return file.fp
+
+        def fd(file: File | None) -> BV:
+            if self._is_closed_or_deleted(file):
+                ret = -1
+            else:
+                assert file is not None
+                ret = file.fd
+            return self.bvv_int(ret)
+
+        err = self.bvv_int(-1)
+        cases = self.search_by_field(fp, field)
+        mapped = ((condition, fd(file)) for condition, file in cases)
+
+        return claripy.ite_cases(mapped, err)
+
     def fd_from_FILE_concrete(self, fp: int) -> int | BV:
         if self.is_emtpy():
             return -1
@@ -672,3 +679,47 @@ class SymbFileSystem:
 
         assert isinstance(fp, BV)
         return self.fd_from_FILE_symbolic(fp)
+
+    def get_offset_from_fd(self, fp: int | BV):
+        def field(file: File): return file.fd
+
+        def offset(file: File | None) -> BV:
+            if self._is_closed_or_deleted(file):
+                ret = -1
+            else:
+                assert file is not None
+                ret = file.offset
+            return self.bvv_int(ret)
+
+        err = self.bvv_int(-1)
+        cases = self.search_by_field(fp, field)
+        mapped = ((condition, offset(file)) for condition, file in cases)
+
+        return claripy.ite_cases(mapped, err)
+
+    def file_offset_concrete(self, fd: int) -> int | BV:
+        if self.is_emtpy():
+            return -1
+
+        if self.is_concrete(self.current):
+            assert isinstance(self.current, dict)
+            for entries in self.current.values():
+                if entries is not None and len(entries) == 1:
+                    file = self._get_first_file(entries)
+                    if file.fd == fd:
+                        return file.offset
+
+        return self.get_offset_from_fd(fd)
+
+    def file_offset_symbolic(self, fd: BV) -> int | BV:
+        if self.is_emtpy():
+            return -1
+
+        return self.get_offset_from_fd(fd)
+
+    def file_offset(self, fd: int | BV) -> int | BV:
+        if isinstance(fd, int):
+            return self.file_offset_concrete(fd)
+
+        assert isinstance(fd, BV)
+        return self.file_offset_symbolic(fd)

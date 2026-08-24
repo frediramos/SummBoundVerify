@@ -91,3 +91,11 @@ class fd_from_FILE(FileSummary):
         fd = self.fs.fd_from_FILE(fp)
         print("File descriptor: ", fd)
         return fd
+
+
+class file_offset(FileSummary):
+    def run(self, fd_: BitVector):
+        fd = self.load_int(fd_)
+        offset = self.fs.file_offset(fd)
+        print("File offset: ", offset)
+        return offset
