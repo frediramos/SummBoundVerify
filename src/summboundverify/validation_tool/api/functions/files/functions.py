@@ -48,9 +48,9 @@ class file_create(FileSummary):
 class file_close(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr)
-        status = self.fs.close_file(filename)
-        print("Close status: ", status)
-        return status
+        ret = self.fs.close_file(filename)
+        print("Close ret: ", ret)
+        return ret
 
 
 class file_open(FileSummary):
@@ -64,17 +64,17 @@ class file_open(FileSummary):
 class file_delete(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr)
-        status = self.fs.delete_file(filename)
-        print("Delete status: ", status)
-        return status
+        ret = self.fs.delete_file(filename)
+        print("Delete ret: ", ret)
+        return ret
 
 
 class file_exists(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr)
-        status = self.fs.exists_file(filename)
-        print("Exists status: ", status)
-        return status
+        ret = self.fs.exists_file(filename)
+        print("Exists ret: ", ret)
+        return ret
 
 
 class FILE_from_fd(FileSummary):
@@ -99,3 +99,12 @@ class file_offset(FileSummary):
         offset = self.fs.file_offset(fd)
         print("File offset: ", offset)
         return offset
+
+
+class file_set_offset(FileSummary):
+    def run(self, fd_: BitVector, offset_: BitVector):
+        fd = self.load_int(fd_)
+        offset = self.load_int(offset_)
+        ret = self.fs.file_set_offset(fd, offset)
+        print("Set offset ret: ", ret)
+        return ret

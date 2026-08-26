@@ -229,7 +229,7 @@ class SymbFileSystem:
     def _get_first_file(self, fd_entries: list[FdEntry]) -> File:
         """Get first `File` from a list of entries"""
         entry = fd_entries[0]
-        assert entry.cond == true()
+        assert entry.cond is true()
         return entry.file
 
     def file_exists_constraint(self, filename: str | SymbString) -> Bool:
@@ -680,7 +680,7 @@ class SymbFileSystem:
         assert isinstance(fp, BV)
         return self.fd_from_FILE_symbolic(fp)
 
-    def get_offset_from_fd(self, fp: int | BV):
+    def get_offset_from_fd(self, fd: int | BV):
         def field(file: File): return file.fd
 
         def offset(file: File | None) -> BV:
@@ -692,7 +692,7 @@ class SymbFileSystem:
             return self.bvv_int(ret)
 
         err = self.bvv_int(-1)
-        cases = self.search_by_field(fp, field)
+        cases = self.search_by_field(fd, field)
         mapped = ((condition, offset(file)) for condition, file in cases)
 
         return claripy.ite_cases(mapped, err)
@@ -723,3 +723,93 @@ class SymbFileSystem:
 
         assert isinstance(fd, BV)
         return self.file_offset_symbolic(fd)
+
+    def _iter_fd_entry_lists(self) -> Iterator[list[FdEntry]]:
+        deleted = []
+
+        for entry in reversed(self.entries):
+            if isinstance(entry, dict):
+                files = entry.items()
+            else:
+                assert isinstance(entry, NameSymbolicEntry)
+                files = [(entry.filename, entry.entries)]
+
+            for filename, entries in files:
+                if entries is None:
+                    deleted.append(filename)
+                    continue
+
+                if any(
+                    not self.is_sat(neq_strings(filename, deleted_name))
+                    for deleted_name in deleted
+                ):
+                    continue
+
+                yield entries
+
+    def _find_fd_entries(self, fd: int) -> list[FdEntry] | None:
+        entries = self._iter_fd_entry_lists()
+
+        for fd_entries in entries:
+            file = self._get_first_file(fd_entries)
+            if file.fd == fd:
+                assert len(fd_entries) > 0
+                return fd_entries
+
+        return None
+
+    def file_set_offset_concrete(self, fd: int, offset: int) -> int:
+        entries = self._find_fd_entries(fd)
+
+        if entries is None:
+            return -1
+
+        for entry in entries:
+            entry.file.offset = offset
+
+        return offset
+
+    def file_set_offset_symbolic(self, fd: BV, offset: int) -> int | BV:
+        cases = []
+
+        for entries in self._iter_fd_entry_lists():
+            first = self._get_first_file(entries)
+            condition = fd == first.fd
+
+            if not self.is_sat(condition):
+                continue
+
+            new_entries = []
+
+            for entry in entries:
+                new_file = copy(entry.file)
+                new_file.offset = offset
+
+                new_entries.append(
+                    FdEntry(
+                        claripy.And(condition, entry.cond),
+                        new_file,
+                    )
+                )
+
+            entries.extend(new_entries)
+            cases.append((condition, self.bvv_int(offset)))
+
+        ret_expr = claripy.ite_cases(cases, self.bvv_int(-1))
+        return ret_expr
+
+    def file_set_offset(self, fd: int | BV, offset: int | BV) -> int | BV:
+
+        # Concretize symbolic offset (for now?)
+        if isinstance(offset, BV):
+            cond = (offset >= 0)
+            if not self.is_sat(cond):
+                return -1
+            self.state.add_constraints(cond)
+            offset = self.state.solver.eval(offset)
+
+        if isinstance(fd, int):
+            return self.file_set_offset_concrete(fd, offset)
+
+        assert isinstance(fd, BV)
+        return self.file_set_offset_symbolic(fd, offset)
