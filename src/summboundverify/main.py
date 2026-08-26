@@ -269,13 +269,6 @@ def fuzz_verdict(entry: dict) -> tuple[str, str]:
             )
         color = Colors.red
 
-    elif verdict == 'uncovered':
-        # Not a refutation: the summary is silent about an input the function
-        # handles, which is what an under-approximation is.
-        missed = (entry.get('counts') or {}).get('uncovered', 0)
-        detail += f' [{missed} not covered]'
-        color = Colors.yellow
-
     elif verdict == 'starved':
         color = Colors.yellow
 
@@ -327,16 +320,6 @@ def print_summary(se_results: Path | None, fuzz_results: Path | None):
             print(
                 f"  {Colors.red}the engines disagree: one of them is wrong"
                 f"{Colors.reset}",
-                file=sys.stderr,
-            )
-
-        # An under-approximation is a verdict symbolic execution reaches on
-        # its own, so the two agreeing here is confirmation rather than
-        # conflict -- worth saying, because `uncovered` reads like a failure.
-        if se_text == 'under' and fz_text.startswith('uncovered'):
-            print(
-                f"  {Colors.white}both engines agree the summary is "
-                f"under-approximating{Colors.reset}",
                 file=sys.stderr,
             )
 

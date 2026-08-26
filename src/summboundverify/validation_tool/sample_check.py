@@ -13,13 +13,12 @@ class Verdict(Enum):
     """What the summary had to say about one concrete sample."""
 
     matched = 'matched'        # the summary admits this input/output pair
-    uncovered = 'uncovered'    # no path of the summary covers this input
     mismatched = 'mismatched'  # a path covers it, but not with this result
     skipped = 'skipped'        # nothing to compare
 
     @property
     def is_finding(self) -> bool:
-        return self in (Verdict.uncovered, Verdict.mismatched)
+        return self == Verdict.mismatched
 
 
 @dataclass
@@ -44,8 +43,7 @@ def summary_formula(formulas: list) -> BoolRef | None:
     """The summary's paths as one formula: their disjunction.
 
     Returns None when there is nothing to check against, which is not the same
-    as an unsatisfiable summary -- it means the symbolic run stored no path,
-    and every sample would otherwise be reported as uncovered.
+    as an unsatisfiable summary.
     """
     if not formulas:
         return None
@@ -155,19 +153,11 @@ def check_sample(formula: BoolRef, sample) -> Check:
     solver = Solver()
     solver.add(formula)
 
-    # Does any path cover this input at all?
+    # Add input restrictions
     solver.push()
     solver.add(inputs)
 
-    if solver.check() == unsat:
-        solver.pop()
-        return Check(
-            Verdict.uncovered, sample,
-            "no path of the summary covers this input",
-            bindings,
-        )
-
-    # It does. Can it produce what the function produced?
+    # Can it produce what the function produced?
     outputs = _memory_bindings(sample, declared)
 
     ret = declared.get('Ret')
