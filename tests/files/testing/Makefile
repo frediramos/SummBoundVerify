@@ -21,9 +21,11 @@ compile: $(TESTS)
 run: compile
 	@status=0; \
 	tests="$(TESTS)"; \
+	\
 	if [ -n "$(TEST)" ]; then \
 		tests="$(TEST:.c=).test"; \
 	fi; \
+	\
 	for test in $$tests; do \
 		echo -e "$(YELLOW)->$(RESET) $(MAGENTA)$$test$(RESET)"; \
 		$(SUMMBV) $$test; \

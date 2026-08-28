@@ -27,7 +27,7 @@ class FileSummary(CSummary, ABC):
 
         return fs
 
-    def load_int(self, v: BitVector):
+    def load_numeric(self, v: BitVector):
         if not self.is_symbolic(v):
             return self.state.solver.eval(v)
         return v
@@ -40,6 +40,14 @@ class FileSummary(CSummary, ABC):
 class file_create(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr)
-        fd = self.fs.create_file(filename)
-        print("Create fd: ", fd)
-        return fd
+        status = self.fs.create_file(filename)
+        print("Create file: ", status)
+        return status 
+
+
+class file_delete(FileSummary):
+    def run(self, filename_addr):
+        filename = self.load_string(filename_addr)
+        status = self.fs.delete_file(filename)
+        print("Delete file: ", status)
+        return status
