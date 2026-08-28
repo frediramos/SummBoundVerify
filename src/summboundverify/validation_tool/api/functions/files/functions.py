@@ -42,7 +42,7 @@ class file_create(FileSummary):
         filename = self.load_string(filename_addr)
         status = self.fs.create_file(filename)
         print("Create file: ", status)
-        return status 
+        return status
 
 
 class file_delete(FileSummary):
@@ -50,4 +50,12 @@ class file_delete(FileSummary):
         filename = self.load_string(filename_addr)
         status = self.fs.delete_file(filename)
         print("Delete file: ", status)
+        return status
+
+
+class file_exists(FileSummary):
+    def run(self, filename_addr):
+        filename = self.load_string(filename_addr)
+        status = self.fs.exists_file(filename)
+        print("Exists file: ", status)
         return status

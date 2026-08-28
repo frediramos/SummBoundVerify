@@ -104,6 +104,11 @@ class SymbolicFS:
             extra_constraints=(neg_cnstr,)
         )
 
+    def bvv_int(self, value: int):
+        """Create a bit-vector containing a C `int` value."""
+        int_bits = self.state.arch.sizeof["int"]
+        return BVV(value, int_bits)
+
     @property
     def current_fname(self):
         """Return the most recently added fname entry, or `None` if empty."""
@@ -114,6 +119,14 @@ class SymbolicFS:
     # ---------------------------------------------------------------------------
     # Constraints
     # ---------------------------------------------------------------------------
+    def _fname_entry_to_list(self, entry: FileNameEntry):
+        if isinstance(entry, dict):
+            fnames = entry.items()
+        else:
+            assert isinstance(entry, SymbolicNameEntry)
+            fnames = [(entry.filename, entry.exists)]
+        return fnames
+
     def file_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating whether `filename` exists."""
 
@@ -121,11 +134,7 @@ class SymbolicFS:
         deleted = []
 
         for entry in reversed(self.fnames):
-            if isinstance(entry, dict):
-                fnames = entry.items()
-            else:
-                assert isinstance(entry, SymbolicNameEntry)
-                fnames = [(entry.filename, entry.exists)]
+            fnames = self._fname_entry_to_list(entry)
 
             for name, exists in fnames:
                 cond = eq_strings(filename, name)
@@ -152,6 +161,30 @@ class SymbolicFS:
         """Return a constraint indicating that `filename` does not exist."""
         exists = self.file_exists_constraint(filename)
         return claripy.Not(exists)
+
+    def file_exists_ite(self, filename: str | SymbString) -> int | BV:
+        cases = []
+        succ = 1
+        err = 0
+        def to_int(b): return self.bvv_int(succ) if b else self.bvv_int(err)
+
+        for entry in reversed(self.fnames):
+            if isinstance(entry, dict):
+                fnames = [
+                    (eq_strings(k, filename), to_int(v))
+                    for k, v in entry.items()
+                ]
+            else:
+                assert isinstance(entry, SymbolicNameEntry)
+                fnames = [(
+                    eq_strings(entry.filename, filename),
+                    to_int(entry.exists)
+                )]
+
+            cases.extend(fnames)
+
+        expr = claripy.ite_cases(cases, err)
+        return expr
 
     # ---------------------------------------------------------------------------
     # Factories
@@ -268,7 +301,7 @@ class SymbolicFS:
         assert isinstance(filename, SymbString)
         return self.create_symbolic_file(filename)
 
-    def delete_file(self, filename: str | SymbString) -> int | BV:
+    def delete_file(self, filename: str | SymbString) -> int:
         """
         Delete a file.
 
@@ -280,3 +313,34 @@ class SymbolicFS:
 
         assert isinstance(filename, SymbString)
         return self.delete_symbolic(filename)
+
+    def exists_concrete(self, filename: str) -> int | BV:
+        """Return 1 if a concrete file exists, otherwise 0."""
+        if self.is_fnames_emtpy():
+            return 0
+
+        if self.is_concrete(self.current_fname):
+            assert isinstance(self.current_fname, dict)
+            if filename in self.current_fname:
+                file = self.current_fname.get(filename, None)
+                if file is not None:
+                    return 1
+
+        return self.file_exists_ite(filename)
+
+    def exists_symbolic(self, filename: SymbString) -> int | BV:
+        """Return 1 if a symbolic file exists, otherwise 0."""
+        if self.is_fnames_emtpy():
+            return 0
+
+        return self.file_exists_ite(filename)
+
+    def exists_file(self, filename: str | SymbString) -> int | BV:
+        """
+        Returns whether a file exists, possibly as a symbolic value.
+        """
+        if isinstance(filename, str):
+            return self.exists_concrete(filename)
+
+        assert isinstance(filename, SymbString)
+        return self.exists_symbolic(filename)

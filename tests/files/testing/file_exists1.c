@@ -1,0 +1,52 @@
+#define NULL ((void*)0)
+#define INT_SIZE (sizeof(int) * 8)
+#define LONG_SIZE (sizeof(long) * 8)
+#define CHAR_SIZE (sizeof(char) * 8)
+#define PTR_SIZE (sizeof(void*) * 8)
+
+#include <stdio.h>
+
+typedef void *symbolic;
+typedef int state_t;
+typedef unsigned int cnstr_t;
+typedef unsigned int result_t;
+typedef unsigned int list_t;
+
+symbolic __sym_var(size_t size) { return 0; }
+symbolic __sym_var_named(char *name, size_t size) { return 0; }
+symbolic __sym_var_array(char *name, size_t index, size_t size) { return 0; }
+
+void __assert(cnstr_t cnstr) { }
+void __report_error(const char* filename, unsigned int line, const char* message){ return; }
+
+int __file_create(char* filename){ return 0; }
+int __file_exists(char* filename){ return 0; }
+int __file_delete(char* filename){ return 0; }
+
+
+#define SIZE 3
+
+int main(){
+  
+  char s1[SIZE];
+  char s2[SIZE];
+
+  // Fill with symbolic bytes
+  for (int i = 0; i < SIZE; i++){
+    s1[i] = __sym_var_array("s1", i, CHAR_SIZE);
+  }
+  
+  for (int i = 0; i < SIZE; i++){
+    s2[i] = __sym_var_array("s2", i, CHAR_SIZE);
+  }
+
+  // Concrete null byte
+  s1[SIZE -1] = '\0';
+  s2[SIZE -1] = '\0';
+
+  int ret1 = __file_create(s1);
+  __assert(ret1 == 1);
+  
+  int ret2 = __file_exists(s1);
+  __assert(ret2 == 1);
+}
