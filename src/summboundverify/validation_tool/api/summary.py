@@ -120,8 +120,9 @@ class CSummary(SimProcedure):
         return self.state.solver.satisfiable(extra_constraints=(cnstr,))
 
     def assert_constraint(self, cnstr):
-        if not self.state.solver.satisfiable(extra_constraints=(cnstr,)):
+        if not self.is_certain(cnstr):
             raise UnsatConstraintError("_assert", cnstr)
+            
 
     def push_pc(self):
         c = self.state.solver._solver.constraints
