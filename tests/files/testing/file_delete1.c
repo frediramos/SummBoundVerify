@@ -20,6 +20,7 @@ void __assert(cnstr_t cnstr) { }
 void __report_error(const char* filename, unsigned int line, const char* message){ return; }
 
 int __file_create(char* filename){ return 0; }
+int __file_delete(char* filename){ return 0; }
 
 #define SIZE 3
 
@@ -42,7 +43,9 @@ int main(){
   s2[SIZE -1] = '\0';
 
   int ret1 = __file_create(s1);
-  int ret2 = __file_create(s2);
   __assert(ret1 == 1);
+  
+  int ret2 = __file_delete(s1);
   __assert(ret2 == 1);
+
 }

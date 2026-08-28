@@ -42,7 +42,7 @@ int main(){
   s2[SIZE -1] = '\0';
 
   int ret1 = __file_create(s1);
-  int ret2 = __file_create(s2);
+  int ret2 = __file_create(s1);
   __assert(ret1 == 1);
-  __assert(ret2 == 1);
+  __assert(ret2 == -1);
 }

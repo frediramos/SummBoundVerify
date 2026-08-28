@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from angr import SimState
 from cle.backends.externs.simdata.io_file import io_file_data_for_arch
 
-from claripy import BVV, true
+from claripy import BVV, true, false
 from claripy.ast import Bool, BV
 
 from ...utils import (
@@ -116,29 +116,37 @@ class SymbolicFS:
     # ---------------------------------------------------------------------------
     def file_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating whether `filename` exists."""
+
         cases = []
+        deleted = []
 
         for entry in reversed(self.fnames):
             if isinstance(entry, dict):
-                fnames = [
-                    name for name, exists in entry.items()
-                    if exists
-                ]
+                fnames = entry.items()
             else:
                 assert isinstance(entry, SymbolicNameEntry)
-                fnames = [entry.filename] if entry.exists else []
+                fnames = [(entry.filename, entry.exists)]
 
-            for name in fnames:
+            for name, exists in fnames:
+                cond = eq_strings(filename, name)
 
-                condition = eq_strings(filename, name)
+                if not exists:
+                    if self.is_certain(cond):
+                        return false()
+                    deleted.append(name)
+                    continue
 
-                if self.is_certain(condition):
-                    return true()
+                if self.is_sat(cond):
+                    cases.append(cond)
 
-                if self.is_sat(condition):
-                    cases.append(condition)
+        eq = constraint(claripy.Or, *cases)
+        neq = constraint(
+            claripy.And,
+            *[neq_strings(filename, d) for d in deleted]
+        )
+        condition = claripy.And(eq, neq)
 
-        return constraint(claripy.Or, *cases)
+        return condition
 
     def file_not_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating that `filename` does not exist."""
@@ -152,12 +160,12 @@ class SymbolicFS:
     def create_concrete_file(self, filename: str) -> int:
         """Create a concrete file."""
 
-        def append_new(name):
-            entry = {name: True}
+        def append_new():
+            entry = {filename: True}
             self.fnames.append(entry)
 
         if self.is_fnames_emtpy():
-            append_new(filename)
+            append_new()
             return 1
 
         if self.is_concrete(self.current_fname):
@@ -173,7 +181,7 @@ class SymbolicFS:
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
-            append_new(filename)
+            append_new()
             return 1
 
         return -1
@@ -181,19 +189,64 @@ class SymbolicFS:
     def create_symbolic_file(self, filename: SymbString) -> int:
         """Create a symbolic file."""
 
-        def append_new(name):
-            entry = SymbolicNameEntry(name, True)
+        def append_new():
+            entry = SymbolicNameEntry(filename, True)
             self.fnames.append(entry)
 
         if self.is_fnames_emtpy():
-            append_new(filename)
+            append_new()
             return 1
 
         cnstr = self.file_not_exists_constraint(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
-            append_new(filename)
+            append_new()
+            return 1
+
+        return -1
+
+    def delete_concrete(self, filename: str) -> int:
+        """Delete a concrete file and return 1 on success or -1 on failure."""
+
+        def append_new():
+            entry = {filename: False}
+            self.fnames.append(entry)
+
+        if self.is_fnames_emtpy():
+            return -1
+
+        if self.is_concrete(self.current_fname):
+            assert isinstance(self.current_fname, dict)
+            if filename in self.current_fname:
+                del self.current_fname[filename]
+                return 1
+
+        cnstr = self.file_exists_constraint(filename)
+
+        if self.is_sat(cnstr):
+            self.state.add_constraints(cnstr)
+            append_new()
+            return 1
+
+        return -1
+
+    def delete_symbolic(self, filename: SymbString) -> int:
+        """Delete a symbolic file and return 1 on success or -1 on failure."""
+
+        def append_new():
+            entry = SymbolicNameEntry(filename, False)
+            self.fnames.append(entry)
+
+        if self.is_fnames_emtpy():
+            return -1
+
+        cnstr = self.file_exists_constraint(filename)
+
+        if self.is_sat(cnstr):
+            self.state.add_constraints(cnstr)
+            append_new()
+            return 1
 
         return -1
 
@@ -214,3 +267,16 @@ class SymbolicFS:
 
         assert isinstance(filename, SymbString)
         return self.create_symbolic_file(filename)
+
+    def delete_file(self, filename: str | SymbString) -> int | BV:
+        """
+        Delete a file.
+
+        Returns `1` on success and `-1` on failure. When necessary, the
+        required existence constraint is added to the path condition.
+        """
+        if isinstance(filename, str):
+            return self.delete_concrete(filename)
+
+        assert isinstance(filename, SymbString)
+        return self.delete_symbolic(filename)
