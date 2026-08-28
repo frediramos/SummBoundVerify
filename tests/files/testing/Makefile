@@ -9,16 +9,17 @@ RESET = \033[0m
 FLAGS  = -Wno-int-conversion
 SUMMBV = summbv -run --binary
 
+BINS = bins
 TESTS = $(patsubst %.c,%.test,$(wildcard *.c))
 
 .PHONY: compile run clean
 
 %.test: %.c
-	$(CC) $(FLAGS) $< -o $@
+	$(CC) $(FLAGS) $< -o $(BINS)/$@
 
 compile: $(TESTS)
 
-run: compile
+run: 
 	@status=0; \
 	tests="$(TESTS)"; \
 	\
@@ -27,9 +28,11 @@ run: compile
 	fi; \
 	\
 	for test in $$tests; do \
+		$(MAKE) $$test; \
 		echo -e "$(YELLOW)->$(RESET) $(MAGENTA)$$test$(RESET)"; \
-		$(SUMMBV) $$test; \
+		$(SUMMBV) $(BINS)/$$test; \
 		result=$$?; \
+		\
 		if [ $$result -eq 0 ]; then \
 			echo -e "$(GREEN)Passed!$(RESET)"; \
 		else \
@@ -41,4 +44,4 @@ run: compile
 	exit $$status
 
 clean:
-	$(RM) *.o *.test
+	$(RM) $(BINS)/*.test
