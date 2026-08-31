@@ -59,3 +59,12 @@ class file_exists(FileSummary):
         status = self.fs.exists_file(filename)
         print("Exists file: ", status)
         return status
+
+
+class file_open(FileSummary):
+    def run(self, filename_addr):
+        filename = self.load_string(filename_addr)
+        status = self.fs.open_file(filename)
+        print("Open file: ", status)
+        print(self.fs)
+        return status
