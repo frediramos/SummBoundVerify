@@ -3,13 +3,15 @@ import claripy
 
 from copy import copy
 from typing import Callable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from angr import SimState
 from cle.backends.externs.simdata.io_file import io_file_data_for_arch
 
 from claripy import BVV, true, false
 from claripy.ast import Bool, BV
+
+from textwrap import indent
 
 from ...utils import (
     SymbString,
@@ -18,6 +20,10 @@ from ...utils import (
     neq_strings
 )
 
+
+# ---------------------------------------------------------------------------
+# Filenames
+# ---------------------------------------------------------------------------
 
 type ConcreteNameEntry = dict[str, bool]
 
@@ -33,6 +39,37 @@ type FileNameEntry = ConcreteNameEntry | SymbolicNameEntry
 type FileNames = list[FileNameEntry]
 
 
+# ---------------------------------------------------------------------------
+# File descriptors
+# ---------------------------------------------------------------------------
+
+@dataclass(slots=True)
+class File:
+    size: int = 0
+    bytes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class FdEntry:
+    filename: str | SymbString
+    cond: Bool
+    offset: int
+    file: File
+
+    def __repr__(self) -> str:
+        return (
+            "FdEntry(\n"
+            f"\tfilename={self.filename!r},\n"
+            f"\tcond={self.cond!r},\n"
+            f"\toffset={self.offset},\n"
+            f"\tfile={self.file!r}\n"
+            ")"
+        )
+
+
+type FdEntries = tuple[str | SymbString, list[FdEntry]]
+
+
 class SymbolicFS:
     """
     Model of a file system with concrete and symbolic file names and file descriptors.
@@ -45,8 +82,48 @@ class SymbolicFS:
         are reserved for stdin, stdout, and stderr, respectively.
         """
         self.state = state
-        self.fd = 3
+
         self.fnames: FileNames = []
+        self.fds: dict[int, FdEntries] = {}
+
+        # Map of object id() values for correct cloning
+        self.shared_files: dict[int, File | None] = {}
+
+    def __repr__(self) -> str:
+        sections = [
+            self._repr_fnames(),
+            self._repr_fds(),
+            self._repr_shared_files(),
+        ]
+
+        return "SymbolicFS(\n" + "\n\n".join(sections) + "\n)"
+
+    def _repr_fnames(self) -> str:
+        lines = ["\tfnames:"]
+
+        for entry in self.fnames:
+            lines.append(f"\t\t{entry!r}")
+
+        return "\n".join(lines)
+
+    def _repr_fds(self) -> str:
+        lines = ["\tfds:"]
+
+        for fd, (filename, entries) in self.fds.items():
+            lines.append(f"\t\tfd {fd} -> {filename!r}")
+            lines.append("\t\t[")
+            for entry in entries:
+                lines.append(indent(repr(entry), "\t\t\t"))
+            lines.append("\t\t[")
+        return "\n".join(lines)
+
+    def _repr_shared_files(self) -> str:
+        lines = ["\tshared_files:"]
+
+        for file_id, file in self.shared_files.items():
+            lines.append(f"\t\t{file_id:#x} -> {file!r}")
+
+        return "\n".join(lines)
 
     # ---------------------------------------------------------------------------
     # Cloning
@@ -57,9 +134,11 @@ class SymbolicFS:
         Create an independent copy of the file system for an angr `state`.
         """
         fs = type(self)(state)
-        fs.fd = self.fd
         fs.fnames = self._clone_fnames(self.fnames)
+        fs.fds = self._clone_fds(self.fds)
         return fs
+
+    # Filenames
 
     def _clone_fnames(self, entries: FileNames) -> FileNames:
         return [self._clone_fname_entry(e) for e in entries]
@@ -77,17 +156,61 @@ class SymbolicFS:
     def _clone_symbolic_fname_entry(self, entry: SymbolicNameEntry) -> SymbolicNameEntry:
         return SymbolicNameEntry(copy(entry.filename), entry.exists)
 
+    # File Descriptors
+
+    def _clone_file(self, file: File) -> File:
+        def clone(): return File(file.size, file.bytes.copy())
+
+        id_ = id(file)
+        if id_ in self.shared_files:
+            value = self.shared_files.get(id_, None)
+            if value is None:
+                value = clone()
+                self.shared_files[id_] = value
+            return value
+
+        return clone()
+
+    def _clone_fd_entry(self, entry: FdEntry) -> FdEntry:
+        return FdEntry(
+            copy(entry.filename),
+            entry.cond,
+            entry.offset,
+            self._clone_file(entry.file)
+        )
+
+    def _clone_fd_entries(self, entries: list[FdEntry]) -> list[FdEntry]:
+        return [self._clone_fd_entry(e) for e in entries]
+
+    def _clone_fds(self, fds: dict[int, FdEntries]) -> dict[int, FdEntries]:
+        return {
+            fd: (copy(name), self._clone_fd_entries(entry))
+            for fd, (name, entry) in fds.items()
+        }
+
     # ---------------------------------------------------------------------------
     # Utils
     # ---------------------------------------------------------------------------
+    @property
+    def current_fname(self):
+        """Return the most recently added fname entry, or `None` if empty."""
+        if self.is_fnames_emtpy():
+            return None
+        return self.fnames[-1]
 
-    def is_concrete(self, entry: FileNameEntry | None):
+    def new_fd(self) -> int:
+        fd = 3
+        while (True):
+            if fd not in self.fds:
+                return fd
+            fd += 1
+
+    def mark_shared(self, file: File):
+        self.shared_files[id(file)] = None
+
+    def is_concrete_fname(self, entry: FileNameEntry | None):
         """Return whether the file name `entry` contains concrete file names."""
         return isinstance(entry, dict)
-
-    def is_symbolic(self, entry: FileNameEntry | None):
-        """Return whether the file name `entry` contains a symbolic file name."""
-        return isinstance(entry, SymbolicNameEntry)
 
     def is_sat(self, cnstr):
         """Return whether `cnstr` is satisfiable under the current path condition."""
@@ -109,23 +232,50 @@ class SymbolicFS:
         int_bits = self.state.arch.sizeof["int"]
         return BVV(value, int_bits)
 
-    @property
-    def current_fname(self):
-        """Return the most recently added fname entry, or `None` if empty."""
-        if self.is_fnames_emtpy():
-            return None
-        return self.fnames[-1]
+    def search_open_concrete_name(self, filename: str) -> FdEntry | None:
+        for (name, v) in self.fds.values():
+            if isinstance(name, str) and name == filename:
+                assert len(v) == 1
+                entry = v[0]
+                assert (name == entry.filename)
+                return entry
+        return None
 
-    # ---------------------------------------------------------------------------
-    # Constraints
-    # ---------------------------------------------------------------------------
-    def _fname_entry_to_list(self, entry: FileNameEntry):
+    def search_open_symbolic_name(self, filename: str | SymbString) -> list[FdEntry] | None:
+        for (name, v) in self.fds.values():
+            if self.is_certain(eq_strings(name, filename)):
+                return v
+        return None
+
+    def existing_fd_entries(self) -> list[FdEntry]:
+        entries = []
+        for fd in reversed(self.fds):
+            _, fd_entries = self.fds[fd]
+            for e in fd_entries:
+                entries.append(e)
+        return entries
+
+    def fname_entry_to_list(self, entry: FileNameEntry):
         if isinstance(entry, dict):
             fnames = entry.items()
         else:
             assert isinstance(entry, SymbolicNameEntry)
             fnames = [(entry.filename, entry.exists)]
         return fnames
+
+    def possible_fnames(self, filename: str | SymbString) -> list[str | SymbString]:
+        fnames = []
+        for f in reversed(self.fnames):
+            names = self.fname_entry_to_list(f)
+            fnames.extend(
+                name for (name, exists) in names
+                if exists and self.is_sat(eq_strings(name, filename))
+            )
+        return fnames
+
+    # ---------------------------------------------------------------------------
+    # Constraints
+    # ---------------------------------------------------------------------------
 
     def file_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating whether `filename` exists."""
@@ -134,7 +284,7 @@ class SymbolicFS:
         deleted = []
 
         for entry in reversed(self.fnames):
-            fnames = self._fname_entry_to_list(entry)
+            fnames = self.fname_entry_to_list(entry)
 
             for name, exists in fnames:
                 cond = eq_strings(filename, name)
@@ -201,7 +351,7 @@ class SymbolicFS:
             append_new()
             return 1
 
-        if self.is_concrete(self.current_fname):
+        if self.is_concrete_fname(self.current_fname):
             assert isinstance(self.current_fname, dict)
             if (
                 filename in self.current_fname
@@ -249,7 +399,7 @@ class SymbolicFS:
         if self.is_fnames_emtpy():
             return -1
 
-        if self.is_concrete(self.current_fname):
+        if self.is_concrete_fname(self.current_fname):
             assert isinstance(self.current_fname, dict)
             if filename in self.current_fname:
                 del self.current_fname[filename]
@@ -280,6 +430,52 @@ class SymbolicFS:
             self.state.add_constraints(cnstr)
             append_new()
             return 1
+
+        return -1
+
+    def create_concrete_fd(self, filename: str) -> int:
+        fd = self.new_fd()
+        entry = self.search_open_concrete_name(filename)
+
+        if entry is not None:
+            entry.offset = 0
+            self.mark_shared(entry.file)
+
+        entry = FdEntry(filename, true(), 0, File())
+
+        self.fds[fd] = (filename, [entry])
+        return fd
+
+    def create_symbolic_fd(self, filename: str | SymbString) -> int:
+        fd = self.new_fd()
+        entries = self.search_open_symbolic_name(filename)
+
+        if entries is not None:
+            for e in entries:
+                e.offset = 0
+                self.mark_shared(e.file)
+        else:
+            entries = []
+            existing = self.existing_fd_entries()
+            fnames = self.possible_fnames(filename)
+
+            for e in existing:
+                eq = eq_strings(filename, e.filename)
+                cond = claripy.And(e.cond, eq)
+
+                if self.is_sat(cond):
+                    entry = FdEntry(e.filename, cond, 0, e.file)
+                    self.mark_shared(e.file)
+                    entries.append(entry)
+
+            for name in fnames:
+                cond = eq_strings(filename, name)
+                entry = FdEntry(name, cond, 0, File())
+                entries.append(entry)
+
+        if len(entries) > 0:
+            self.fds[fd] = (filename, entries)
+            return fd
 
         return -1
 
@@ -319,7 +515,7 @@ class SymbolicFS:
         if self.is_fnames_emtpy():
             return 0
 
-        if self.is_concrete(self.current_fname):
+        if self.is_concrete_fname(self.current_fname):
             assert isinstance(self.current_fname, dict)
             if filename in self.current_fname:
                 file = self.current_fname.get(filename, None)
@@ -344,3 +540,36 @@ class SymbolicFS:
 
         assert isinstance(filename, SymbString)
         return self.exists_symbolic(filename)
+
+    def open_concrete(self, filename: str) -> int:
+        """Open a concrete file name and return its file descriptor."""
+        if self.is_fnames_emtpy():
+            return -1
+
+        if self.is_concrete_fname(self.current_fname):
+            assert isinstance(self.current_fname, dict)
+            if filename in self.current_fname:
+                exists = self.current_fname[filename]
+                if exists:
+                    return self.create_concrete_fd(filename)
+                
+        return self.create_symbolic_fd(filename)
+
+    def open_symbolic(self, filename: SymbString) -> int:
+        """Open a symbolic file name and return its file descriptor."""
+        if self.is_fnames_emtpy():
+            return -1
+
+        ret = self.create_symbolic_fd(filename)
+        return ret
+
+    def open_file(self, filename: SymbString) -> int:
+        """
+        Open a file and returns a concrete descriptor.
+
+        Returns `-1` if the file system is empty or the file cannot be found.
+        """
+        if not filename.is_symbolic():
+            return self.open_concrete(str(filename))
+
+        return self.open_symbolic(filename)
