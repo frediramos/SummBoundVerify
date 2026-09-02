@@ -62,8 +62,7 @@ static jmp_buf g_reject_jmp;
  * normal case early on, and turning those runs away would starve the corpus
  * exactly when it is smallest.
  */
-static unsigned char tape_byte(void)
-{
+static unsigned char tape_byte(void) {
     if (g_input_pos >= g_input_len)
         return 0;
 
@@ -72,16 +71,14 @@ static unsigned char tape_byte(void)
 
 /* Copying without libc: a test's helper library may redirect memcpy, and the
  * harness must not go through whatever it redirected it to. */
-static void sbv_memcpy(unsigned char *dst, const unsigned char *src, size_t n)
-{
+static void sbv_memcpy(unsigned char *dst, const unsigned char *src, size_t n) {
     size_t i;
 
     for (i = 0; i < n; i++)
         dst[i] = src[i];
 }
 
-static void sbv_strcpy(char *dst, size_t cap, const char *src)
-{
+static void sbv_strcpy(char *dst, size_t cap, const char *src) {
     size_t i;
 
     for (i = 0; src && src[i] && i + 1 < cap; i++)
@@ -103,8 +100,7 @@ static int g_nregions;
 
 /* Emitting records ------------------------------------------------------ */
 
-static void put_hex(const unsigned char *bytes, size_t n)
-{
+static void put_hex(const unsigned char *bytes, size_t n) {
     static const char digits[] = "0123456789abcdef";
     size_t i;
 
@@ -116,8 +112,7 @@ static void put_hex(const unsigned char *bytes, size_t n)
 
 static void record_draw(const char *name, long index, int indexed,
                         const unsigned char *bytes, size_t bits,
-                        size_t offset, size_t taken)
-{
+                        size_t offset, size_t taken) {
     if (!g_record)
         return;
 
@@ -143,8 +138,7 @@ static void record_draw(const char *name, long index, int indexed,
 /* Drawing inputs -------------------------------------------------------- */
 
 static void draw_bytes(char *name, unsigned char *dst, size_t bits,
-                       long index, int indexed)
-{
+                       long index, int indexed) {
     size_t nbytes = (bits + 7) / 8;
     size_t offset = g_input_pos;
     size_t i;
@@ -155,8 +149,7 @@ static void draw_bytes(char *name, unsigned char *dst, size_t bits,
     record_draw(name, index, indexed, dst, bits, offset, nbytes);
 }
 
-static sbv_value draw_value(char *name, size_t bits, long index, int indexed)
-{
+static sbv_value draw_value(char *name, size_t bits, long index, int indexed) {
     unsigned char bytes[sizeof(sbv_value)];
     sbv_value value = 0;
     size_t nbytes = (bits + 7) / 8;
@@ -182,25 +175,21 @@ static sbv_value draw_value(char *name, size_t bits, long index, int indexed)
     return value;
 }
 
-sbv_value sym_var_named(char *name, size_t bits)
-{
+sbv_value sym_var_named(char *name, size_t bits) {
     return draw_value(name, bits, 0, 0);
 }
 
-sbv_value sym_var_array(char *name, size_t index, size_t bits)
-{
+sbv_value sym_var_array(char *name, size_t index, size_t bits) {
     return draw_value(name, bits, (long)index, 1);
 }
 
-void sym_var_bytes(char *name, void *dst, size_t bits)
-{
+void sym_var_bytes(char *name, void *dst, size_t bits) {
     draw_bytes(name, (unsigned char *)dst, bits, 0, 0);
 }
 
 /* Bounding the domain --------------------------------------------------- */
 
-void assume(int cnstr)
-{
+void assume(int cnstr) {
     if (cnstr)
         return;
 
@@ -208,13 +197,11 @@ void assume(int cnstr)
     longjmp(g_reject_jmp, 1);
 }
 
-void _assert(int cnstr)
-{
+void _assert(int cnstr) {
     assume(cnstr);
 }
 
-void sbv_exit(int code)
-{
+void sbv_exit(int code) {
     (void)code;
     g_total_exited++;
     longjmp(g_reject_jmp, 1);
@@ -227,23 +214,19 @@ int _LE_(sbv_value a, sbv_value b) { return a <= b; }
 int _GT_(sbv_value a, sbv_value b) { return a > b; }
 int _GE_(sbv_value a, sbv_value b) { return a >= b; }
 
-int _ULT_(sbv_value a, sbv_value b)
-{
+int _ULT_(sbv_value a, sbv_value b) {
     return (unsigned long)a < (unsigned long)b;
 }
 
-int _ULE_(sbv_value a, sbv_value b)
-{
+int _ULE_(sbv_value a, sbv_value b) {
     return (unsigned long)a <= (unsigned long)b;
 }
 
-int _UGT_(sbv_value a, sbv_value b)
-{
+int _UGT_(sbv_value a, sbv_value b) {
     return (unsigned long)a > (unsigned long)b;
 }
 
-int _UGE_(sbv_value a, sbv_value b)
-{
+int _UGE_(sbv_value a, sbv_value b) {
     return (unsigned long)a >= (unsigned long)b;
 }
 
@@ -260,8 +243,7 @@ int _OR_(int a, int b) { return a || b; }
  * crash the harness caused itself would be reported as a finding about the
  * function under test. Discarded like a rejected input instead.
  */
-static void fail(const char *why)
-{
+static void fail(const char *why) {
     fprintf(stderr, "sbv: %s\n", why);
     g_total_rejected++;
     longjmp(g_reject_jmp, 1);
@@ -294,8 +276,7 @@ static chunk_t g_chunks[SBV_MAX_CHUNKS];
 static unsigned char g_arena[SBV_ARENA_SIZE];
 static size_t g_arena_pos;
 
-void *mem_alloc(size_t bytes)
-{
+void *mem_alloc(size_t bytes) {
     unsigned char *ptr;
     size_t aligned = (bytes + 7u) & ~(size_t)7u;
     int i;
@@ -322,8 +303,7 @@ void *mem_alloc(size_t bytes)
     return ptr;
 }
 
-void mem_free(void *ptr)
-{
+void mem_free(void *ptr) {
     int i;
 
     /* Forgotten, not reclaimed: the arena is rewound wholesale when the next
@@ -337,8 +317,7 @@ void mem_free(void *ptr)
     }
 }
 
-size_t n_allocd(void *ptr)
-{
+size_t n_allocd(void *ptr) {
     int i;
 
     for (i = 0; i < SBV_MAX_CHUNKS; i++)
@@ -348,16 +327,14 @@ size_t n_allocd(void *ptr)
     return 0;
 }
 
-void allocd(void *ptr, size_t size)
-{
+void allocd(void *ptr, size_t size) {
     (void)size;
     assume(ptr != NULL);
 }
 
 /* Recording the outcome ------------------------------------------------- */
 
-void mem_addr(char *name, void *addr, size_t len)
-{
+void mem_addr(char *name, void *addr, size_t len) {
     region_t *r;
 
     if (g_nregions >= SBV_MAX_REGIONS)
@@ -385,8 +362,7 @@ void mem_addr(char *name, void *addr, size_t len)
  * would need the addresses of those arguments recorded on both sides, and
  * the symbolic side only knows them when regions are tagged with mem_addr.
  */
-void sbv_record(char *test, void *ret, size_t bits, int is_pointer)
-{
+void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
     int i;
 
     if (!g_record) {
@@ -421,8 +397,7 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer)
 
 /* Driver interface ------------------------------------------------------ */
 
-static void reset(const unsigned char *data, size_t len, int record)
-{
+static void reset(const unsigned char *data, size_t len, int record) {
     g_input = data;
     g_input_len = len;
     g_input_pos = 0;
@@ -440,8 +415,7 @@ static void reset(const unsigned char *data, size_t len, int record)
 }
 
 int sbv_sample_exec(const unsigned char *data, size_t len,
-                    int (*tests)(void), int record)
-{
+                    int (*tests)(void), int record) {
     reset(data, len, record);
     g_total_execs++;
 
@@ -455,17 +429,14 @@ int sbv_sample_exec(const unsigned char *data, size_t len,
     return SBV_OK;
 }
 
-unsigned long sbv_sample_total_execs(void)
-{
+unsigned long sbv_sample_total_execs(void) {
     return g_total_execs;
 }
 
-unsigned long sbv_sample_total_rejected(void)
-{
+unsigned long sbv_sample_total_rejected(void) {
     return g_total_rejected;
 }
 
-unsigned long sbv_sample_total_exited(void)
-{
+unsigned long sbv_sample_total_exited(void) {
     return g_total_exited;
 }

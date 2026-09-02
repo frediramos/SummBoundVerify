@@ -46,8 +46,7 @@ int sbv_run_tests(void);
 
 /* Not strcmp(): a concrete function may be named strcmp and would override
  * libc's. */
-static int arg_is(const char *arg, const char *want)
-{
+static int arg_is(const char *arg, const char *want) {
     size_t i;
 
     for (i = 0; arg[i] || want[i]; i++)
@@ -63,8 +62,7 @@ __AFL_FUZZ_INIT();
  * Run a single saved tape outside AFL++ and print what the concrete function
  * did with it.
  */
-static int record(const char *path)
-{
+static int record(const char *path) {
     static unsigned char buf[MAX_TAPE];
     ssize_t len;
     int fd;
@@ -100,8 +98,7 @@ static int record(const char *path)
  * library may have routed malloc to mem_alloc, and fclose would then hand an
  * arena pointer to glibc's free(). That aborts with "free(): invalid
  * pointer" -- at exit, where AFL++ reads it as a crash. */
-static void write_stats(void)
-{
+static void write_stats(void) {
     const char *path = getenv("SBV_STATS_FILE");
     char line[128];
     int fd, n;
@@ -123,8 +120,7 @@ static void write_stats(void)
     close(fd);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     unsigned char *buf;
 
     /* Unbuffered: stdio would otherwise malloc() its buffer, which may come
