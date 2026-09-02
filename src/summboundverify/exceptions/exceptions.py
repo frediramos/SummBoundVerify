@@ -105,6 +105,14 @@ class ReportError(RunError):
         )
         super().__init__(message)
 
+class InvalidFDError(RunError):
+    def __init__(self, function:str, value):
+        message = (
+            f"The function '{function}' only takes concrete file descriptors.\n"
+            f"Invalid argument found: {value}"
+        )
+        super().__init__(message)
+
 # ---
 
 

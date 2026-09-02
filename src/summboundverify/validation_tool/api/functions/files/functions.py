@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from claripy.ast.bv import BV as BitVector
-from angr.state_plugins import SimStateGlobals
 
 from .fs2 import SymbolicFS
 
@@ -58,5 +57,14 @@ class file_open(FileSummary):
         filename = self.load_string(filename_addr)
         status = self.fs.open_file(filename)
         print("Open file: ", status)
+        print(self.fs)
+        return status
+
+
+class file_close(FileSummary):
+    def run(self, fd_bv):
+        fd = self.load_numeric(fd_bv)
+        status = self.fs.close_file(fd)
+        print("Close file: ", status)
         print(self.fs)
         return status
