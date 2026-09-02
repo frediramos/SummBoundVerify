@@ -13,6 +13,10 @@ from claripy.ast import Bool, BV
 
 from textwrap import indent
 
+from summboundverify.exceptions import (
+    InvalidFDError
+)
+
 from ...utils import (
     SymbString,
     constraint,
@@ -70,6 +74,8 @@ class FdEntry:
 
 type FdEntries = tuple[str | SymbString, list[FdEntry]]
 
+type SharedFiles = dict[int, tuple[int, File | None]]
+
 
 class SymbolicFS(angr.SimStatePlugin):
     """
@@ -88,7 +94,7 @@ class SymbolicFS(angr.SimStatePlugin):
         self.fds: dict[int, FdEntries] = {}
 
         # Map of object id() values for correct cloning
-        self.shared_files: dict[int, File | None] = {}
+        self.shared: SharedFiles = {}
 
     def __repr__(self) -> str:
         sections = [
@@ -116,8 +122,8 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def _repr_shared_files(self) -> str:
         lines = ["\tshared_files:"]
-        for file_id, file in self.shared_files.items():
-            lines.append(f"\t\t{file_id:#x} -> {file!r}")
+        for file_id, e in self.shared.items():
+            lines.append(f"\t\t{file_id:#x} -> {e!r}")
         return "\n".join(lines)
 
     # ---------------------------------------------------------------------------
@@ -135,6 +141,7 @@ class SymbolicFS(angr.SimStatePlugin):
         fs = SymbolicFS()
         fs.fnames = self._clone_fnames(self.fnames)
         fs.fds = self._clone_fds(self.fds)
+        fs.shared = self._clone_shared(self.shared)
         return fs
 
     # Filenames
@@ -161,11 +168,11 @@ class SymbolicFS(angr.SimStatePlugin):
         def clone(): return File(file.size, file.bytes.copy())
 
         id_ = id(file)
-        if id_ in self.shared_files:
-            value = self.shared_files.get(id_, None)
+        if id_ in self.shared:
+            c, value = self.shared[id_]
             if value is None:
                 value = clone()
-                self.shared_files[id_] = value
+                self.shared[id_] = (c, value)
             return value
 
         return clone()
@@ -187,9 +194,14 @@ class SymbolicFS(angr.SimStatePlugin):
             for fd, (name, entry) in fds.items()
         }
 
+    # Shared Files
+    def _clone_shared(self, shared: SharedFiles) -> SharedFiles:
+        return {k: (c, None) for k, (c, _) in shared.items()}
+
     # ---------------------------------------------------------------------------
     # Utils
     # ---------------------------------------------------------------------------
+
     @property
     def current_fname(self):
         """Return the most recently added fname entry, or `None` if empty."""
@@ -205,7 +217,26 @@ class SymbolicFS(angr.SimStatePlugin):
             fd += 1
 
     def mark_shared(self, file: File):
-        self.shared_files[id(file)] = None
+        id_ = id(file)
+        if id_ in self.shared:
+            entry = self.shared[id_]
+            count, f = entry
+            count += 1
+            self.shared[id_] = (count, f)
+        else:
+            self.shared[id_] = (1, None)
+
+    def unmark_shared(self, file: File):
+        id_ = id(file)
+        if id_ not in self.shared:
+            return
+        entry = self.shared[id_]
+        count, f = entry
+        count -= 1
+        if count == 0:
+            del self.shared[id_]
+        else:
+            self.shared[id_] = (count, f)
 
     def is_concrete_fname(self, entry: FileNameEntry | None):
         """Return whether the file name `entry` contains concrete file names."""
@@ -246,13 +277,10 @@ class SymbolicFS(angr.SimStatePlugin):
                 return v
         return None
 
-    def existing_fd_entries(self) -> list[FdEntry]:
-        entries = []
+    def existing_fd_entries(self) -> Iterator[FdEntry]:
         for fd in reversed(self.fds):
             _, fd_entries = self.fds[fd]
-            for e in fd_entries:
-                entries.append(e)
-        return entries
+            yield from fd_entries
 
     def fname_entry_to_list(self, entry: FileNameEntry):
         if isinstance(entry, dict):
@@ -271,6 +299,24 @@ class SymbolicFS(angr.SimStatePlugin):
                 if exists and self.is_sat(eq_strings(name, filename))
             )
         return fnames
+
+    def check_valid_fd(self, fd):
+        if isinstance(fd, int):
+            return fd
+        elif isinstance(fd, BV):
+            try:
+                fd = self.state.solver.eval_one(fd, cast_to=int)
+                return fd
+            except:
+                pass
+        raise InvalidFDError(self.close_file.__name__, fd)
+
+    def is_filename_open(self, filename: str | SymbString) -> bool:
+        entries = self.existing_fd_entries()
+        for e in entries:
+            if self.is_sat(eq_strings(filename, e.filename)):
+                return True
+        return False
 
     # ---------------------------------------------------------------------------
     # Constraints
@@ -503,8 +549,11 @@ class SymbolicFS(angr.SimStatePlugin):
         Returns `1` on success and `-1` on failure. When necessary, the
         required existence constraint is added to the path condition.
         """
-        if isinstance(filename, str):
-            return self.delete_concrete(filename)
+        if self.is_filename_open(filename):
+            return -1
+
+        if (isinstance(filename, str) or not filename.is_symbolic()):
+            return self.delete_concrete(str(filename))
 
         assert isinstance(filename, SymbString)
         return self.delete_symbolic(filename)
@@ -534,8 +583,8 @@ class SymbolicFS(angr.SimStatePlugin):
         """
         Returns whether a file exists, possibly as a symbolic value.
         """
-        if isinstance(filename, str):
-            return self.exists_concrete(filename)
+        if (isinstance(filename, str) or not filename.is_symbolic()):
+            return self.exists_concrete(str(filename))
 
         assert isinstance(filename, SymbString)
         return self.exists_symbolic(filename)
@@ -562,13 +611,31 @@ class SymbolicFS(angr.SimStatePlugin):
         ret = self.create_symbolic_fd(filename)
         return ret
 
-    def open_file(self, filename: SymbString) -> int:
+    def open_file(self, filename: str | SymbString) -> int:
         """
         Open a file and returns a concrete descriptor.
 
         Returns `-1` if the file system is empty or the file cannot be found.
         """
-        if not filename.is_symbolic():
+        if (isinstance(filename, str) or not filename.is_symbolic()):
             return self.open_concrete(str(filename))
 
         return self.open_symbolic(filename)
+
+    def close_file(self, fd: int | BV) -> int:
+        """
+        Close a file descriptor.
+
+        Returns `-1` if the file system is empty or the fd cannot be found.
+        """
+        fd = self.check_valid_fd(fd)
+
+        if fd not in self.fds:
+            return -1
+
+        entries = self.fds[fd]
+        for entry in entries[1]:
+            self.unmark_shared(entry.file)
+
+        del self.fds[fd]
+        return 0
