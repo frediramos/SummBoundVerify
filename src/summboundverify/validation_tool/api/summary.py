@@ -11,9 +11,10 @@ from summboundverify.exceptions import (
     ReportError,
 )
 
-from ..macros import SYM_VAR
-from .context import ValidationCTX
 from .utils import SymbString
+from .context import ValidationCTX
+
+from ..macros import SYM_VAR
 
 
 class CSummary(SimProcedure):
@@ -122,7 +123,6 @@ class CSummary(SimProcedure):
     def assert_constraint(self, cnstr):
         if not self.is_certain(cnstr):
             raise UnsatConstraintError("_assert", cnstr)
-            
 
     def push_pc(self):
         c = self.state.solver._solver.constraints
