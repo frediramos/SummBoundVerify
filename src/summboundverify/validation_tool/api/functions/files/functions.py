@@ -68,3 +68,17 @@ class file_close(FileSummary):
         print("Close file: ", status)
         print(self.fs)
         return status
+
+class FILE_from_fd(FileSummary):
+    def run(self, fd_bv):
+        fd = self.load_numeric(fd_bv)
+        status = self.fs.FILE_from_fd(fd)
+        print(f"FILE*: {status:#x}")
+        return status
+
+class fd_from_FILE(FileSummary):
+    def run(self, fp_bv):
+        fp = self.load_numeric(fp_bv)
+        status = self.fs.fd_from_FILE(fp)
+        print("fd: ", status)
+        return status
