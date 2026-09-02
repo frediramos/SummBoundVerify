@@ -2,10 +2,9 @@ import angr
 import claripy
 
 from copy import copy
-from typing import Callable, Iterator
+from typing import Iterator
 from dataclasses import dataclass, field
 
-from angr import SimState
 from cle.backends.externs.simdata.io_file import io_file_data_for_arch
 
 from claripy import BVV, true, false
@@ -14,7 +13,8 @@ from claripy.ast import Bool, BV
 from textwrap import indent
 
 from summboundverify.exceptions import (
-    InvalidFDError
+    InvalidFdError,
+    InvalidFpError
 )
 
 from ...utils import (
@@ -72,7 +72,12 @@ class FdEntry:
         )
 
 
-type FdEntries = tuple[str | SymbString, list[FdEntry]]
+@dataclass(slots=True)
+class FdEntries:
+    open_name: str | SymbString
+    fp: int
+    entries: list[FdEntry]
+
 
 type SharedFiles = dict[int, tuple[int, File | None]]
 
@@ -112,10 +117,12 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def _repr_fds(self) -> str:
         lines = ["\tfds:"]
-        for fd, (filename, entries) in self.fds.items():
-            lines.append(f"\t\tfd {fd} -> {filename!r}")
+        for fd, entry in self.fds.items():
+            lines.append(
+                f"\t\tfd {fd} -> {entry.open_name!r}, FILE* = {entry.fp:#x}"
+            )
             lines.append("\t\t[")
-            for entry in entries:
+            for entry in entry.entries:
                 lines.append(indent(repr(entry), "\t\t\t"))
             lines.append("\t\t[")
         return "\n".join(lines)
@@ -190,8 +197,12 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def _clone_fds(self, fds: dict[int, FdEntries]) -> dict[int, FdEntries]:
         return {
-            fd: (copy(name), self._clone_fd_entries(entry))
-            for fd, (name, entry) in fds.items()
+            fd: FdEntries(
+                open_name=copy(e.open_name),
+                fp=e.fp,
+                entries=self._clone_fd_entries(e.entries)
+            )
+            for fd, e in fds.items()
         }
 
     # Shared Files
@@ -263,24 +274,23 @@ class SymbolicFS(angr.SimStatePlugin):
         return BVV(value, int_bits)
 
     def search_open_concrete_name(self, filename: str) -> FdEntry | None:
-        for (name, v) in self.fds.values():
-            if isinstance(name, str) and name == filename:
-                assert len(v) == 1
-                entry = v[0]
-                assert (name == entry.filename)
+        for fde in self.fds.values():
+            if isinstance(fde.open_name, str) and fde.open_name == filename:
+                assert len(fde.entries) == 1
+                entry = fde.entries[0]
+                assert (fde.open_name == entry.filename)
                 return entry
         return None
 
     def search_open_symbolic_name(self, filename: str | SymbString) -> list[FdEntry] | None:
-        for (name, v) in self.fds.values():
-            if self.is_certain(eq_strings(name, filename)):
-                return v
+        for fde in self.fds.values():
+            if self.is_certain(eq_strings(fde.open_name, filename)):
+                return fde.entries
         return None
 
     def existing_fd_entries(self) -> Iterator[FdEntry]:
         for fd in reversed(self.fds):
-            _, fd_entries = self.fds[fd]
-            yield from fd_entries
+            yield from self.fds[fd].entries
 
     def fname_entry_to_list(self, entry: FileNameEntry):
         if isinstance(entry, dict):
@@ -300,16 +310,23 @@ class SymbolicFS(angr.SimStatePlugin):
             )
         return fnames
 
+    def check_is_int(self, v) -> int | None:
+        try:
+            return self.state.solver.eval_one(v, cast_to=int)
+        except:
+            return None
+
     def check_valid_fd(self, fd):
-        if isinstance(fd, int):
-            return fd
-        elif isinstance(fd, BV):
-            try:
-                fd = self.state.solver.eval_one(fd, cast_to=int)
-                return fd
-            except:
-                pass
-        raise InvalidFDError(self.close_file.__name__, fd)
+        fd = self.check_is_int(fd)
+        if fd is None:
+            raise InvalidFdError(self.close_file.__name__, fd)
+        return fd
+
+    def check_valid_fp(self, fp):
+        fp = self.check_is_int(fp)
+        if fp is None:
+            raise InvalidFpError(self.close_file.__name__, fp)
+        return fp
 
     def is_filename_open(self, filename: str | SymbString) -> bool:
         entries = self.existing_fd_entries()
@@ -384,6 +401,39 @@ class SymbolicFS(angr.SimStatePlugin):
     # ---------------------------------------------------------------------------
     # Factories
     # ---------------------------------------------------------------------------
+
+    def call_simprocedure(self, procedure, *args, **kwargs):
+        e_args = [
+            claripy.BVV(a, self.state.arch.bits)
+            if isinstance(a, int) else a for a in args
+        ]
+        p = procedure(project=self.state.project, **kwargs)
+        return p.execute(self.state, None, arguments=e_args)
+
+    def create_file_pointer(self, fd: int):
+        malloc = angr.SIM_PROCEDURES["libc"]["malloc"]
+        io_file_data = io_file_data_for_arch(self.state.arch)
+        fp = self.call_simprocedure(malloc, io_file_data["size"]).ret_expr
+        size = self.state.arch.sizeof["int"]
+
+        # Write the fd
+        self.state.memory.store(
+            fp + io_file_data["fd"],
+            fd,
+            size=size,
+            endness=self.state.arch.memory_endness
+        )
+        return fp
+
+    def load_fd_from_fp(self, fp: int) -> int:
+        io_file_data = io_file_data_for_arch(self.state.arch)
+        fd = self.state.memory.load(
+            fp + io_file_data["fd"],
+            self.state.arch.sizeof["int"]//8,
+            endness=self.state.arch.memory_endness
+        )
+        fd = self.state.solver.eval_one(fd, cast_to=int)
+        return fd
 
     def create_concrete_file(self, filename: str) -> int:
         """Create a concrete file."""
@@ -480,6 +530,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def create_concrete_fd(self, filename: str) -> int:
         fd = self.new_fd()
+        fp = self.create_file_pointer(fd)
         entry = self.search_open_concrete_name(filename)
 
         if entry is not None:
@@ -488,11 +539,12 @@ class SymbolicFS(angr.SimStatePlugin):
 
         entry = FdEntry(filename, true(), 0, File())
 
-        self.fds[fd] = (filename, [entry])
+        self.fds[fd] = FdEntries(filename, fp, [entry])
         return fd
 
     def create_symbolic_fd(self, filename: str | SymbString) -> int:
         fd = self.new_fd()
+        fp = self.create_file_pointer(fd)
         entries = self.search_open_symbolic_name(filename)
 
         if entries is not None:
@@ -519,7 +571,7 @@ class SymbolicFS(angr.SimStatePlugin):
                 entries.append(entry)
 
         if len(entries) > 0:
-            self.fds[fd] = (filename, entries)
+            self.fds[fd] = FdEntries(filename, fp, entries)
             return fd
 
         return -1
@@ -633,9 +685,28 @@ class SymbolicFS(angr.SimStatePlugin):
         if fd not in self.fds:
             return -1
 
-        entries = self.fds[fd]
-        for entry in entries[1]:
+        for entry in self.fds[fd].entries:
             self.unmark_shared(entry.file)
 
         del self.fds[fd]
         return 0
+
+    def FILE_from_fd(self, fd: int | BV) -> int:
+        fd = self.check_valid_fd(fd)
+        if fd not in self.fds:
+            fp = -1
+        fp = self.fds[fd].fp
+        fd_= self.load_fd_from_fp(fp)
+        assert fd == fd_
+        return fp
+
+    def fd_from_FILE(self, fp: int | BV) -> int:
+        fp = self.check_valid_fp(fp)
+
+        for fd, e in self.fds.items():
+            if fp == e.fp:
+                fd_ = self.load_fd_from_fp(fp)
+                assert fd == fd_
+                return fd
+
+        return -1
