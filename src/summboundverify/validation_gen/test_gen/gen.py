@@ -31,11 +31,7 @@ class TestGen:
     * `concrete` runs the concrete function alone, natively, and writes down
       what it returned for the inputs it was handed.
 
-    The last two are the two halves of a fuzzing run, and they share the whole
-    argument-construction path: the same declarations, the same names, the
-    same bounds. That is not a convenience, it is the correctness condition --
-    a sample can only be checked against a formula if both sides agree on what
-    each input variable is called.
+    The last two are the two halves of a fuzzing run.
     """
 
     def __init__(
@@ -61,12 +57,6 @@ class TestGen:
 
     def _returns_pointer(self, node):
         """Whether the function under test hands back an address.
-
-        Worth telling the sampler about, because an address is the one kind of
-        return whose *value* means nothing outside the run that produced it:
-        the symbolic side has whatever address angr laid the buffer out at,
-        the concrete side has whatever the loader gave it, and neither number
-        says anything about the other.
         """
         return isinstance(node, PtrDecl)
 
@@ -125,11 +115,6 @@ class TestGen:
 
     def _summary_body(self, call_args, test_id) -> list[Node]:
         """The summary alone, symbolically.
-
-        No `save_current_state`: nothing is resumed here, because there is no
-        second call to line up against. Each path that reaches `halt_all(NULL)`
-        has already stored its own formula, so what survives the run is the
-        list of `(pc, sr)` pairs the sampling check consumes.
         """
         return [
             self.call_function(self.summ_name, call_args, "ret", self.ret),
@@ -141,11 +126,6 @@ class TestGen:
 
     def _concrete_body(self, call_args, test_id) -> list[Node]:
         """The concrete function alone, natively, recording what it produced.
-
-        `sbv_record` sits exactly where `get_cnstr` sits in the symbolic
-        bodies, and reads exactly the same things -- the return value and the
-        memory tagged by `mem_addr`. Keeping the two in step is what makes a
-        sample comparable to a formula.
         """
         return [
             self.call_function(self.cncrt_name, call_args, "ret", self.ret),
