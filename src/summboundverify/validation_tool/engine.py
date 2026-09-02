@@ -91,8 +91,11 @@ class angrEngine():
             add_options=opt
         )
         heap = SimHeapPTMalloc()
+        fs = SymbolicFS()
 
         state.register_plugin('heap', heap)
+        state.register_plugin("fs", fs)
+
         state.libc.simple_strtok = False  # type: ignore
 
         if self.stats_dir:
@@ -101,10 +104,6 @@ class angrEngine():
                 when=BP_AFTER,
                 action=self._count_fcall
             )
-
-        fs = SymbolicFS(state)
-        state.globals["fs"] = fs  # type: ignore
-
         return state
 
     def _register_timeout(self, sm: SimulationManager):
