@@ -15,17 +15,9 @@ class FileSummary(CSummary, ABC):
 
     @property
     def fs(self) -> SymbolicFS:
-        plugin = self.state.globals
-        assert isinstance(plugin, SimStateGlobals)
-
-        fs = plugin["fs"]
-        assert isinstance(fs, SymbolicFS)
-
-        if fs.state is not self.state:
-            fs = fs.clone(self.state)
-            plugin["fs"] = fs
-
-        return fs
+        plugin = self.state.fs
+        assert isinstance(plugin, SymbolicFS)
+        return plugin
 
     def load_numeric(self, v: BitVector):
         if not self.is_symbolic(v):

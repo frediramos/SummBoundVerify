@@ -62,7 +62,8 @@ class FdEntry:
             f"\tfilename={self.filename!r},\n"
             f"\tcond={self.cond!r},\n"
             f"\toffset={self.offset},\n"
-            f"\tfile={self.file!r}\n"
+            f"\tfile={self.file!r}\n,"
+            f"\t(id={id(self.file):#x})\n"
             ")"
         )
 
@@ -70,18 +71,18 @@ class FdEntry:
 type FdEntries = tuple[str | SymbString, list[FdEntry]]
 
 
-class SymbolicFS:
+class SymbolicFS(angr.SimStatePlugin):
     """
     Model of a file system with concrete and symbolic file names and file descriptors.
     """
 
-    def __init__(self, state: SimState) -> None:
+    def __init__(self) -> None:
         """Initialize an empty file system.
 
         File descriptor allocation starts at 3. Descriptors 0, 1, and 2
         are reserved for stdin, stdout, and stderr, respectively.
         """
-        self.state = state
+        super().__init__()
 
         self.fnames: FileNames = []
         self.fds: dict[int, FdEntries] = {}
@@ -95,20 +96,16 @@ class SymbolicFS:
             self._repr_fds(),
             self._repr_shared_files(),
         ]
-
         return "SymbolicFS(\n" + "\n\n".join(sections) + "\n)"
 
     def _repr_fnames(self) -> str:
         lines = ["\tfnames:"]
-
         for entry in self.fnames:
             lines.append(f"\t\t{entry!r}")
-
         return "\n".join(lines)
 
     def _repr_fds(self) -> str:
         lines = ["\tfds:"]
-
         for fd, (filename, entries) in self.fds.items():
             lines.append(f"\t\tfd {fd} -> {filename!r}")
             lines.append("\t\t[")
@@ -119,21 +116,23 @@ class SymbolicFS:
 
     def _repr_shared_files(self) -> str:
         lines = ["\tshared_files:"]
-
         for file_id, file in self.shared_files.items():
             lines.append(f"\t\t{file_id:#x} -> {file!r}")
-
         return "\n".join(lines)
 
     # ---------------------------------------------------------------------------
     # Cloning
     # ---------------------------------------------------------------------------
 
-    def clone(self, state: SimState) -> "SymbolicFS":
+    @angr.SimStatePlugin.memo
+    def copy(self, memo):
+        return self.clone()
+
+    def clone(self) -> "SymbolicFS":
         """
         Create an independent copy of the file system for an angr `state`.
         """
-        fs = type(self)(state)
+        fs = SymbolicFS()
         fs.fnames = self._clone_fnames(self.fnames)
         fs.fds = self._clone_fds(self.fds)
         return fs
@@ -552,7 +551,7 @@ class SymbolicFS:
                 exists = self.current_fname[filename]
                 if exists:
                     return self.create_concrete_fd(filename)
-                
+
         return self.create_symbolic_fd(filename)
 
     def open_symbolic(self, filename: SymbString) -> int:
