@@ -24,6 +24,7 @@ void halt_all(state_t state) {return;}
 void mem_addr(char* name, void* addr, size_t length) {return;}
 void print_counterexamples(result_t result) {return;}
 void store_cnstr(char* name, cnstr_t constraint) {return;}
+void sym_var_bytes(char* name, void* dst, size_t size) {return;}
 
 cnstr_t _AND_(cnstr_t cnstr1, cnstr_t cnstr2) {return 0;}
 cnstr_t _EQ_(symbolic var1, symbolic var2) {return 0;}
@@ -94,4 +95,5 @@ void test_1()
 int main()
 {
   test_1();
+  return 0;
 }

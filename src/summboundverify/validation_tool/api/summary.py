@@ -42,11 +42,20 @@ class CSummary(SimProcedure):
             endness=self.state.arch.memory_endness
         )
 
-    def sym_var(self, length, name=None):
+    def sym_var(self, length, name=None, arch_bounded=True):
+        """A fresh symbolic variable of `length` bits.
+
+        `arch_bounded` is the default because most callers hand the variable
+        back through a `symbolic`, which is pointer-sized: a value wider than
+        the architecture could not survive the trip. It does not apply to a
+        caller that writes the variable straight to memory -- a 64-bit double
+        sits in memory perfectly well on a 32-bit target, and refusing it
+        there was rejecting floating point for a reason that did not hold.
+        """
         arch_bits = self.state.arch.bits
         explicit_name = True
 
-        if length > arch_bits:
+        if arch_bounded and length > arch_bits:
             raise InvalidArchVariableSizeError(length, arch_bits)
 
         if length % 8 != 0:

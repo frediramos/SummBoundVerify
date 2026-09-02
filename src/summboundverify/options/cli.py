@@ -65,6 +65,13 @@ def parse_cmdline_args(input=None):
     generation.add_argument(flag(Options.config), metavar='path', type=str, required=False,
                             help='Config file')
 
+    validation.add_argument(flag(Options.engine), metavar='name', choices=['se', 'fuzz', 'both'],
+                            default='se',
+                            help='Validation engine: se (symbolic execution), fuzz, or both (default: se)')
+
+    validation.add_argument(flag(Options.execs), metavar='n', type=int, default=10000,
+                            help='Number of inputs to try when fuzzing (default: 10000)')
+
     validation.add_argument(flag(Options.run), action='store_true',
                             help='Run the generated test')
 

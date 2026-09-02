@@ -359,6 +359,7 @@ class print_counterexamples(CSummary):
 
     def reset(self):
         '''(small) HACK: reset context in between test executions'''
+        self.ctx.archive()
         self.ctx.reset()
 
     def save_json(self, json_result: dict):

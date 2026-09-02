@@ -1,7 +1,17 @@
+from copy import deepcopy
 from pathlib import Path
 
 from pycparser import c_generator
-from pycparser.c_ast import ID, FuncDef, FileAST, FuncCall, Compound
+from pycparser.c_ast import (
+    ID,
+    Return,
+    FuncDef,
+    FileAST,
+    FuncCall,
+    Compound,
+    Constant,
+    TypeDecl,
+)
 
 from .utils import *
 from .utils.visitors import FuncCallsVisitor
@@ -45,6 +55,7 @@ class ValidationGenerator(Generator):
 
         memory=False,
         no_api=False,
+        engine: str = 'se',
     ):
         super().__init__(outputfile, concrete_file, summary_file)
         self.arraysize = arraysize
@@ -59,6 +70,7 @@ class ValidationGenerator(Generator):
         self.summ_name = summ_name
         self.cncrt_name = cncrt_name
         self.no_api = no_api
+        self.engine = engine
 
     def get_api_calls(self, funcs):
         fdefs = []
@@ -90,18 +102,95 @@ class ValidationGenerator(Generator):
 
         return fdefs
 
+    def gen_summary_prototype(self, defs):
+        """Declare the summary before the test body calls it.
+
+        The summary is a separate translation unit, so without a declaration
+        the call goes through an implicit `int`-returning declaration and a
+        wider return value is silently truncated. Symbolically that is
+        invisible (the test is built for a 32-bit target, where it happens to
+        be a no-op) but a native build reports it as a divergence between the
+        summary and the concrete function -- a harness artefact that looks
+        exactly like a real finding.
+        """
+        def find(name):
+            return next(
+                (d for d in defs if d is not None and d.decl.name == name),
+                None
+            )
+
+        summ_def = find(self.summ_name)
+
+        if summ_def is not None:
+            decl = summ_def.decl
+
+        else:
+            # Only `-summ` gives us the summary's AST; with `--lib` we know
+            # nothing but its name. Fall back to the concrete function's
+            # signature, which is the premise of the comparison anyway.
+            cncrt_def = find(self.cncrt_name)
+            if cncrt_def is None:
+                return []
+
+            decl = deepcopy(cncrt_def.decl)
+            decl.name = self.summ_name
+
+            inner = decl.type
+            while not isinstance(inner, TypeDecl):
+                inner = inner.type
+            inner.declname = self.summ_name
+
+        generator = c_generator.CGenerator()
+
+        # A struct parameter needs its tag already visible at file scope.
+        # Without this the tag in the parameter list declares a *new*,
+        # incomplete type scoped to the prototype, and the call below fails
+        # with "type of formal parameter 1 is incomplete" -- the struct's real
+        # definition is emitted further down, after the headers.
+        forward = [f'struct {tag};' for tag in self.struct_tags()]
+
+        return [*forward, f'extern {generator.visit(decl)};', '']
+
+    def struct_tags(self) -> list[str]:
+        """Tags of the structs the test will define, in a stable order."""
+        tags = []
+
+        for file in (self.tmp_concrete, self.tmp_summary):
+            if not file:
+                continue
+            for tag in StructVisitor(file).structs:
+                if tag not in tags:
+                    tags.append(tag)
+
+        return tags
+
     # Gen headers
     # Typedefs, API stubs and Macros
     def gen_headers(self, defs):
 
-        # Add core api functions.
-        headers = list(type_defs)
-        headers.append('')
+        if self.engine == 'concrete':
+            # No stubs and no typedefs: the sampling harness is compiled
+            # against sbv_sample.h, which declares the handful of primitives a
+            # generated test actually uses with the concrete meanings they
+            # have once the values are concrete.
+            headers = []
 
-        # Add API calls
-        if not self.no_api:
-            headers += self.get_api_calls(defs)
+        else:
+            # Add core api functions.
+            headers = list(type_defs)
             headers.append('')
+
+            # Add API calls
+            if not self.no_api:
+                headers += self.get_api_calls(defs)
+                headers.append('')
+
+            # The summary-only test may not carry the summary's definition --
+            # with `--lib` it is a separate translation unit and all we have
+            # is its name. Declare it rather than let the call fall back to an
+            # implicit int-returning one.
+            if self.engine == 'summary':
+                headers += self.gen_summary_prototype(defs)
 
         # Add macros
         headers.append(defineMacro(POINTER_SIZE_MACRO, self.pointersize))
@@ -141,11 +230,16 @@ class ValidationGenerator(Generator):
         # Number of tests
         tests = max(len(self.maxnum), len(self.arraysize))
 
+        # The sampling harness has no symbolic state to fork or resume: its
+        # tests run one after another off the same tape.
+        symbolic = self.engine != 'concrete'
+
         # Save Multiple fresh states if needed (multiple tests)
-        main_body += [
-            save_current_state(f'fresh_state{i}')
-            for i in range(1, tests)
-        ]
+        if symbolic:
+            main_body += [
+                save_current_state(f'fresh_state{i}')
+                for i in range(1, tests)
+            ]
 
         for i in range(1, tests+1):
             testName = f'test_{i}'
@@ -158,7 +252,7 @@ class ValidationGenerator(Generator):
             main_body.append(FuncCall(ID(testName), ExprList([])))
 
             # Halt to a fresh state in between tests
-            if i < tests:
+            if symbolic and i < tests:
                 main_body.append(halt_all(f'fresh_state{i}'))
 
         return test_defs, main_body
@@ -222,7 +316,8 @@ class ValidationGenerator(Generator):
         gen = TestGen(
             args, ret_type,
             self.cncrt_name, self.summ_name,
-            self.memory, self.maxnames
+            self.memory, self.maxnames,
+            mode=self.engine,
         )
 
         return gen.create_test(
@@ -245,14 +340,31 @@ class ValidationGenerator(Generator):
         self.cncrt_name = parsed.concrete_name
         self.summ_name = parsed.summary_name
 
+        # Which side's code goes into the file. The differential test needs
+        # both; each half of a fuzzing run needs exactly one, and carrying the
+        # other would defeat the point -- the summary calls primitives the
+        # sampling harness does not link, and letting angr see the concrete
+        # function is precisely what running the summary alone avoids.
+        if self.engine == 'summary':
+            functions = parsed.summary_functions
+        elif self.engine == 'concrete':
+            functions = parsed.concrete_functions
+        else:
+            functions = parsed.functions
+
         function_defs = [
             f.definition if f else None
-            for f in parsed.functions
+            for f in functions
         ]
         args = parsed.arguments
         ret_type = parsed.return_type
 
-        header = self.gen_headers(function_defs)
+        # API stubs are chosen from what the code in the file calls, so the
+        # full set has to be visible even when only one side is emitted.
+        header = self.gen_headers([
+            f.definition if f else None
+            for f in parsed.functions
+        ])
 
         # If one the functions is not provided
         if None in function_defs:
@@ -267,6 +379,11 @@ class ValidationGenerator(Generator):
 
         # Gen test definitions and calls from main
         test_defs, main_body = self.genTests(args, ret_type)
+
+        # main() is declared int, so it has to return one: without this the
+        # fuzz build warns on every single compile, and a harness that always
+        # warns is a harness whose warnings stop being read.
+        main_body.append(Return(Constant('int', '0')))
 
         # Create main() body
         block = Compound(main_body)

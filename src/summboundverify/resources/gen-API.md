@@ -32,6 +32,14 @@ and an <index>, denoting a value with <length> bits. Used to fill symbolic array
 
 
 ```c
+void sym_var_bytes(char* name, void* dst, size_t size);
+```
+- Writes a new symbolic variable, identified by `name` and denoting a value with `size` bits, into the memory at `dst`.
+- The counterpart of `sym_var_named` for types a `symbolic` cannot carry. A `symbolic` is a pointer-sized integer, so a floating-point value cannot be returned through one: use this instead.
+- e.g. `double r; sym_var_bytes("r", &r, sizeof(double) * 8);`
+
+
+```c
 int is_symbolic(symbolic var);
 ```
 - Checks if variable `var` bits is symbolic.
@@ -208,6 +216,6 @@ size_t n_allocd(void* ptr);
 - Returns the number of allocated bytes pointed to by `ptr`. The pointer must have been returned by `mem_alloc`.
 
 ```c
-size_t allocd(void* ptr);
+void allocd(void* ptr, size_t size);
 ```
-- Throws and exception if the memory pointed to by `ptr` does not have `r/w` permissions. The input `ptr` does **not** need to be a mallocd heap pointer.
+- Throws an exception if the `size` bytes from `ptr` do not have `r/w` permissions. The input `ptr` does **not** need to be a mallocd heap pointer.
