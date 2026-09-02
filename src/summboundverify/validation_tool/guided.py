@@ -36,7 +36,7 @@ import logging
 from z3 import BitVecNumRef, Or, Solver, sat
 
 from .sample_check import declared_vars, formula_key, input_bindings, is_input
-from .seeding import build_tape, tape_layout
+from .seeding import build_tape, model_with, observability, tape_layout
 
 logger = logging.getLogger(__name__)
 
@@ -104,12 +104,19 @@ def _blocking(declared: dict, assignment: dict):
 
 
 def input_for(path, tried: list[dict]) -> dict | None:
-    """An input reaching `path` and unlike every one already tried.
+    """An input reaching `path`, unlike every one already tried, and legible.
 
     Every input variable is given a value, `model_completion` included, rather
     than only those the model happens to bind. A variable the solver left free
     would otherwise be written to the tape as zero, which is a value the path
     may well exclude -- so the input would miss the path it was built for.
+
+    Zero is also the value that hides the most. Completion is arbitrary, and
+    what it arbitrarily picks for a buffer byte the path says nothing about is
+    zero -- the same thing an untouched destination already holds, so a
+    summary that skipped writing that byte looks identical to one that wrote
+    it correctly. `observability` is what stops the input reaching the path
+    and proving nothing once it gets there.
     """
     declared = declared_vars(path)
 
@@ -121,10 +128,11 @@ def input_for(path, tried: list[dict]) -> dict | None:
         if clause is not None:
             solver.add(clause)
 
-    if solver.check() != sat:
+    model = model_with(solver, observability(path))
+
+    if model is None:
         return None
 
-    model = solver.model()
     assignment = {}
 
     for name, var in declared.items():
