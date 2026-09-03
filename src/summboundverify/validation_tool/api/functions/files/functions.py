@@ -69,12 +69,25 @@ class file_close(FileSummary):
         print(self.fs)
         return status
 
+
+class file_write(FileSummary):
+    def run(self, fd_bv, buffer_addr, count_bv):
+        fd = self.load_numeric(fd_bv)
+        buffer = self.load_string(buffer_addr)
+        count = self.load_numeric(count_bv)
+        n = self.fs.write_file(fd, buffer, count)
+        print("Write to file: ", n)
+        print(self.fs)
+        return n
+
+
 class FILE_from_fd(FileSummary):
     def run(self, fd_bv):
         fd = self.load_numeric(fd_bv)
         status = self.fs.FILE_from_fd(fd)
         print(f"FILE*: {status:#x}")
         return status
+
 
 class fd_from_FILE(FileSummary):
     def run(self, fp_bv):
