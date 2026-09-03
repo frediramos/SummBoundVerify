@@ -81,7 +81,7 @@ ssize_t __file_read(int fd, void* buffer, size_t count);
  * Advances the file offset by the number of bytes written.
  * Returns `-1` on error.
  */
-ssize_t __file_write(int fd, void* buffer, size_t count);
+ssize_t __file_write(int fd, const void* buffer, size_t count);
 
 /**
  * Returns the size, in bytes, of the file associated with file descriptor
