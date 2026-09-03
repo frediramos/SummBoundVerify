@@ -1,8 +1,9 @@
 import angr
+import inspect
 import claripy
 
 from copy import copy
-from typing import Iterator
+from typing import Callable, Iterator
 from dataclasses import dataclass, field
 
 from cle.backends.externs.simdata.io_file import io_file_data_for_arch
@@ -14,7 +15,8 @@ from textwrap import indent
 
 from summboundverify.exceptions import (
     InvalidFdError,
-    InvalidFpError
+    InvalidFpError,
+    InvalidCountError
 )
 
 from ...utils import (
@@ -23,7 +25,6 @@ from ...utils import (
     eq_strings,
     neq_strings
 )
-
 
 # ---------------------------------------------------------------------------
 # Filenames
@@ -49,8 +50,7 @@ type FileNames = list[FileNameEntry]
 
 @dataclass(slots=True)
 class File:
-    size: int = 0
-    bytes: list[str] = field(default_factory=list)
+    bytes: list = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -66,7 +66,7 @@ class FdEntry:
             f"\tfilename={self.filename!r},\n"
             f"\tcond={self.cond!r},\n"
             f"\toffset={self.offset},\n"
-            f"\tfile={self.file!r}\n,"
+            f"\tfile={self.file!r},\n"
             f"\t(id={id(self.file):#x})\n"
             ")"
         )
@@ -79,7 +79,7 @@ class FdEntries:
     entries: list[FdEntry]
 
 
-type SharedFiles = dict[int, tuple[int, File | None]]
+type SharedFiles = dict[int, set[int]]
 
 
 class SymbolicFS(angr.SimStatePlugin):
@@ -143,12 +143,16 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def clone(self) -> "SymbolicFS":
         """
-        Create an independent copy of the file system for an angr `state`.
+        Create an independent copy of the file system for an angr state.
         """
         fs = SymbolicFS()
+
+        file_map: dict[int, File] = {}
+
         fs.fnames = self._clone_fnames(self.fnames)
-        fs.fds = self._clone_fds(self.fds)
-        fs.shared = self._clone_shared(self.shared)
+        fs.fds = self._clone_fds(self.fds, file_map)
+        fs.shared = self._clone_shared(self.shared, file_map)
+
         return fs
 
     # Filenames
@@ -171,43 +175,40 @@ class SymbolicFS(angr.SimStatePlugin):
 
     # File Descriptors
 
-    def _clone_file(self, file: File) -> File:
-        def clone(): return File(file.size, file.bytes.copy())
+    def _clone_fds(self, fds: dict[int, FdEntries], file_map: dict[int, File]) -> dict[int, FdEntries]:
+        return {
+            fd: FdEntries(
+                open_name=copy(entries.open_name),
+                fp=entries.fp,
+                entries=self._clone_fd_entries(entries.entries, file_map),
+            )
+            for fd, entries in fds.items()
+        }
 
-        id_ = id(file)
-        if id_ in self.shared:
-            c, value = self.shared[id_]
-            if value is None:
-                value = clone()
-                self.shared[id_] = (c, value)
-            return value
+    def _clone_fd_entries(self, entries: list[FdEntry], file_map: dict[int, File]) -> list[FdEntry]:
+        return [
+            self._clone_fd_entry(entry, file_map)
+            for entry in entries
+        ]
 
-        return clone()
-
-    def _clone_fd_entry(self, entry: FdEntry) -> FdEntry:
+    def _clone_fd_entry(self, entry: FdEntry, file_map: dict[int, File]) -> FdEntry:
         return FdEntry(
             copy(entry.filename),
             entry.cond,
             entry.offset,
-            self._clone_file(entry.file)
+            self._clone_file(entry.file, file_map),
         )
 
-    def _clone_fd_entries(self, entries: list[FdEntry]) -> list[FdEntry]:
-        return [self._clone_fd_entry(e) for e in entries]
-
-    def _clone_fds(self, fds: dict[int, FdEntries]) -> dict[int, FdEntries]:
-        return {
-            fd: FdEntries(
-                open_name=copy(e.open_name),
-                fp=e.fp,
-                entries=self._clone_fd_entries(e.entries)
-            )
-            for fd, e in fds.items()
-        }
+    def _clone_file(self, file: File, file_map: dict[int, File]) -> File:
+        id_ = id(file)
+        if id_ not in file_map:
+            file_map[id_] = File(file.bytes.copy())
+        return file_map[id_]
 
     # Shared Files
-    def _clone_shared(self, shared: SharedFiles) -> SharedFiles:
-        return {k: (c, None) for k, (c, _) in shared.items()}
+
+    def _clone_shared(self, shared: SharedFiles, file_map: dict[int, File]) -> SharedFiles:
+        return {id(file_map[id_]): fds for id_, fds in shared.items()}
 
     # ---------------------------------------------------------------------------
     # Utils
@@ -227,27 +228,18 @@ class SymbolicFS(angr.SimStatePlugin):
                 return fd
             fd += 1
 
-    def mark_shared(self, file: File):
+    def mark_shared(self, file: File, fd: int):
         id_ = id(file)
         if id_ in self.shared:
-            entry = self.shared[id_]
-            count, f = entry
-            count += 1
-            self.shared[id_] = (count, f)
+            self.shared[id_].add(fd)
         else:
-            self.shared[id_] = (1, None)
+            self.shared[id_] = {fd}
 
-    def unmark_shared(self, file: File):
+    def unmark_shared(self, file: File, fd: int):
         id_ = id(file)
         if id_ not in self.shared:
             return
-        entry = self.shared[id_]
-        count, f = entry
-        count -= 1
-        if count == 0:
-            del self.shared[id_]
-        else:
-            self.shared[id_] = (count, f)
+        self.shared[id_].remove(fd)
 
     def is_concrete_fname(self, entry: FileNameEntry | None):
         """Return whether the file name `entry` contains concrete file names."""
@@ -316,17 +308,21 @@ class SymbolicFS(angr.SimStatePlugin):
         except:
             return None
 
+    def _check_valid(self, value, error):
+        try:
+            return self.state.solver.eval_one(value, cast_to=int)
+        except Exception:
+            caller = inspect.stack()[2].function
+            raise error(caller, value)
+
     def check_valid_fd(self, fd):
-        fd = self.check_is_int(fd)
-        if fd is None:
-            raise InvalidFdError(self.close_file.__name__, fd)
-        return fd
+        return self._check_valid(fd, InvalidFdError)
 
     def check_valid_fp(self, fp):
-        fp = self.check_is_int(fp)
-        if fp is None:
-            raise InvalidFpError(self.close_file.__name__, fp)
-        return fp
+        return self._check_valid(fp, InvalidFpError)
+
+    def check_valid_count(self, count):
+        return self._check_valid(count, InvalidCountError)
 
     def is_filename_open(self, filename: str | SymbString) -> bool:
         entries = self.existing_fd_entries()
@@ -397,6 +393,14 @@ class SymbolicFS(angr.SimStatePlugin):
 
         expr = claripy.ite_cases(cases, err)
         return expr
+
+    def write_bytes(self, file: File, offset: int, bytes: str | SymbString):
+        size = len(file.bytes)
+
+        if offset > size:
+            file.bytes.extend(['\0'] * (offset - size))
+
+        file.bytes[offset:offset + len(bytes)] = bytes
 
     # ---------------------------------------------------------------------------
     # Factories
@@ -535,7 +539,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         if entry is not None:
             entry.offset = 0
-            self.mark_shared(entry.file)
+            self.mark_shared(entry.file, fd)
 
         entry = FdEntry(filename, true(), 0, File())
 
@@ -550,7 +554,7 @@ class SymbolicFS(angr.SimStatePlugin):
         if entries is not None:
             for e in entries:
                 e.offset = 0
-                self.mark_shared(e.file)
+                self.mark_shared(e.file, fd)
         else:
             entries = []
             existing = self.existing_fd_entries()
@@ -562,7 +566,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
                 if self.is_sat(cond):
                     entry = FdEntry(e.filename, cond, 0, e.file)
-                    self.mark_shared(e.file)
+                    self.mark_shared(e.file, fd)
                     entries.append(entry)
 
             for name in fnames:
@@ -686,17 +690,33 @@ class SymbolicFS(angr.SimStatePlugin):
             return -1
 
         for entry in self.fds[fd].entries:
-            self.unmark_shared(entry.file)
+            self.unmark_shared(entry.file, fd)
 
         del self.fds[fd]
         return 0
+
+    def write_file(self, fd: int | BV, buffer: str | SymbString, count: int | BV) -> int:
+        fd = self.check_valid_fd(fd)
+        count = self.check_valid_count(count)
+        buffer = buffer[:count]
+
+        entries = self.fds[fd].entries
+
+        if len(entries) == 0:
+            return -1
+
+        for e in entries:
+            self.write_bytes(e.file, e.offset, buffer)
+            e.offset += count
+
+        return count
 
     def FILE_from_fd(self, fd: int | BV) -> int:
         fd = self.check_valid_fd(fd)
         if fd not in self.fds:
             fp = -1
         fp = self.fds[fd].fp
-        fd_= self.load_fd_from_fp(fp)
+        fd_ = self.load_fd_from_fp(fp)
         assert fd == fd_
         return fp
 

@@ -20,6 +20,10 @@ class GenError(ValidationError):
 class RunError(ValidationError):
     pass
 
+# -----------------------------------------------------------------------------------
+# Run Exceptions
+# -----------------------------------------------------------------------------------
+
 
 class TimeoutError(RunError):
     def __init__(self, timeout: int):
@@ -123,7 +127,19 @@ class InvalidFpError(RunError):
         )
         super().__init__(message)
 
-# ---
+
+class InvalidCountError(RunError):
+    def __init__(self, function: str, value):
+        message = (
+            f"The function '{function}' takes only concrete 'count' values .\n"
+            f"Invalid argument found: {value}"
+        )
+        super().__init__(message)
+
+
+# -----------------------------------------------------------------------------------
+# Generation Exceptions
+# -----------------------------------------------------------------------------------
 
 
 class FileParseError(GenError):
