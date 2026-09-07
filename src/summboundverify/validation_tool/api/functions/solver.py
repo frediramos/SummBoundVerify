@@ -173,8 +173,10 @@ class __assert(CSummary):
     def run(self, cnstr: BitVector):
         if not self.is_symbolic(cnstr):
             cnstr_id = self.state.solver.eval(cnstr)
-            cnstr = self.ctx.CNSTR_MAP[cnstr_id]
-        self.assert_constraint(cnstr)
+            constraint = self.ctx.CNSTR_MAP[cnstr_id]
+        else:
+            constraint = (cnstr == 1)
+        self.assert_constraint(constraint)
         self.ret()
 
 

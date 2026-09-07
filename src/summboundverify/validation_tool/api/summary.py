@@ -37,10 +37,12 @@ class CSummary(SimProcedure):
             endness=self.state.arch.memory_endness
         )
 
-    def load_string(self, addr) -> SymbString:
+    def load_string(self, addr, include_null: bool = False) -> SymbString:
         """
         Load a null-terminated string from memory.
         Can be symbolic.
+
+        `include_null`: Whether to include the null byte in the result.
         """
         i = 0
         chars = []
@@ -50,18 +52,21 @@ class CSummary(SimProcedure):
             byte: BitVector = self.state.memory.load(
                 addr + i,
                 1,
-                endness=endness
+                endness=endness,
             )
 
-            if not self.is_symbolic(byte):
-                code = self.state.solver.eval(byte)
-                if code == 0:
-                    break
-                char = chr(code)
+            if self.is_symbolic(byte):
+                chars.append(byte)
             else:
-                char = byte
+                code = self.state.solver.eval(byte)
 
-            chars.append(char)
+                if code == 0:
+                    if include_null:
+                        chars.append("\x00")
+                    break
+
+                chars.append(chr(code))
+
             i += 1
 
         return SymbString(chars)
