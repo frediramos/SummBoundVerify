@@ -30,7 +30,7 @@ class FileSummary(CSummary, ABC):
 
 class file_create(FileSummary):
     def run(self, filename_addr):
-        filename = self.load_string(filename_addr)
+        filename = self.load_string(filename_addr, include_null=True)
         status = self.fs.create_file(filename)
         print("Create file: ", status)
         return status
@@ -38,7 +38,7 @@ class file_create(FileSummary):
 
 class file_delete(FileSummary):
     def run(self, filename_addr):
-        filename = self.load_string(filename_addr)
+        filename = self.load_string(filename_addr, include_null=True)
         status = self.fs.delete_file(filename)
         print("Delete file: ", status)
         return status
@@ -46,7 +46,7 @@ class file_delete(FileSummary):
 
 class file_exists(FileSummary):
     def run(self, filename_addr):
-        filename = self.load_string(filename_addr)
+        filename = self.load_string(filename_addr, include_null=True)
         status = self.fs.exists_file(filename)
         print("Exists file: ", status)
         return status
@@ -54,7 +54,7 @@ class file_exists(FileSummary):
 
 class file_open(FileSummary):
     def run(self, filename_addr):
-        filename = self.load_string(filename_addr)
+        filename = self.load_string(filename_addr, include_null=True)
         status = self.fs.open_file(filename)
         print("Open file: ", status)
         print(self.fs)
@@ -73,11 +73,20 @@ class file_close(FileSummary):
 class file_write(FileSummary):
     def run(self, fd_bv, buffer_addr, count_bv):
         fd = self.load_numeric(fd_bv)
-        buffer = self.load_string(buffer_addr)
+        buffer = self.load_string(buffer_addr, include_null=True)
         count = self.load_numeric(count_bv)
         n = self.fs.write_file(fd, buffer, count)
         print("Write to file: ", n)
         print(self.fs)
+        return n
+
+
+class file_read(FileSummary):
+    def run(self, fd_bv, buffer, count_bv):
+        fd = self.load_numeric(fd_bv)
+        count = self.load_numeric(count_bv)
+        n = self.fs.read_file(fd, buffer, count)
+        print("Read bytes: ", n)
         return n
 
 

@@ -53,9 +53,9 @@ int main(){
   }
 
   // Concrete null byte
-  s1[SIZE -1] = '\0';
-  s2[SIZE -1] = '\0';
-  s3[SIZE -1] = '\0';
+  s1[SIZE-1] = '\0';
+  s2[SIZE-1] = '\0';
+  s3[SIZE-1] = '\0';
 
   int ret1 = __file_create(s1);
   __assert(ret1 == 1);
