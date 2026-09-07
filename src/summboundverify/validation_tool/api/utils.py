@@ -4,7 +4,7 @@ from typing import Callable, Any
 
 
 from claripy import ClaripyError
-from claripy.ast import Bool, false
+from claripy.ast import Bool, true, false
 from claripy.ast.bv import BV as BitVector
 
 from summboundverify.exceptions import (
@@ -121,22 +121,41 @@ type String = str | SymbString
 def compare_strings(
     s1: str | SymbString,
     s2: str | SymbString,
-    compare: Callable[[object, object], bool],
+    compare: Callable[[object, object], Bool | bool],
+    op: Callable[[list], Bool],
+
 ) -> Bool:
-    if len(s1) != len(s2):
-        return false()
 
     constraints = [
         constraint(compare, c1, c2)
         for c1, c2 in zip(s1, s2)
     ]
 
-    return constraint(claripy.And, *constraints)
+    return constraint(op, *constraints)
+
+
+def possibly_same_length(s1: str | SymbString, s2: str | SymbString) -> bool:
+    if isinstance(s1, str) and isinstance(s2, str):
+        return len(s1) == len(s2)
+
+    if isinstance(s1, str):
+        return len(s1) <= len(s2)
+
+    if isinstance(s2, str):
+        return len(s2) <= len(s1)
+
+    return True
 
 
 def eq_strings(s1: str | SymbString, s2: str | SymbString) -> Bool:
-    return compare_strings(s1, s2, lambda c1, c2: c1 == c2)
+    if not possibly_same_length(s1, s2):
+        return false()
+
+    return compare_strings(s1, s2, lambda c1, c2: c1 == c2, claripy.And)
 
 
 def neq_strings(s1: str | SymbString, s2: str | SymbString) -> Bool:
-    return compare_strings(s1, s2, lambda c1, c2: c1 != c2)
+    if not possibly_same_length(s1, s2):
+        return true()
+
+    return compare_strings(s1, s2, lambda c1, c2: c1 != c2, claripy.Or)

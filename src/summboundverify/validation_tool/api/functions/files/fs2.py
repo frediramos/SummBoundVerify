@@ -3,7 +3,7 @@ import inspect
 import claripy
 
 from copy import copy
-from typing import Callable, Iterator
+from typing import Iterator
 from dataclasses import dataclass, field
 
 from cle.backends.externs.simdata.io_file import io_file_data_for_arch
@@ -16,7 +16,8 @@ from textwrap import indent
 from summboundverify.exceptions import (
     InvalidFdError,
     InvalidFpError,
-    InvalidCountError
+    InvalidCountError,
+    InvalidBufferPointerError
 )
 
 from ...utils import (
@@ -265,6 +266,14 @@ class SymbolicFS(angr.SimStatePlugin):
         int_bits = self.state.arch.sizeof["int"]
         return BVV(value, int_bits)
 
+    def bvv_char(self, value: int | str):
+        """Create a bit-vector containing a C `char` value."""
+        if isinstance(value, str):
+            assert len(value) == 1
+            value = ord(value[0])
+
+        return BVV(value, 8)
+
     def search_open_concrete_name(self, filename: str) -> FdEntry | None:
         for fde in self.fds.values():
             if isinstance(fde.open_name, str) and fde.open_name == filename:
@@ -323,6 +332,9 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def check_valid_count(self, count):
         return self._check_valid(count, InvalidCountError)
+
+    def check_valid_buffer(self, count):
+        return self._check_valid(count, InvalidBufferPointerError)
 
     def is_filename_open(self, filename: str | SymbString) -> bool:
         entries = self.existing_fd_entries()
@@ -394,14 +406,6 @@ class SymbolicFS(angr.SimStatePlugin):
         expr = claripy.ite_cases(cases, err)
         return expr
 
-    def write_bytes(self, file: File, offset: int, bytes: str | SymbString):
-        size = len(file.bytes)
-
-        if offset > size:
-            file.bytes.extend(['\0'] * (offset - size))
-
-        file.bytes[offset:offset + len(bytes)] = bytes
-
     # ---------------------------------------------------------------------------
     # Factories
     # ---------------------------------------------------------------------------
@@ -418,7 +422,7 @@ class SymbolicFS(angr.SimStatePlugin):
         malloc = angr.SIM_PROCEDURES["libc"]["malloc"]
         io_file_data = io_file_data_for_arch(self.state.arch)
         fp = self.call_simprocedure(malloc, io_file_data["size"]).ret_expr
-        size = self.state.arch.sizeof["int"]
+        size = self.state.arch.sizeof["int"] // 8
 
         # Write the fd
         self.state.memory.store(
@@ -551,6 +555,21 @@ class SymbolicFS(angr.SimStatePlugin):
         fp = self.create_file_pointer(fd)
         entries = self.search_open_symbolic_name(filename)
 
+        # Ongoing condition to filter impossible opens
+        ongoing_cond = []
+
+        def can_add(cond):
+            if len(ongoing_cond) == 0:
+                neg = true()
+            elif len(ongoing_cond) == 1:
+                neg = claripy.Not(ongoing_cond[0])
+            else:
+                neg = claripy.And(*[claripy.Not(c) for c in ongoing_cond])
+            return self.is_sat(claripy.And(cond, neg))
+
+        def update_ongoing(cond):
+            ongoing_cond.append(cond)
+
         if entries is not None:
             for e in entries:
                 e.offset = 0
@@ -564,15 +583,18 @@ class SymbolicFS(angr.SimStatePlugin):
                 eq = eq_strings(filename, e.filename)
                 cond = claripy.And(e.cond, eq)
 
-                if self.is_sat(cond):
+                if can_add(cond):
                     entry = FdEntry(e.filename, cond, 0, e.file)
                     self.mark_shared(e.file, fd)
                     entries.append(entry)
+                    update_ongoing(cond)
 
             for name in fnames:
                 cond = eq_strings(filename, name)
-                entry = FdEntry(name, cond, 0, File())
-                entries.append(entry)
+                if can_add(cond):
+                    entry = FdEntry(name, cond, 0, File())
+                    entries.append(entry)
+                    update_ongoing(cond)
 
         if len(entries) > 0:
             self.fds[fd] = FdEntries(filename, fp, entries)
@@ -705,11 +727,75 @@ class SymbolicFS(angr.SimStatePlugin):
         if len(entries) == 0:
             return -1
 
+        def write_bytes(file: File, offset: int, bytes: str | SymbString):
+            size = len(file.bytes)
+            if offset > size:
+                file.bytes.extend(['\0'] * (offset - size))
+            file.bytes[offset:offset + len(bytes)] = bytes
+
         for e in entries:
-            self.write_bytes(e.file, e.offset, buffer)
+            write_bytes(e.file, e.offset, buffer)
             e.offset += count
 
         return count
+
+    def read_file(self, fd: int | BV, buffer: int | BV, count: int | BV) -> int | BV:
+        fd = self.check_valid_fd(fd)
+        buffer = self.check_valid_buffer(buffer)
+        count = self.check_valid_count(count)
+
+        entries = self.fds[fd].entries
+
+        if len(entries) == 0:
+            return -1
+
+        def read_byte(file: File, offset: int):
+            content = file.bytes
+            size = len(content)
+            index = offset
+            if index >= size:
+                return None
+            return content[index]
+
+        def store_byte(buffer: int, byte: int | BV, i: int):
+            self.state.memory.store(
+                buffer + i,
+                byte,
+                size=1,
+                endness=self.state.arch.memory_endness
+            )
+
+        default = self.bvv_char(0)
+        ret_cases: dict[int, None | int] = {
+            k: None for k in range(len(entries))
+        }
+
+        for i in range(count):
+            read_cases = []
+
+            for j, e in enumerate(entries):
+                c = read_byte(e.file, e.offset)
+
+                if c is None:
+                    c = default
+                    if ret_cases[j] is None:
+                        ret_cases[j] = i
+                else:
+                    c = self.bvv_char(c)
+                    e.offset += 1
+
+                read_cases.append((e.cond, c))
+
+            read = claripy.ite_cases(read_cases, default)
+            store_byte(buffer, read, i)
+
+        ret = (
+            (entries[k].cond, v if v is not None else count)
+            for k, v in ret_cases.items()
+        )
+        ret = claripy.ite_cases(ret, self.bvv_int(0))
+
+        return ret
 
     def FILE_from_fd(self, fd: int | BV) -> int:
         fd = self.check_valid_fd(fd)

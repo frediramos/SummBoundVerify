@@ -28,6 +28,7 @@ int __file_open(char* filename){ return 0; }
 int main(){
   
   char s1[SIZE];
+  char s2[SIZE];
 
   // Fill with symbolic bytes
   for (int i = 0; i < SIZE; i++){
@@ -35,8 +36,8 @@ int main(){
   }
 
   // Concrete null byte
-  s1[SIZE -1] = '\0';
-  s2[SIZE -1] = '\0';
+  s1[SIZE-1] = '\0';
+  s2[SIZE-1] = '\0';
 
   int ret1 = __file_create(s1);
   __assert(ret1 == 1);

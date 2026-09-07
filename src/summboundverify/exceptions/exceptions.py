@@ -113,7 +113,7 @@ class ReportError(RunError):
 class InvalidFdError(RunError):
     def __init__(self, function: str, value):
         message = (
-            f"The function '{function}' only takes concrete file descriptors.\n"
+            f"The function '{function}' takes only concrete file descriptors.\n"
             f"Invalid argument found: {value}"
         )
         super().__init__(message)
@@ -122,7 +122,7 @@ class InvalidFdError(RunError):
 class InvalidFpError(RunError):
     def __init__(self, function: str, value):
         message = (
-            f"The function '{function}' only takes concrete file pointers (FILE*).\n"
+            f"The function '{function}' takes only concrete file pointers (FILE*).\n"
             f"Invalid argument found: {value}"
         )
         super().__init__(message)
@@ -136,6 +136,13 @@ class InvalidCountError(RunError):
         )
         super().__init__(message)
 
+class InvalidBufferPointerError(RunError):
+    def __init__(self, function: str, value):
+        message = (
+            f"The function '{function}' takes only concrete buffer pointers.\n"
+            f"Invalid argument found: {value}"
+        )
+        super().__init__(message)
 
 # -----------------------------------------------------------------------------------
 # Generation Exceptions
