@@ -150,12 +150,8 @@ def possibly_same_length(s1: str | SymbString, s2: str | SymbString) -> bool:
 def eq_strings(s1: str | SymbString, s2: str | SymbString) -> Bool:
     if not possibly_same_length(s1, s2):
         return false()
-
     return compare_strings(s1, s2, lambda c1, c2: c1 == c2, claripy.And)
 
 
 def neq_strings(s1: str | SymbString, s2: str | SymbString) -> Bool:
-    if not possibly_same_length(s1, s2):
-        return true()
-
-    return compare_strings(s1, s2, lambda c1, c2: c1 != c2, claripy.Or)
+    return claripy.Not(eq_strings(s1, s2))
