@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from claripy.ast.bv import BV as BitVector
 
-from .fs2 import SymbolicFS
+from .fs import SymbolicFS
 
 from ...summary import CSummary
 from ...context import ValidationCTX
