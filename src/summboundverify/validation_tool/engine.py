@@ -21,7 +21,7 @@ from summboundverify.exceptions import TimeoutError
 from .macros import SYM_VAR
 
 from .api import ValidationAPI
-from .api.functions.files.fs2 import SymbolicFS
+from .api.functions.files.fs import SymbolicFS
 
 from .utils import (
     truncate,
