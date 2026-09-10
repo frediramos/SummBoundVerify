@@ -52,16 +52,6 @@ sbv_value sym_var_named(char *name, size_t bits);
  */
 sbv_value sym_var_array(char *name, size_t index, size_t bits);
 
-/*
- * `bits` fresh bytes for the input `name`, written straight to `dst`.
- *
- * The counterpart of sym_var_bytes in the symbolic API, and needed for the
- * same reason: a floating-point value cannot travel back through an integer
- * return without being converted, and converting it is exactly what must not
- * happen -- the bit pattern is the value being tested.
- */
-void sym_var_bytes(char *name, void *dst, size_t bits);
-
 /* Bounding the domain --------------------------------------------------- */
 
 /*

@@ -28,10 +28,11 @@ reasoning and removed on evidence:
   terminates the harness, which AFL++ records as a crash -- so handing the
   target to sampling was *worse* than not skipping, because it manufactured a
   finding. Fixed at the source instead, with `sbv_exit`.
-* Floating point, because `sym_var` refused a bitvector wider than the
-  architecture. That was a restriction on the wrong primitive: `sym_var_bytes`
-  writes through a pointer and never returns the value in a register, so a
-  64-bit double is fine at -m32. Lifted.
+* Floating point, first because `sym_var` refused a bitvector wider than the
+  architecture, then because sampling drew from the wrong domain rather than
+  failing. Both are the `FILE *` situation: the generator cannot build the
+  argument for *either* engine, so it now refuses one at generation time
+  (`UnsupportedTypeError`) and there is nothing left for this module to skip.
 
 The rule that survives all of this: only skip symbolic execution when sampling
 can genuinely take over. Anything else trades a missing verdict for a false
@@ -56,9 +57,6 @@ from summboundverify.validation_gen.function_parser.visitors import (
 logger = logging.getLogger(__name__)
 
 
-FLOAT_TYPES = frozenset({'float', 'double', 'long double'})
-
-
 class _Calls(NodeVisitor):
     """Collect the function calls made inside a body."""
 
@@ -72,30 +70,16 @@ class _Calls(NodeVisitor):
         self.generic_visit(node)
 
 
-class _Types(NodeVisitor):
-    """Collect the base types named in a declaration."""
-
-    def __init__(self):
-        self.types: set[str] = set()
-
-    def visit_IdentifierType(self, node):
-        self.types.add(" ".join(node.names))
-
-
 def se_obstacles(function: Function) -> list[str]:
     """Reasons symbolic execution cannot handle this function.
 
     Empty when there are none, so the result doubles as a predicate.
 
-    Calls come from the body and types from the declaration, so a function
-    that merely *returns* a double is caught as readily as one that takes it.
-    A function with no body (a bare prototype) contributes no calls.
+    A function with no body (a bare prototype) contributes no calls, and so
+    no obstacles.
     """
     calls_visitor = _Calls()
     calls_visitor.visit(function.body) if function.body is not None else None
-
-    types_visitor = _Types()
-    types_visitor.visit(function.declaration)
 
     calls = calls_visitor.calls
     obstacles = []
@@ -105,10 +89,6 @@ def se_obstacles(function: Function) -> list[str]:
     # but nothing bounds the recursion depth symbolically.
     if function.name in calls:
         obstacles.append("is recursive")
-
-    if hits := types_visitor.types & FLOAT_TYPES:
-        names = ", ".join(sorted(hits))
-        obstacles.append(f"takes or returns floating point ({names})")
 
     return obstacles
 

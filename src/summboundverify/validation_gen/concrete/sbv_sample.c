@@ -137,18 +137,6 @@ static void record_draw(const char *name, long index, int indexed,
 
 /* Drawing inputs -------------------------------------------------------- */
 
-static void draw_bytes(char *name, unsigned char *dst, size_t bits,
-                       long index, int indexed) {
-    size_t nbytes = (bits + 7) / 8;
-    size_t offset = g_input_pos;
-    size_t i;
-
-    for (i = 0; i < nbytes; i++)
-        dst[i] = tape_byte();
-
-    record_draw(name, index, indexed, dst, bits, offset, nbytes);
-}
-
 static sbv_value draw_value(char *name, size_t bits, long index, int indexed) {
     unsigned char bytes[sizeof(sbv_value)];
     sbv_value value = 0;
@@ -181,10 +169,6 @@ sbv_value sym_var_named(char *name, size_t bits) {
 
 sbv_value sym_var_array(char *name, size_t index, size_t bits) {
     return draw_value(name, bits, (long)index, 1);
-}
-
-void sym_var_bytes(char *name, void *dst, size_t bits) {
-    draw_bytes(name, (unsigned char *)dst, bits, 0, 0);
 }
 
 /* Bounding the domain --------------------------------------------------- */

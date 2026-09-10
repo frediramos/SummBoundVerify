@@ -159,3 +159,29 @@ class DuplicateFunctionDeclarationError(GenError):
     def __init__(self, name: str, file: Path):
         message = f"Multiple functions named '{name}' declared in file: {file}"
         super().__init__(message)
+
+
+class UnsupportedTypeError(GenError):
+    """A type the generator cannot draw a symbolic value for.
+
+    Raised at generation time, so it stops both engines rather than one. The
+    alternative is worse than a refusal: a `symbolic` is a pointer-sized
+    integer, so a generated `double x = sym_var_named(...)` *compiles* and
+    converts the drawn value numerically instead of reinterpreting its bits.
+    The test would then run to completion over integer-valued doubles alone --
+    no fractions, no NaN, no infinities -- and report a verdict earned on a
+    fraction of the domain it claims to have covered.
+    """
+
+    def __init__(self, typename: str, where: str):
+        self.typename = typename
+        self.where = where
+        message = (
+            f"Cannot draw a symbolic value of type '{typename}' ({where}).\n"
+            "A `symbolic` is a pointer-sized integer, so a floating-point "
+            "value taken through one is converted, not reinterpreted: only "
+            "integer-valued floats would ever be tested and the run would "
+            "still report a verdict. Refusing beats validating part of the "
+            "domain silently."
+        )
+        super().__init__(message)
