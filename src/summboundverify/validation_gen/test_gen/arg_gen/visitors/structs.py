@@ -15,6 +15,8 @@ from pycparser.c_ast import (
 
 )
 
+from summboundverify.utils.unsupported import check_supported
+
 from summboundverify.validation_gen.utils import (
     return_value,
     parse_file,
@@ -221,6 +223,11 @@ class StructFieldsVisitor(NodeVisitor):
     # TypeDecl (Common node)
     def visit_TypeDecl(self, node):
         self.visit(node.type)
+
+        # After the aliases are resolved, so a typedefed double is caught too.
+        check_supported(
+            self.argtype, f"field '{self.struct_name}.{self.field}'"
+        )
 
         if len(self.sizes) == 0:
             if self.struct:

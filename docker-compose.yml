@@ -1,0 +1,11 @@
+services:
+  sbv:
+    build: .
+    image: sbv-image
+    hostname: sbv
+    platform: linux/amd64
+    working_dir: /root/summboundverify
+    volumes:
+      - .:/root/summboundverify
+    stdin_open: true
+    tty: true

@@ -60,3 +60,8 @@ dist/
 # Virtual environments
 .venv/
 venv/
+
+#Fuzz engine artifacts
+/**/*-fuzz*
+/**/*.fuzz*
+/**/*.aflwork*

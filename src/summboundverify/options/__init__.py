@@ -11,6 +11,13 @@ from .parser import (
 )
 
 
+# Options that are used as numbers rather than passed along as text. argparse
+# coerces them on the command line; the config file parser returns every
+# `SIMPLE` option as a string, so `timeout 60` in a config reaches
+# `sp.run(timeout='60')` and raises TypeError before the campaign starts.
+NUMERIC = ('execs', 'timeout')
+
+
 def parse_input_args(input=None):
 
     # Parse command line args
@@ -28,5 +35,10 @@ def parse_input_args(input=None):
         config = parse_config_file(config_file)
         for c in config.keys():
             setattr(args, c, config[c])
+
+        for option in NUMERIC:
+            value = getattr(args, option, None)
+            if isinstance(value, str):
+                setattr(args, option, int(value))
 
     return args

@@ -43,6 +43,12 @@ class CSummary(SimProcedure):
         )
 
     def sym_var(self, length, name=None):
+        """A fresh symbolic variable of `length` bits.
+
+        Bounded by the architecture because every caller hands the variable
+        back through a `symbolic`, which is pointer-sized: a value wider than
+        the architecture could not survive the trip.
+        """
         arch_bits = self.state.arch.bits
         explicit_name = True
 

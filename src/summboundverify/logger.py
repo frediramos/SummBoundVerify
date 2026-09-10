@@ -1,3 +1,4 @@
+import sys
 import logging
 
 
@@ -34,6 +35,21 @@ class FriendlyFormatter(logging.Formatter):
         # Style logger name
         record.name = f"{Colors.green}{name}{Colors.reset}"
         return super().format(record)
+
+
+def section(title: str, color: str = Colors.teal) -> None:
+    '''Announce a new stage of the run.
+
+    Written to stderr rather than printed: that is where the log handler
+    writes, and mixing the two streams reorders the output as soon as it is
+    piped (stdout is block-buffered, stderr is not).
+    '''
+    bar = '=' * (len(title) + 4)
+    print(
+        f"\n{color}{bar}\n  {title}\n{bar}{Colors.reset}\n",
+        file=sys.stderr,
+        flush=True,
+    )
 
 
 def format_string(debug: bool):

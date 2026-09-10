@@ -10,16 +10,24 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${SCRIPT_DIR}/../utils/colors.sh"
+source "${SCRIPT_DIR}/../utils/sudo.sh"
+
+# 32-bit support is required by the symbolic engine's default -m32 build, so
+# being unable to install it is fatal.
+if [[ "$SUDO_OK" -ne 1 ]]; then
+    sudo_unavailable_msg
+    exit 1
+fi
 
 install_apt() {
     echo "Using APT (Debian/Ubuntu)"
-    apt-get update
-    apt-get install -y gcc-multilib libc6-dev-i386
+    $SUDO apt-get update
+    $SUDO apt-get install -y gcc-multilib libc6-dev-i386
 }
 
 install_dnf() {
     echo "Using DNF (Fedora)"
-    dnf install -y glibc-devel.i686 libstdc++-devel.i686
+    $SUDO dnf install -y glibc-devel.i686 libstdc++-devel.i686
 }
 
 install_pacman() {
@@ -28,16 +36,16 @@ install_pacman() {
     # Enable multilib repo if not already enabled
     if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
         echo "==> Enabling multilib repository..."
-        sed -i '/#\[multilib\]/,/Include/ s/^#//' /etc/pacman.conf
+        $SUDO sed -i '/#\[multilib\]/,/Include/ s/^#//' /etc/pacman.conf
     fi
 
-    pacman -Syu --noconfirm
-    pacman -S --needed --noconfirm gcc lib32-glibc
+    $SUDO pacman -Syu --noconfirm
+    $SUDO pacman -S --needed --noconfirm gcc lib32-glibc
 }
 
 install_zypper() {
     echo "Using Zypper (openSUSE)"
-    zypper install -y glibc-devel-32bit libstdc++6-32bit
+    $SUDO zypper install -y glibc-devel-32bit libstdc++6-32bit
 }
 
 if [[ ! -f /etc/os-release ]]; then

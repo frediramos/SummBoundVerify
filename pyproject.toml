@@ -12,6 +12,8 @@ where = ["src"]
 summboundverify = [
     "resources/*.md",
     "validation_gen/utils/fake_libc_include/**/*",
+    "validation_gen/concrete/*.c",
+    "validation_gen/concrete/*.h",
 ]
 
 [project]
