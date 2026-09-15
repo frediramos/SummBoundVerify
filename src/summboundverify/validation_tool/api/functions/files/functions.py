@@ -104,3 +104,11 @@ class fd_from_FILE(FileSummary):
         status = self.fs.fd_from_FILE(fp)
         print("fd: ", status)
         return status
+
+
+class file_offset(FileSummary):
+    def run(self, fd_bv):
+        fd = self.load_numeric(fd_bv)
+        offset = self.fs.file_offset(fd)
+        print("offset: ", offset)
+        return offset
