@@ -920,6 +920,18 @@ class SymbolicFS(angr.SimStatePlugin):
         ret = claripy.ite_cases(ret, self.bvv_int(0))
         return ret
 
+    def file_offset(self, fd: int | BV):
+        fd = self.check_valid_fd(fd)
+        entries = self.fds[fd].entries
+        cases = []
+
+        for e in entries:
+            cases.append((e.cond, e.offset))
+
+        default = self.bvv_int(-1)
+        ret = claripy.ite_cases(cases, default)
+        return ret
+
     def FILE_from_fd(self, fd: int | BV) -> int:
         """Return the `FILE *` pointer associated with `fd`, or `-1` if it is not found."""
         fd = self.check_valid_fd(fd)
