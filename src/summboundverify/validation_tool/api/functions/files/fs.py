@@ -15,6 +15,7 @@ from summboundverify.exceptions import (
     InvalidFdError,
     InvalidFpError,
     InvalidCountError,
+    InvalidOffsetError,
     InvalidBufferPointerError
 )
 
@@ -357,6 +358,10 @@ class SymbolicFS(angr.SimStatePlugin):
     def check_valid_count(self, count):
         """Validate and concretize a byte count."""
         return self._check_valid(count, InvalidCountError)
+
+    def check_valid_offset(self, offset):
+        """Validate and concretize a byte count."""
+        return self._check_valid(offset, InvalidOffsetError)
 
     def check_valid_buffer(self, count):
         """Validate and concretize a buffer pointer."""
@@ -931,6 +936,20 @@ class SymbolicFS(angr.SimStatePlugin):
         default = self.bvv_int(-1)
         ret = claripy.ite_cases(cases, default)
         return ret
+
+    def file_set_offset(self, fd: int | BV, offset: int | BV):
+        fd = self.check_valid_fd(fd)
+        offset = self.check_valid_offset(offset)
+
+        entries = self.fds[fd].entries
+
+        if len(entries) == 0:
+            return -1
+
+        for e in entries:
+            e.offset = offset
+        
+        return offset
 
     def FILE_from_fd(self, fd: int | BV) -> int:
         """Return the `FILE *` pointer associated with `fd`, or `-1` if it is not found."""

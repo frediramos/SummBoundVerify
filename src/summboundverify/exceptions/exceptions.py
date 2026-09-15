@@ -136,6 +136,16 @@ class InvalidCountError(RunError):
         )
         super().__init__(message)
 
+
+class InvalidOffsetError(RunError):
+    def __init__(self, function: str, value):
+        message = (
+            f"The function '{function}' takes only concrete 'offset' values .\n"
+            f"Invalid argument found: {value}"
+        )
+        super().__init__(message)
+
+
 class InvalidBufferPointerError(RunError):
     def __init__(self, function: str, value):
         message = (
