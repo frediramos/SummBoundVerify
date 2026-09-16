@@ -142,9 +142,11 @@ class InvalidSizeError(InvalidArgumentError):
     argument = "size"
 
 
-class InvalidBufferPointerError(InvalidArgumentError):
-    argument = "buffer pointer"
+class InvalidPointerError(InvalidArgumentError):
+    argument = "pointer"
 
+class InvalidModeError(InvalidArgumentError):
+    argument = "mode_t"
 # -----------------------------------------------------------------------------------
 # Generation Exceptions
 # -----------------------------------------------------------------------------------

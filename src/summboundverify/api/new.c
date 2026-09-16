@@ -125,6 +125,7 @@ int __file_set_flags(int fd, int flags);
 
 /**
  * Sets the mode (`st_mode`) of the file associated with file descriptor `fd`.
+ * Returns `1` on success and `-1` on failure.
  */
 int __file_set_mode(int fd, mode_t mode);
 
@@ -135,7 +136,7 @@ int __file_set_mode(int fd, mode_t mode);
  * The stored value encodes both the file type and permission bits (e.g.,
  * regular file, directory, `0644`, `0755`).
  *
- * Returns `0` on success and `-1` on failure.
+ * Returns `1` on success and `-1` on failure.
  */
 int __file_mode(int fd, mode_t* mode);
 

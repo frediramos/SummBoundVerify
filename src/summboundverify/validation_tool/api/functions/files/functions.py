@@ -147,10 +147,28 @@ class file_dup(FileSummary):
         print(f"dup: {fd1} -> {fd2}")
         return fd2
 
+
 class file_dup2(FileSummary):
     def run(self, fd1_bv, fd2_bv):
         fd1 = self.load_numeric(fd1_bv)
         fd2 = self.load_numeric(fd2_bv)
         ret = self.fs.file_dup2(fd1, fd2)
         print(f"dup2: {fd1} -> {fd2}")
-        return ret  
+        return ret
+
+
+class file_mode(FileSummary):
+    def run(self, fd_bv, mode_ptr_bv):
+        fd = self.load_numeric(fd_bv)
+        mode_ptr = self.load_numeric(mode_ptr_bv)
+        status = self.fs.file_mode(fd, mode_ptr)
+        print(f"mode status: {status}")
+        return status
+
+class file_set_mode(FileSummary):
+    def run(self, fd_bv, mode_bv):
+        fd = self.load_numeric(fd_bv)
+        mode = self.load_numeric(mode_bv)
+        status = self.fs.file_set_mode(fd, mode)
+        print(f"set mode status: {status}")
+        return status
