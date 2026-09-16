@@ -1053,3 +1053,19 @@ class SymbolicFS(angr.SimStatePlugin):
         self.fds[fd2] = self.fds[fd]
 
         return fd2
+
+    def file_dup2(self, fd1: int | BV, fd2: int | BV):
+        fd1 = self.check_valid_fd(fd1)
+        fd2 = self.check_valid_fd(fd2)
+
+        if fd2 in self.fds:
+            self.close_file(fd2)
+
+        entries = self.fds[fd1].entries
+
+        if len(entries) == 0:
+            return -1
+
+        self.fds[fd2] = self.fds[fd1]
+
+        return fd2

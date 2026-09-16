@@ -33,54 +33,38 @@ ssize_t __file_write(int fd, const void* buffer, size_t count){ return 0; }
 ssize_t __file_read(int fd, void* buffer, size_t count){ return 0; }
 ssize_t __file_offset(int fd){ return 0; }
 ssize_t __file_set_offset(int fd, size_t offset){ return 0; }
-int __file_dup(int fd){ return 0; }
+int __file_dup2(int fd1, int fd2){ return 0; }
 
 
 #define SIZE 3
 
 int main(){
   
-  int ret = __file_create("abc");
+  int ret1 = __file_create("abc");
+  int ret2 = __file_create("def");
   int fd1 = __file_open("abc");
-  __assert(ret == 1);
-  __assert(fd1 == 3);
+  int fd2 = __file_open("def");
 
-  int fd2 = __file_dup(fd1);
+  __assert(ret1 == 1);
+  __assert(ret2 == 1);
+  __assert(fd1 == 3);
   __assert(fd2 == 4);
 
-  int count = __file_write(fd1, "abc", 3);
-  __assert(count == 3);
+  int count1 = __file_write(fd1, "123", 3);
+  int count2 = __file_write(fd2, "456", 3);
+  __assert(count1 == 3);
+  __assert(count2 == 3);
 
-  ssize_t offset1 = __file_offset(fd1);
-  ssize_t offset2 = __file_offset(fd2);
-
-  __assert(offset1 == 3);
-  __assert(offset2 == 3);
-
-  __file_set_offset(fd1, 0);
+  int fd3 = __file_dup2(fd1, fd2);
+  __assert(fd2 == 4);
+  
   __file_set_offset(fd2, 0);
-  
-  offset1 = __file_offset(fd1);
-  offset2 = __file_offset(fd2);
 
-  __assert(offset1 == 0);
-  __assert(offset2 == 0);
+  char buffer[5];
+  
+  __file_read(fd2, buffer, 3);
+  __assert(buffer[0] == '1');
+  __assert(buffer[1] == '2');
+  __assert(buffer[2] == '3');
 
-  char buffer1[5];
-  char buffer2[5];
-  
-  __file_read(fd1, buffer1, 3);
-  __assert(buffer1[0] == 'a');
-  __assert(buffer1[1] == 'b');
-  __assert(buffer1[2] == 'c');
-  
-  offset2 = __file_offset(fd2);
-  __assert(offset2 == 3);
-
-  __file_set_offset(fd2, 0);
-  __file_read(fd2, buffer2, 3);
-  __assert(buffer2[0] == 'a');
-  __assert(buffer2[1] == 'b');
-  __assert(buffer2[2] == 'c');
-  
 }
