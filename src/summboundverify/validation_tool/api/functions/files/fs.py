@@ -149,9 +149,10 @@ class SymbolicFS(angr.SimStatePlugin):
         """
         fs = SymbolicFS()
         file_map: dict[int, File] = {}
+        entry_map: dict[int, FdEntry] = {}
 
         fs.fnames = self._clone_fnames(self.fnames)
-        fs.fds = self._clone_fds(self.fds, file_map)
+        fs.fds = self._clone_fds(self.fds, file_map, entry_map)
         fs.shared = self._clone_shared(self.shared, file_map)
 
         return fs
@@ -178,29 +179,53 @@ class SymbolicFS(angr.SimStatePlugin):
 
     # File Descriptors
 
-    def _clone_fds(self, fds: dict[int, FdEntries], file_map: dict[int, File]) -> dict[int, FdEntries]:
+    def _clone_fds(
+        self,
+        fds: dict[int, FdEntries],
+        file_map: dict[int, File],
+        entry_map: dict[int, FdEntry]
+    ) -> dict[int, FdEntries]:
+
         return {
             fd: FdEntries(
                 open_name=copy(entries.open_name),
                 fp=entries.fp,
-                entries=self._clone_fd_entries(entries.entries, file_map),
+                entries=self._clone_fd_entries(
+                    entries.entries, file_map, entry_map),
             )
             for fd, entries in fds.items()
         }
 
-    def _clone_fd_entries(self, entries: list[FdEntry], file_map: dict[int, File]) -> list[FdEntry]:
+    def _clone_fd_entries(
+        self,
+        entries: list[FdEntry],
+        file_map: dict[int, File],
+        entry_map: dict[int, FdEntry]
+    ) -> list[FdEntry]:
+
         return [
-            self._clone_fd_entry(entry, file_map)
+            self._clone_fd_entry(entry, file_map, entry_map)
             for entry in entries
         ]
 
-    def _clone_fd_entry(self, entry: FdEntry, file_map: dict[int, File]) -> FdEntry:
-        return FdEntry(
-            copy(entry.filename),
-            entry.cond,
-            entry.offset,
-            self._clone_file(entry.file, file_map),
-        )
+    def _clone_fd_entry(
+        self,
+        entry: FdEntry,
+        file_map: dict[int, File],
+        entry_map: dict[int, FdEntry]
+    ) -> FdEntry:
+
+        id_ = id(entry)
+
+        if id_ not in entry_map:
+            entry_map[id_] = FdEntry(
+                copy(entry.filename),
+                entry.cond,
+                entry.offset,
+                self._clone_file(entry.file, file_map)
+            )
+
+        return entry_map[id_]
 
     def _clone_file(self, file: File, file_map: dict[int, File]) -> File:
         id_ = id(file)
@@ -1016,3 +1041,15 @@ class SymbolicFS(angr.SimStatePlugin):
                 return fd
 
         return -1
+
+    def file_dup(self, fd: int | BV):
+        fd = self.check_valid_fd(fd)
+        entries = self.fds[fd].entries
+
+        if len(entries) == 0:
+            return -1
+
+        fd2 = self.new_fd()
+        self.fds[fd2] = self.fds[fd]
+
+        return fd2
