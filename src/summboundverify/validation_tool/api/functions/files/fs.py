@@ -15,9 +15,10 @@ from summboundverify.exceptions import (
     InvalidFdError,
     InvalidFpError,
     InvalidSizeError,
+    InvalidModeError,
     InvalidCountError,
     InvalidOffsetError,
-    InvalidBufferPointerError
+    InvalidPointerError,
 )
 
 from ...utils import (
@@ -77,6 +78,7 @@ class FdEntry:
 class FdEntries:
     open_name: str | SymbString
     fp: int
+    mode: int
     entries: list[FdEntry]
 
 
@@ -118,14 +120,20 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def _repr_fds(self) -> str:
         lines = ["\tfds:"]
+
         for fd, entry in self.fds.items():
             lines.append(
-                f"\t\tfd {fd} -> {entry.open_name!r}, FILE* = {entry.fp:#x}"
+                (
+                    f"\t\tfd {fd} -> {entry.open_name!r}, "
+                    f"FILE* = {entry.fp:#x}, "
+                    f"mode = {entry.mode:#o}"
+                )
             )
             lines.append("\t\t[")
             for entry in entry.entries:
                 lines.append(indent(repr(entry), "\t\t\t"))
             lines.append("\t\t[")
+
         return "\n".join(lines)
 
     def _repr_shared_files(self) -> str:
@@ -188,12 +196,16 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return {
             fd: FdEntries(
-                open_name=copy(entries.open_name),
-                fp=entries.fp,
+                open_name=copy(fde.open_name),
+                fp=fde.fp,
+                mode=fde.mode,
                 entries=self._clone_fd_entries(
-                    entries.entries, file_map, entry_map),
+                    fde.entries,
+                    file_map,
+                    entry_map
+                ),
             )
-            for fd, entries in fds.items()
+            for fd, fde in fds.items()
         }
 
     def _clone_fd_entries(
@@ -258,6 +270,12 @@ class SymbolicFS(angr.SimStatePlugin):
             if fd not in self.fds:
                 return fd
             fd += 1
+
+    def mode_t(self, mode: int):
+        return mode & ~0o022
+
+    def default_mode(self):
+        return self.mode_t(0o666)
 
     def mark_shared(self, file: File, fd: int):
         """Mark a file as shared with the given file descriptor."""
@@ -393,9 +411,13 @@ class SymbolicFS(angr.SimStatePlugin):
         """Validate and concretize a file size ."""
         return self._check_valid(size, InvalidSizeError)
 
-    def check_valid_buffer(self, count):
-        """Validate and concretize a buffer pointer."""
-        return self._check_valid(count, InvalidBufferPointerError)
+    def check_valid_pointer(self, count):
+        """Validate and concretize a pointer."""
+        return self._check_valid(count, InvalidPointerError)
+
+    def check_valid_mode(self, mode):
+        """Validate and concretize a mode_t value."""
+        return self._check_valid(mode, InvalidModeError)
 
     def is_filename_open(self, filename: str | SymbString) -> bool:
         """
@@ -648,7 +670,8 @@ class SymbolicFS(angr.SimStatePlugin):
             self.mark_shared(entry.file, fd)
 
         entry = FdEntry(filename, true(), 0, File())
-        self.fds[fd] = FdEntries(filename, fp, [entry])
+        mode = self.default_mode()
+        self.fds[fd] = FdEntries(filename, fp, mode, [entry])
 
         return fd
 
@@ -717,7 +740,8 @@ class SymbolicFS(angr.SimStatePlugin):
                     update_ongoing(cond)
 
         if len(entries) > 0:
-            self.fds[fd] = FdEntries(filename, fp, entries)
+            mode = self.default_mode()
+            self.fds[fd] = FdEntries(filename, fp, mode, entries)
             return fd
 
         return -1
@@ -894,7 +918,7 @@ class SymbolicFS(angr.SimStatePlugin):
         """
 
         fd = self.check_valid_fd(fd)
-        buffer = self.check_valid_buffer(buffer)
+        buffer = self.check_valid_pointer(buffer)
         count = self.check_valid_count(count)
 
         entries = self.fds[fd].entries
@@ -1069,3 +1093,37 @@ class SymbolicFS(angr.SimStatePlugin):
         self.fds[fd2] = self.fds[fd1]
 
         return fd2
+
+    def file_mode(self, fd, mode_ptr):
+        fd = self.check_valid_fd(fd)
+        mode_ptr = self.check_valid_pointer(mode_ptr)
+
+        fde = self.fds[fd]
+        entries = fde.entries
+
+        if len(entries) == 0:
+            return -1
+
+        size = self.state.arch.sizeof["int"] // 8
+
+        mode = fde.mode
+        self.state.memory.store(
+            mode_ptr,
+            mode,
+            size=size,
+            endness=self.state.arch.memory_endness,
+        )
+        return 1
+
+    def file_set_mode(self, fd, mode):
+        fd = self.check_valid_fd(fd)
+        mode = self.check_valid_pointer(mode)
+
+        fde = self.fds[fd]
+        entries = fde.entries
+
+        if len(entries) == 0:
+            return -1
+        
+        fde.mode = self.mode_t(mode)
+        return 1
