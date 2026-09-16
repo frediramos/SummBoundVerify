@@ -130,11 +130,20 @@ class file_size(FileSummary):
         print("size: ", offset)
         return offset
 
+
 class file_set_size(FileSummary):
     def run(self, fd_bv, size_bv):
         fd = self.load_numeric(fd_bv)
         size = self.load_numeric(size_bv)
         size = self.fs.file_set_size(fd, size)
         print("set size: ", size)
+        return size
+
+
+class file_dup(FileSummary):
+    def run(self, fd_bv):
+        fd1 = self.load_numeric(fd_bv)
+        fd2 = self.fs.file_dup(fd1)
+        print(f"dup: {fd1} -> {fd2}")
         print(self.fs)
-        return size 
+        return fd2
