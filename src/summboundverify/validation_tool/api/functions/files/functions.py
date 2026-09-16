@@ -113,11 +113,19 @@ class file_offset(FileSummary):
         print("offset: ", offset)
         return offset
 
+
 class file_set_offset(FileSummary):
     def run(self, fd_bv, offset_bv):
         fd = self.load_numeric(fd_bv)
         offset = self.load_numeric(offset_bv)
         offset = self.fs.file_set_offset(fd, offset)
         print("set offset: ", offset)
-        print(self.fs)
+        return offset
+
+
+class file_size(FileSummary):
+    def run(self, fd_bv):
+        fd = self.load_numeric(fd_bv)
+        offset = self.fs.file_size(fd)
+        print("size: ", offset)
         return offset
