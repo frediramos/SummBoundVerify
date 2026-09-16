@@ -129,3 +129,12 @@ class file_size(FileSummary):
         offset = self.fs.file_size(fd)
         print("size: ", offset)
         return offset
+
+class file_set_size(FileSummary):
+    def run(self, fd_bv, size_bv):
+        fd = self.load_numeric(fd_bv)
+        size = self.load_numeric(size_bv)
+        size = self.fs.file_set_size(fd, size)
+        print("set size: ", size)
+        print(self.fs)
+        return size 

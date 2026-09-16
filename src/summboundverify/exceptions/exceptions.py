@@ -110,49 +110,40 @@ class ReportError(RunError):
         super().__init__(message)
 
 
-class InvalidFdError(RunError):
+class InvalidArgumentError(RunError):
+    argument: str
+
     def __init__(self, function: str, value):
         message = (
-            f"The function '{function}' takes only concrete file descriptors.\n"
+            f"The function '{function}' takes only concrete "
+            f"'{self.argument}' values.\n"
             f"Invalid argument found: {value}"
         )
         super().__init__(message)
 
 
-class InvalidFpError(RunError):
-    def __init__(self, function: str, value):
-        message = (
-            f"The function '{function}' takes only concrete file pointers (FILE*).\n"
-            f"Invalid argument found: {value}"
-        )
-        super().__init__(message)
+class InvalidFdError(InvalidArgumentError):
+    argument = "file descriptor"
 
 
-class InvalidCountError(RunError):
-    def __init__(self, function: str, value):
-        message = (
-            f"The function '{function}' takes only concrete 'count' values .\n"
-            f"Invalid argument found: {value}"
-        )
-        super().__init__(message)
+class InvalidFpError(InvalidArgumentError):
+    argument = "file pointer (FILE*)"
 
 
-class InvalidOffsetError(RunError):
-    def __init__(self, function: str, value):
-        message = (
-            f"The function '{function}' takes only concrete 'offset' values .\n"
-            f"Invalid argument found: {value}"
-        )
-        super().__init__(message)
+class InvalidCountError(InvalidArgumentError):
+    argument = "count"
 
 
-class InvalidBufferPointerError(RunError):
-    def __init__(self, function: str, value):
-        message = (
-            f"The function '{function}' takes only concrete buffer pointers.\n"
-            f"Invalid argument found: {value}"
-        )
-        super().__init__(message)
+class InvalidOffsetError(InvalidArgumentError):
+    argument = "offset"
+
+
+class InvalidSizeError(InvalidArgumentError):
+    argument = "size"
+
+
+class InvalidBufferPointerError(InvalidArgumentError):
+    argument = "buffer pointer"
 
 # -----------------------------------------------------------------------------------
 # Generation Exceptions

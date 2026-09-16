@@ -14,6 +14,7 @@ from claripy.ast import Bool, BV
 from summboundverify.exceptions import (
     InvalidFdError,
     InvalidFpError,
+    InvalidSizeError,
     InvalidCountError,
     InvalidOffsetError,
     InvalidBufferPointerError
@@ -360,8 +361,12 @@ class SymbolicFS(angr.SimStatePlugin):
         return self._check_valid(count, InvalidCountError)
 
     def check_valid_offset(self, offset):
-        """Validate and concretize a byte count."""
+        """Validate and concretize a file offset."""
         return self._check_valid(offset, InvalidOffsetError)
+
+    def check_valid_size(self, size):
+        """Validate and concretize a file size ."""
+        return self._check_valid(size, InvalidSizeError)
 
     def check_valid_buffer(self, count):
         """Validate and concretize a buffer pointer."""
@@ -842,8 +847,8 @@ class SymbolicFS(angr.SimStatePlugin):
         def write_bytes(file: File, offset: int, bytes: str | SymbString):
             size = len(file.bytes)
             if offset > size:
-                file.bytes.extend(["\0"] * (offset - size))
-            file.bytes[offset:offset + len(bytes)] = bytes
+                file.bytes.extend(['\0'] * (offset - size))
+            file.bytes[offset:(offset + len(bytes))] = bytes
 
         for e in entries:
             write_bytes(e.file, e.offset, buffer)
@@ -948,9 +953,9 @@ class SymbolicFS(angr.SimStatePlugin):
 
         for e in entries:
             e.offset = offset
-        
+
         return offset
-    
+
     def file_size(self, fd: int | BV):
         fd = self.check_valid_fd(fd)
         entries = self.fds[fd].entries
@@ -964,6 +969,29 @@ class SymbolicFS(angr.SimStatePlugin):
         default = self.bvv_int(-1)
         ret = claripy.ite_cases(cases, default)
         return ret
+
+    def file_set_size(self, fd: int | BV, size: int | BV):
+        fd = self.check_valid_fd(fd)
+        size = self.check_valid_size(size)
+
+        entries = self.fds[fd].entries
+
+        if len(entries) == 0:
+            return -1
+
+        # In-place resize
+        def resize(file: File, size: int):
+            curr = len(file.bytes)
+            if size > curr:
+                file.bytes.extend(['\0'] * (size - curr))
+            else:
+                del file.bytes[size:]
+
+        for e in entries:
+            file = e.file
+            resize(file, size)
+
+        return size
 
     def FILE_from_fd(self, fd: int | BV) -> int:
         """Return the `FILE *` pointer associated with `fd`, or `-1` if it is not found."""
