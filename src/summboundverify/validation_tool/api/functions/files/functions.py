@@ -145,5 +145,12 @@ class file_dup(FileSummary):
         fd1 = self.load_numeric(fd_bv)
         fd2 = self.fs.file_dup(fd1)
         print(f"dup: {fd1} -> {fd2}")
-        print(self.fs)
         return fd2
+
+class file_dup2(FileSummary):
+    def run(self, fd1_bv, fd2_bv):
+        fd1 = self.load_numeric(fd1_bv)
+        fd2 = self.load_numeric(fd2_bv)
+        ret = self.fs.file_dup2(fd1, fd2)
+        print(f"dup2: {fd1} -> {fd2}")
+        return ret  
