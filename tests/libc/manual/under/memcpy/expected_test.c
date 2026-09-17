@@ -8,10 +8,14 @@
 
 typedef void *symbolic;
 typedef int state_t;
-typedef unsigned int size_t;
 typedef unsigned int cnstr_t;
 typedef unsigned int result_t;
 typedef unsigned int list_t;
+
+typedef unsigned int size_t;
+typedef int ssize_t;
+typedef int mode_t;
+typedef void *FILE;
 
 cnstr_t _EQ_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _ULE_(symbolic var1, symbolic var2) { return 0; }

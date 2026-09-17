@@ -109,12 +109,14 @@ class ReportError(RunError):
         )
         super().__init__(message)
 
+
 class InvalidOpenFlagError(RunError):
     def __init__(self, flag):
         message = (
             f"Unsupported file open flag: '{flag}'\n"
         )
         super().__init__(message)
+
 
 class InvalidArgumentError(RunError):
     argument: str
@@ -126,6 +128,10 @@ class InvalidArgumentError(RunError):
             f"Invalid argument found: {value}"
         )
         super().__init__(message)
+
+
+class SymbolicPointerError(InvalidArgumentError):
+    argument = "pointer"
 
 
 class InvalidFdError(InvalidArgumentError):

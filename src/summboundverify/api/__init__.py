@@ -24,10 +24,13 @@ CURRENT = current_dir(__file__)
 
 
 class APIFiles:
+    sra = CURRENT / "sra.h"
+    validation = CURRENT / "validation.h"
+
+    sra_types = CURRENT / "sra_types.h"
+    stub_types = CURRENT / "stub_types.h"
+
     macros = CURRENT / "macros.h"
-    types = CURRENT / "types.h"
-    sra = CURRENT / "sra.c"
-    validation = CURRENT / "validation.c"
 
 
 @cache
@@ -57,7 +60,7 @@ def macros() -> str:
 @cache
 def type_stubs() -> list[str]:
     """Returns the type stubs required by the API functions."""
-    return get_code(APIFiles.types)
+    return get_code(APIFiles.sra_types, APIFiles.stub_types)
 
 
 @cache
@@ -65,7 +68,11 @@ def sra_stubs() -> dict[str, str]:
     """
     Returns the stubs for the Symbolic Reflection API functions (excluding validation).
     """
-    return get_stubs(APIFiles.sra, APIFiles.types)
+    return get_stubs(
+        APIFiles.sra,
+        APIFiles.sra_types,
+        APIFiles.stub_types
+    )
 
 
 @cache
@@ -73,7 +80,11 @@ def validation_stubs() -> dict[str, str]:
     """
     Returns the stubs for the validation API functions.
     """
-    return get_stubs(APIFiles.validation, APIFiles.types)
+    return get_stubs(
+        APIFiles.validation,
+        APIFiles.sra_types,
+        APIFiles.stub_types
+    )
 
 
 @cache

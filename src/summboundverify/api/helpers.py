@@ -66,12 +66,11 @@ def _make_stub(function) -> str:
     return formatted
 
 
-def get_stubs(file: Path, types: Path) -> dict[str, str]:
-
+def get_stubs(file: Path, *types: Path) -> dict[str, str]:
     stubs = {}
-    ast = parse_api(file, types)
-
+    ast = parse_api(file, *types)
     functions = FunctionVisitor(ast, file).functions()
+
     for name, node in functions.items():
         stub = _make_stub(node)
         stubs[name] = stub
@@ -79,9 +78,11 @@ def get_stubs(file: Path, types: Path) -> dict[str, str]:
     return stubs
 
 
-def get_code(file: Path) -> list[str]:
-    ast = parse_api(file)
+def get_code(*files: Path) -> list[str]:
     generator = CGenerator()
-    code = generator.visit(ast)
+    code = ""
+    for f in files:
+        ast = parse_api(f)
+        code += generator.visit(ast) + '\n'
     formatted = code.strip().split('\n')
     return formatted

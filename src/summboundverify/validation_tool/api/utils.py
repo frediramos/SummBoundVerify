@@ -1,15 +1,20 @@
+import inspect
 import claripy
 
 from typing import Callable, Any
 
-
 from claripy import ClaripyError
-from claripy.ast import Bool, true, false
+from claripy.ast import Bool, false
 from claripy.ast.bv import BV as BitVector
 
 from summboundverify.exceptions import (
     ClaripyConstraintError
 )
+
+
+def called_by(n: int):
+    """Returns the name of the function `n` levels above in the call stack"""
+    return inspect.stack()[n].function
 
 
 class SymbString:
