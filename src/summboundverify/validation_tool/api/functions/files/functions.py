@@ -53,9 +53,11 @@ class file_exists(FileSummary):
 
 
 class file_open(FileSummary):
-    def run(self, filename_addr):
+    def run(self, filename_addr, flags_addr):
         filename = self.load_string(filename_addr, include_null=True)
-        status = self.fs.open_file(filename)
+        flags = self.load_string(flags_addr)
+        print(flags)
+        status = self.fs.open_file(filename, flags)
         print("Open file: ", status)
         print(self.fs)
         return status
@@ -165,6 +167,7 @@ class file_mode(FileSummary):
         print(f"mode status: {status}")
         return status
 
+
 class file_set_mode(FileSummary):
     def run(self, fd_bv, mode_bv):
         fd = self.load_numeric(fd_bv)
@@ -172,3 +175,11 @@ class file_set_mode(FileSummary):
         status = self.fs.file_set_mode(fd, mode)
         print(f"set mode status: {status}")
         return status
+
+
+class file_flags(FileSummary):
+    def run(self, fd_bv):
+        fd = self.load_numeric(fd_bv)
+        flags = self.fs.file_flags(fd)
+        print(f"flags: {flags}")
+        return flags

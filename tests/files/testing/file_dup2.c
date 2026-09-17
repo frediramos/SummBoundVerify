@@ -28,7 +28,7 @@ void __report_error(const char* filename, unsigned int line, const char* message
 int __file_create(char* filename){ return 0; }
 int __file_exists(char* filename){ return 0; }
 int __file_delete(char* filename){ return 0; }
-int __file_open(char* filename){ return 0; }
+int __file_open(char* filename, char* flags ){ return 0; }
 ssize_t __file_write(int fd, const void* buffer, size_t count){ return 0; }
 ssize_t __file_read(int fd, void* buffer, size_t count){ return 0; }
 ssize_t __file_offset(int fd){ return 0; }
@@ -42,8 +42,8 @@ int main(){
   
   int ret1 = __file_create("abc");
   int ret2 = __file_create("def");
-  int fd1 = __file_open("abc");
-  int fd2 = __file_open("def");
+  int fd1 = __file_open("abc", "r+");
+  int fd2 = __file_open("def", "r+");
 
   __assert(ret1 == 1);
   __assert(ret2 == 1);
