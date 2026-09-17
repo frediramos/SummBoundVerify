@@ -1,10 +1,9 @@
 import angr
-import inspect
 import claripy
 
 from copy import copy
-from typing import Iterator
 from textwrap import indent
+from typing import Iterator, Literal
 from dataclasses import dataclass, field
 
 from cle.backends.externs.simdata.io_file import io_file_data_for_arch
@@ -29,7 +28,8 @@ from ...utils import (
     SymbString,
     constraint,
     eq_strings,
-    neq_strings
+    neq_strings,
+    called_by
 )
 
 
@@ -421,7 +421,7 @@ class SymbolicFS(angr.SimStatePlugin):
         try:
             return self.state.solver.eval_one(value, cast_to=int)
         except Exception:
-            caller = inspect.stack()[2].function
+            caller = called_by(2)
             raise error(caller, value)
 
     def _concrete_string(self, string, error):
@@ -431,7 +431,7 @@ class SymbolicFS(angr.SimStatePlugin):
         """
         string = SymbString(string)
         if string.is_symbolic():
-            caller = inspect.stack()[2].function
+            caller = called_by(2)
             raise error(caller, string)
         return str(string)
 
@@ -1034,7 +1034,7 @@ class SymbolicFS(angr.SimStatePlugin):
         ret = claripy.ite_cases(ret, self.bvv_int(0))
         return ret
 
-    def file_offset(self, fd: int | BV):
+    def file_offset(self, fd: int | BV) -> int | BV:
         fd = self.check_valid_fd(fd)
         entries = self.fds[fd].entries
         cases = []
@@ -1046,7 +1046,7 @@ class SymbolicFS(angr.SimStatePlugin):
         ret = claripy.ite_cases(cases, default)
         return ret
 
-    def file_set_offset(self, fd: int | BV, offset: int | BV):
+    def file_set_offset(self, fd: int | BV, offset: int | BV) -> int:
         fd = self.check_valid_fd(fd)
         offset = self.check_valid_offset(offset)
 
@@ -1060,7 +1060,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return offset
 
-    def file_size(self, fd: int | BV):
+    def file_size(self, fd: int | BV) -> int | BV:
         fd = self.check_valid_fd(fd)
         entries = self.fds[fd].entries
         cases = []
@@ -1074,7 +1074,7 @@ class SymbolicFS(angr.SimStatePlugin):
         ret = claripy.ite_cases(cases, default)
         return ret
 
-    def file_set_size(self, fd: int | BV, size: int | BV):
+    def file_set_size(self, fd: int | BV, size: int | BV) -> int:
         fd = self.check_valid_fd(fd)
         size = self.check_valid_size(size)
 
@@ -1149,7 +1149,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return fd2
 
-    def file_mode(self, fd, mode_ptr):
+    def file_mode(self, fd, mode_ptr) -> Literal[-1, 1]:
         fd = self.check_valid_fd(fd)
         mode_ptr = self.check_valid_pointer(mode_ptr)
 
@@ -1170,7 +1170,7 @@ class SymbolicFS(angr.SimStatePlugin):
         )
         return 1
 
-    def file_set_mode(self, fd, mode):
+    def file_set_mode(self, fd, mode) -> Literal[-1, 1]:
         fd = self.check_valid_fd(fd)
         mode = self.check_valid_pointer(mode)
 

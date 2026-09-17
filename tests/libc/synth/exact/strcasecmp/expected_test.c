@@ -8,11 +8,16 @@
 
 typedef void *symbolic;
 typedef int state_t;
-typedef unsigned int size_t;
 typedef unsigned int cnstr_t;
 typedef unsigned int result_t;
 typedef unsigned int list_t;
 
+typedef unsigned int size_t;
+typedef int ssize_t;
+typedef int mode_t;
+typedef void *FILE;
+
+FILE *__FILE_from_fd(int fd) { return 0; }
 cnstr_t _AND_(cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
 cnstr_t _EQ_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _GE_(symbolic var1, symbolic var2) { return 0; }
@@ -30,6 +35,17 @@ cnstr_t _ULE_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _ULT_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t __get_cnstr(symbolic var, size_t size) { return 0; }
 cnstr_t __lst_empty(list_t lst) { return 0; }
+int __fd_from_FILE(FILE *fp) { return 0; }
+int __file_close(int fd) { return 0; }
+int __file_create(const char *name) { return 0; }
+int __file_delete(const char *name) { return 0; }
+int __file_dup(int oldfd) { return 0; }
+int __file_dup2(int oldfd, int newfd) { return 0; }
+int __file_exists(const char *name) { return 0; }
+int __file_flags(int fd) { return 0; }
+int __file_mode(int fd, mode_t *mode) { return 0; }
+int __file_open(const char *name, const char *flags) { return 0; }
+int __file_set_mode(int fd, mode_t mode) { return 0; }
 int __is_certain(cnstr_t cnstr) { return 0; }
 int __is_sat(cnstr_t cnstr) { return 0; }
 int __is_symbolic(symbolic var) { return 0; }
@@ -38,12 +54,19 @@ list_t __lst_mk(void) { return 0; }
 list_t __lst_nbytes(char c, size_t n) { return 0; }
 list_t __lst_tl(list_t lst) { return 0; }
 list_t __lst_zeros(size_t n) { return 0; }
+long __concretize(symbolic var) { return 0; }
 long __maximize(symbolic var) { return 0; }
 long __minimize(symbolic var) { return 0; }
 result_t __check_implications(char *summ, char *cncrt) { return 0; }
 size_t __allocd(void *ptr) { return 0; }
 size_t __lst_len(list_t lst) { return 0; }
 size_t __n_allocd(void *ptr) { return 0; }
+ssize_t __file_offset(int fd) { return 0; }
+ssize_t __file_read(int fd, void *buffer, size_t count) { return 0; }
+ssize_t __file_set_offset(int fd, size_t offset) { return 0; }
+ssize_t __file_set_size(int fd, size_t size) { return 0; }
+ssize_t __file_size(int fd) { return 0; }
+ssize_t __file_write(int fd, const void *buffer, size_t count) { return 0; }
 state_t __save_current_state(void) { return 0; }
 symbolic __lst_hd(list_t lst) { return 0; }
 symbolic __sym_var(size_t size) { return 0; }
@@ -59,6 +82,7 @@ void __mem_free(void *ptr) { }
 void __pop_pc(void) { }
 void __print_counterexamples(result_t result) { }
 void __push_pc(void) { }
+void __report_error(const char *filename, unsigned int line, const char *message) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
 #define POINTER_SIZE 5

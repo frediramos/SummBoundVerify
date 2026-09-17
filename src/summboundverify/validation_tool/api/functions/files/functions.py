@@ -2,8 +2,11 @@ from abc import ABC, abstractmethod
 
 from claripy.ast.bv import BV as BitVector
 
+from summboundverify.exceptions import SymbolicPointerError
+
 from .fs import SymbolicFS
 
+from ...utils import SymbString, called_by
 from ...summary import CSummary
 from ...context import ValidationCTX
 
@@ -23,6 +26,12 @@ class FileSummary(CSummary, ABC):
             return self.state.solver.eval(v)
         return v
 
+    def load_string(self, addr, include_null: bool = False) -> SymbString:
+        if self.is_symbolic(addr):
+            caller = called_by(1)
+            raise SymbolicPointerError(caller, addr)
+        return super().load_string(addr, include_null)
+
     @abstractmethod
     def run(self):
         pass
@@ -32,7 +41,6 @@ class file_create(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr, include_null=True)
         status = self.fs.create_file(filename)
-        print("Create file: ", status)
         return status
 
 
@@ -40,7 +48,6 @@ class file_delete(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr, include_null=True)
         status = self.fs.delete_file(filename)
-        print("Delete file: ", status)
         return status
 
 
@@ -48,7 +55,6 @@ class file_exists(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr, include_null=True)
         status = self.fs.exists_file(filename)
-        print("Exists file: ", status)
         return status
 
 
@@ -56,10 +62,7 @@ class file_open(FileSummary):
     def run(self, filename_addr, flags_addr):
         filename = self.load_string(filename_addr, include_null=True)
         flags = self.load_string(flags_addr)
-        print(flags)
         status = self.fs.open_file(filename, flags)
-        print("Open file: ", status)
-        print(self.fs)
         return status
 
 
@@ -67,8 +70,6 @@ class file_close(FileSummary):
     def run(self, fd_bv):
         fd = self.load_numeric(fd_bv)
         status = self.fs.close_file(fd)
-        print("Close file: ", status)
-        print(self.fs)
         return status
 
 
@@ -78,8 +79,6 @@ class file_write(FileSummary):
         buffer = self.load_string(buffer_addr, include_null=True)
         count = self.load_numeric(count_bv)
         n = self.fs.write_file(fd, buffer, count)
-        print("Write to file: ", n)
-        print(self.fs)
         return n
 
 
@@ -88,7 +87,6 @@ class file_read(FileSummary):
         fd = self.load_numeric(fd_bv)
         count = self.load_numeric(count_bv)
         n = self.fs.read_file(fd, buffer, count)
-        print("Read bytes: ", n)
         return n
 
 
@@ -96,7 +94,6 @@ class FILE_from_fd(FileSummary):
     def run(self, fd_bv):
         fd = self.load_numeric(fd_bv)
         status = self.fs.FILE_from_fd(fd)
-        print(f"FILE*: {status:#x}")
         return status
 
 
@@ -104,7 +101,6 @@ class fd_from_FILE(FileSummary):
     def run(self, fp_bv):
         fp = self.load_numeric(fp_bv)
         status = self.fs.fd_from_FILE(fp)
-        print("fd: ", status)
         return status
 
 
@@ -112,7 +108,6 @@ class file_offset(FileSummary):
     def run(self, fd_bv):
         fd = self.load_numeric(fd_bv)
         offset = self.fs.file_offset(fd)
-        print("offset: ", offset)
         return offset
 
 
@@ -121,7 +116,6 @@ class file_set_offset(FileSummary):
         fd = self.load_numeric(fd_bv)
         offset = self.load_numeric(offset_bv)
         offset = self.fs.file_set_offset(fd, offset)
-        print("set offset: ", offset)
         return offset
 
 
@@ -129,7 +123,6 @@ class file_size(FileSummary):
     def run(self, fd_bv):
         fd = self.load_numeric(fd_bv)
         offset = self.fs.file_size(fd)
-        print("size: ", offset)
         return offset
 
 
@@ -138,7 +131,6 @@ class file_set_size(FileSummary):
         fd = self.load_numeric(fd_bv)
         size = self.load_numeric(size_bv)
         size = self.fs.file_set_size(fd, size)
-        print("set size: ", size)
         return size
 
 
@@ -146,7 +138,6 @@ class file_dup(FileSummary):
     def run(self, fd_bv):
         fd1 = self.load_numeric(fd_bv)
         fd2 = self.fs.file_dup(fd1)
-        print(f"dup: {fd1} -> {fd2}")
         return fd2
 
 
@@ -155,7 +146,6 @@ class file_dup2(FileSummary):
         fd1 = self.load_numeric(fd1_bv)
         fd2 = self.load_numeric(fd2_bv)
         ret = self.fs.file_dup2(fd1, fd2)
-        print(f"dup2: {fd1} -> {fd2}")
         return ret
 
 
@@ -164,7 +154,6 @@ class file_mode(FileSummary):
         fd = self.load_numeric(fd_bv)
         mode_ptr = self.load_numeric(mode_ptr_bv)
         status = self.fs.file_mode(fd, mode_ptr)
-        print(f"mode status: {status}")
         return status
 
 
@@ -173,7 +162,6 @@ class file_set_mode(FileSummary):
         fd = self.load_numeric(fd_bv)
         mode = self.load_numeric(mode_bv)
         status = self.fs.file_set_mode(fd, mode)
-        print(f"set mode status: {status}")
         return status
 
 
@@ -181,5 +169,4 @@ class file_flags(FileSummary):
     def run(self, fd_bv):
         fd = self.load_numeric(fd_bv)
         flags = self.fs.file_flags(fd)
-        print(f"flags: {flags}")
         return flags
