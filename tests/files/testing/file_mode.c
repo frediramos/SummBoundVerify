@@ -29,7 +29,7 @@ void __report_error(const char* filename, unsigned int line, const char* message
 int __file_create(char* filename){ return 0; }
 int __file_exists(char* filename){ return 0; }
 int __file_delete(char* filename){ return 0; }
-int __file_open(char* filename){ return 0; }
+int __file_open(char* filename, char* flags ){ return 0; }
 int __file_mode(int fd, mode_t* mode){ return 0; }
 int __file_set_mode(int fd, mode_t mode){ return 0; }
 
@@ -39,7 +39,7 @@ int __file_set_mode(int fd, mode_t mode){ return 0; }
 int main(){
   
   int ret = __file_create("abc");
-  int fd = __file_open("abc");
+  int fd = __file_open("abc", "r+");
   __assert(ret == 1);
   __assert(fd == 3);
 

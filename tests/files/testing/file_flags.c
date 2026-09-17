@@ -5,6 +5,8 @@
 #define PTR_SIZE (sizeof(void*) * 8)
 
 #include <stdio.h>
+#include <fcntl.h>
+#include <sys/types.h>
 
 typedef void *symbolic;
 typedef int state_t;
@@ -29,29 +31,35 @@ int __file_create(char* filename){ return 0; }
 int __file_exists(char* filename){ return 0; }
 int __file_delete(char* filename){ return 0; }
 int __file_open(char* filename, char* flags ){ return 0; }
-int __file_close(int fd){ return 0; }
+int __file_mode(int fd, mode_t* mode){ return 0; }
+int __file_set_mode(int fd, mode_t mode){ return 0; }
+int __file_flags(int fd){ return 0; }
 
 
 #define SIZE 3
 
 int main(){
-  char s1[SIZE];
-
-  // Fill with symbolic bytes
-  for (int i = 0; i < SIZE; i++){
-    s1[i] = __sym_var_array("s1", i, CHAR_SIZE);
-  }
-
-  // Concrete null byte
-  s1[SIZE-1] = '\0';
-
-  int ret1 = __file_create(s1);
-  __assert(ret1 == 1);
   
-  int ret2 = __file_open(s1, "r");
-  __assert(ret2 == 3);
+  int ret = __file_create("abc");
 
-  int ret3 = __file_close(ret2);
-  __assert(ret3 == 0);
+  int fd1 = __file_open("abc", "r");
+  int fd2 = __file_open("abc", "w");
+  int fd3 = __file_open("abc", "a");
+  int fd4 = __file_open("abc", "r+");
+  int fd5 = __file_open("abc", "w+");
+  int fd6 = __file_open("abc", "a+");
 
+  int flags1 = __file_flags(fd1);
+  int flags2 = __file_flags(fd2);
+  int flags3 = __file_flags(fd3);
+  int flags4 = __file_flags(fd4);
+  int flags5 = __file_flags(fd5);
+  int flags6 = __file_flags(fd6);
+
+  __assert(flags1 == 0);
+  __assert(flags2 == 577);
+  __assert(flags3 == 1089);
+  __assert(flags4 == 2);
+  __assert(flags5 == 578);
+  __assert(flags6 == 1090);
 }

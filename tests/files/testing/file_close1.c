@@ -28,7 +28,7 @@ void __report_error(const char* filename, unsigned int line, const char* message
 int __file_create(char* filename){ return 0; }
 int __file_exists(char* filename){ return 0; }
 int __file_delete(char* filename){ return 0; }
-int __file_open(char* filename){ return 0; }
+int __file_open(char* filename, char* flags ){ return 0; }
 int __file_close(int fd){ return 0; }
 
 
@@ -39,7 +39,7 @@ int main(){
   int ret1 = __file_create("abc");
   __assert(ret1 == 1);
   
-  int ret2 = __file_open("abc");
+  int ret2 = __file_open("abc", "r");
   __assert(ret2 == 3);
 
   int ret3 = __file_close(ret2);

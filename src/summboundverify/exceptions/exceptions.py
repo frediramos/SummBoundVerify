@@ -109,6 +109,12 @@ class ReportError(RunError):
         )
         super().__init__(message)
 
+class InvalidOpenFlagError(RunError):
+    def __init__(self, flag):
+        message = (
+            f"Unsupported file open flag: '{flag}'\n"
+        )
+        super().__init__(message)
 
 class InvalidArgumentError(RunError):
     argument: str
@@ -145,8 +151,15 @@ class InvalidSizeError(InvalidArgumentError):
 class InvalidPointerError(InvalidArgumentError):
     argument = "pointer"
 
+
 class InvalidModeError(InvalidArgumentError):
     argument = "mode_t"
+
+
+class InvalidFlagsError(InvalidArgumentError):
+    argument = "open flags"
+
+
 # -----------------------------------------------------------------------------------
 # Generation Exceptions
 # -----------------------------------------------------------------------------------

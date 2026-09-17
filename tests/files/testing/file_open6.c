@@ -28,7 +28,7 @@ void __report_error(const char* filename, unsigned int line, const char* message
 int __file_create(char* filename){ return 0; }
 int __file_exists(char* filename){ return 0; }
 int __file_delete(char* filename){ return 0; }
-int __file_open(char* filename){ return 0; }
+int __file_open(char* filename, char* flags ){ return 0; }
 
 
 #define SIZE 3
@@ -69,10 +69,10 @@ int main(){
   int ret2 = __file_create(s2);
   __assert(ret2 == 1);
 
-  int ret3 = __file_open(s3);
+  int ret3 = __file_open(s3, "r+");
   __assert(ret3 == 3);
   
-  int ret4 = __file_open(s4);
+  int ret4 = __file_open(s4, "r+");
   __assert(ret4 == 4);
 
 }

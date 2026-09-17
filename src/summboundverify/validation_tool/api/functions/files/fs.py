@@ -11,14 +11,18 @@ from cle.backends.externs.simdata.io_file import io_file_data_for_arch
 from claripy import BVV, true, false
 from claripy.ast import Bool, BV
 
+from angr.storage.file import Flags
+
 from summboundverify.exceptions import (
     InvalidFdError,
     InvalidFpError,
     InvalidSizeError,
     InvalidModeError,
+    InvalidFlagsError,
     InvalidCountError,
     InvalidOffsetError,
     InvalidPointerError,
+    InvalidOpenFlagError
 )
 
 from ...utils import (
@@ -78,7 +82,8 @@ class FdEntry:
 class FdEntries:
     open_name: str | SymbString
     fp: int
-    mode: int
+    flags: int  # Open flags, e.g., O_RDONLY
+    mode: int  # Permissions, user, group, etc.
     entries: list[FdEntry]
 
 
@@ -126,6 +131,7 @@ class SymbolicFS(angr.SimStatePlugin):
                 (
                     f"\t\tfd {fd} -> {entry.open_name!r}, "
                     f"FILE* = {entry.fp:#x}, "
+                    f"flags = {entry.flags:#x}, "
                     f"mode = {entry.mode:#o}"
                 )
             )
@@ -198,6 +204,7 @@ class SymbolicFS(angr.SimStatePlugin):
             fd: FdEntries(
                 open_name=copy(fde.open_name),
                 fp=fde.fp,
+                flags=fde.flags,
                 mode=fde.mode,
                 entries=self._clone_fd_entries(
                     fde.entries,
@@ -276,6 +283,29 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def default_mode(self):
         return self.mode_t(0o666)
+
+    def str_to_flag(self, mode: str | bytes):
+        if isinstance(mode, str):
+            mode = mode.encode()
+
+        if mode[-1] == ord("b") or mode[-1] == ord("t"):
+            mode = mode[:-1]
+
+        mode = bytes(mode)
+        mode = mode.replace(b"c", b"").replace(b"e", b"")
+
+        modes = {
+            b"r": Flags.O_RDONLY,
+            b"r+": Flags.O_RDWR,
+            b"w": Flags.O_WRONLY | Flags.O_CREAT | Flags.O_TRUNC,
+            b"w+": Flags.O_RDWR | Flags.O_CREAT | Flags.O_TRUNC,
+            b"a": Flags.O_WRONLY | Flags.O_CREAT | Flags.O_APPEND,
+            b"a+": Flags.O_RDWR | Flags.O_CREAT | Flags.O_APPEND,
+        }
+        if mode not in modes:
+            raise InvalidOpenFlagError(mode)
+
+        return modes[mode]
 
     def mark_shared(self, file: File, fd: int):
         """Mark a file as shared with the given file descriptor."""
@@ -383,41 +413,59 @@ class SymbolicFS(angr.SimStatePlugin):
         except:
             return None
 
-    def _check_valid(self, value, error):
-        """Concretize `value` as an integer or raise the supplied validation error."""
+    def _concrete_numeric(self, value, error):
+        """
+        Concretize `value` as an integer. 
+        Raises `error` if `value` is symbolic.
+        """
         try:
             return self.state.solver.eval_one(value, cast_to=int)
         except Exception:
             caller = inspect.stack()[2].function
             raise error(caller, value)
 
+    def _concrete_string(self, string, error):
+        """
+        Concretize `value` as a string. 
+        Raises `error` if `string` is symbolic.
+        """
+        string = SymbString(string)
+        if string.is_symbolic():
+            caller = inspect.stack()[2].function
+            raise error(caller, string)
+        return str(string)
+
     def check_valid_fd(self, fd):
         """Validate and concretize a file descriptor."""
-        return self._check_valid(fd, InvalidFdError)
+        return self._concrete_numeric(fd, InvalidFdError)
 
     def check_valid_fp(self, fp):
         """Validate and concretize a `FILE *` pointer."""
-        return self._check_valid(fp, InvalidFpError)
+        return self._concrete_numeric(fp, InvalidFpError)
 
     def check_valid_count(self, count):
         """Validate and concretize a byte count."""
-        return self._check_valid(count, InvalidCountError)
+        return self._concrete_numeric(count, InvalidCountError)
 
     def check_valid_offset(self, offset):
         """Validate and concretize a file offset."""
-        return self._check_valid(offset, InvalidOffsetError)
+        return self._concrete_numeric(offset, InvalidOffsetError)
 
     def check_valid_size(self, size):
         """Validate and concretize a file size ."""
-        return self._check_valid(size, InvalidSizeError)
+        return self._concrete_numeric(size, InvalidSizeError)
 
-    def check_valid_pointer(self, count):
+    def check_valid_pointer(self, pointer):
         """Validate and concretize a pointer."""
-        return self._check_valid(count, InvalidPointerError)
+        return self._concrete_numeric(pointer, InvalidPointerError)
 
     def check_valid_mode(self, mode):
         """Validate and concretize a mode_t value."""
-        return self._check_valid(mode, InvalidModeError)
+        return self._concrete_numeric(mode, InvalidModeError)
+
+    def check_valid_flags(self, flags):
+        """Validate and concretize open flags."""
+        return self._concrete_string(flags, InvalidFlagsError)
 
     def is_filename_open(self, filename: str | SymbString) -> bool:
         """
@@ -658,7 +706,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return -1
 
-    def create_concrete_fd(self, filename: str) -> int:
+    def create_concrete_fd(self, filename: str, flags: int) -> int:
         """Create a file descriptor for a concrete file name."""
         fd = self.new_fd()
         fp = self.create_file_pointer(fd)
@@ -666,16 +714,19 @@ class SymbolicFS(angr.SimStatePlugin):
         entry = self.search_open_concrete_name(filename)
 
         if entry is not None:
-            entry.offset = 0
+            file = entry.file
             self.mark_shared(entry.file, fd)
+        else:
+            file = File()
 
-        entry = FdEntry(filename, true(), 0, File())
+        entry = FdEntry(filename, true(), 0, file)
+
         mode = self.default_mode()
-        self.fds[fd] = FdEntries(filename, fp, mode, [entry])
+        self.fds[fd] = FdEntries(filename, fp, flags, mode, [entry])
 
         return fd
 
-    def create_symbolic_fd(self, filename: str | SymbString) -> int:
+    def create_symbolic_fd(self, filename: str | SymbString, flags: int) -> int:
         """
         Create a file descriptor for a concrete or symbolic file name.
 
@@ -741,7 +792,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         if len(entries) > 0:
             mode = self.default_mode()
-            self.fds[fd] = FdEntries(filename, fp, mode, entries)
+            self.fds[fd] = FdEntries(filename, fp, flags, mode, entries)
             return fd
 
         return -1
@@ -762,8 +813,8 @@ class SymbolicFS(angr.SimStatePlugin):
 
         Returns `-1` if the file already exists on the current path.
         """
-        if isinstance(filename, str):
-            return self.create_concrete_file(filename)
+        if isinstance(filename, str) or not filename.is_symbolic():
+            return self.create_concrete_file(str(filename))
 
         assert isinstance(filename, SymbString)
         return self.create_symbolic_file(filename)
@@ -820,7 +871,7 @@ class SymbolicFS(angr.SimStatePlugin):
         assert isinstance(filename, SymbString)
         return self.exists_symbolic(filename)
 
-    def open_concrete(self, filename: str) -> int:
+    def open_concrete(self, filename: str, flags: int) -> int:
         """Open a concrete file name and return its file descriptor."""
         if self.is_fnames_emtpy():
             return -1
@@ -830,28 +881,32 @@ class SymbolicFS(angr.SimStatePlugin):
             if filename in self.current_fname:
                 exists = self.current_fname[filename]
                 if exists:
-                    return self.create_concrete_fd(filename)
+                    return self.create_concrete_fd(filename, flags)
 
-        return self.create_symbolic_fd(filename)
+        print("here")
+        return self.create_symbolic_fd(filename, flags)
 
-    def open_symbolic(self, filename: SymbString) -> int:
+    def open_symbolic(self, filename: SymbString, flags: int) -> int:
         """Open a symbolic file name and return its file descriptor."""
         if self.is_fnames_emtpy():
             return -1
 
-        ret = self.create_symbolic_fd(filename)
+        ret = self.create_symbolic_fd(filename, flags)
         return ret
 
-    def open_file(self, filename: str | SymbString) -> int:
+    def open_file(self, filename: str | SymbString, flag_string: str | SymbString) -> int:
         """
         Open a file and returns a concrete descriptor.
 
         Returns `-1` if the file system is empty or the file cannot be found.
         """
-        if isinstance(filename, str) or not filename.is_symbolic():
-            return self.open_concrete(str(filename))
+        flag_string = self.check_valid_flags(flag_string)
+        flags = self.str_to_flag(flag_string)
 
-        return self.open_symbolic(filename)
+        if isinstance(filename, str) or not filename.is_symbolic():
+            return self.open_concrete(str(filename), flags)
+
+        return self.open_symbolic(filename, flags)
 
     def close_file(self, fd: int | BV) -> int:
         """
@@ -1066,7 +1121,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return -1
 
-    def file_dup(self, fd: int | BV):
+    def file_dup(self, fd: int | BV) -> int:
         fd = self.check_valid_fd(fd)
         entries = self.fds[fd].entries
 
@@ -1078,7 +1133,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return fd2
 
-    def file_dup2(self, fd1: int | BV, fd2: int | BV):
+    def file_dup2(self, fd1: int | BV, fd2: int | BV) -> int:
         fd1 = self.check_valid_fd(fd1)
         fd2 = self.check_valid_fd(fd2)
 
@@ -1124,6 +1179,17 @@ class SymbolicFS(angr.SimStatePlugin):
 
         if len(entries) == 0:
             return -1
-        
+
         fde.mode = self.mode_t(mode)
         return 1
+
+    def file_flags(self, fd) -> int:
+        fd = self.check_valid_fd(fd)
+
+        fde = self.fds[fd]
+        entries = fde.entries
+
+        if len(entries) == 0:
+            return -1
+
+        return fde.flags

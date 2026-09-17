@@ -21,7 +21,7 @@ void __report_error(const char* filename, unsigned int line, const char* message
 
 int __file_create(char* filename){ return 0; }
 int __file_delete(char* filename){ return 0; }
-int __file_open(char* filename){ return 0; }
+int __file_open(char* filename, char* flags ){ return 0; }
 
 #define SIZE 3
 
@@ -46,7 +46,7 @@ int main(){
   int ret1 = __file_create(s1);
   __assert(ret1 == 1);
 
-  int ret2 = __file_open(s1);
+  int ret2 = __file_open(s1, "r");
   __assert(ret2 == 3);
 
   int ret3 = __file_delete(s2);

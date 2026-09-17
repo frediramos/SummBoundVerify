@@ -41,7 +41,7 @@ int __file_create(const char* name);
  *
  * Returns `-1` if the file does not exist or cannot be opened.
  */
-int __file_open(const char* name);
+int __file_open(const char* name, const char* flags);
 
 /**
  * Returns `1` if the file named `name` exists and `0` otherwise.
@@ -114,14 +114,6 @@ ssize_t __file_set_size(int fd, size_t size);
  * Returns the new file offset on success, or `-1` on failure.
  */
 ssize_t __file_set_offset(int fd, size_t offset);
-
-/**
- * Sets the open status flags of the file associated with file descriptor `fd`
- * to `flags`.
- *
- * Common flags include `O_RDONLY`, `O_WRONLY`, `O_RDWR`, and `O_APPEND`.
- */
-int __file_set_flags(int fd, int flags);
 
 /**
  * Sets the mode (`st_mode`) of the file associated with file descriptor `fd`.

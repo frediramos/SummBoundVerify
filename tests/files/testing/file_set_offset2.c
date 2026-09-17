@@ -28,7 +28,7 @@ void __report_error(const char* filename, unsigned int line, const char* message
 int __file_create(char* filename){ return 0; }
 int __file_exists(char* filename){ return 0; }
 int __file_delete(char* filename){ return 0; }
-int __file_open(char* filename){ return 0; }
+int __file_open(char* filename, char* flags ){ return 0; }
 
 ssize_t __file_write(int fd, const void* buffer, size_t count){ return 0; }
 ssize_t __file_offset(int fd){ return 0; }
@@ -50,7 +50,7 @@ int main(){
   s1[SIZE-1] = '\0';
 
   int ret1 = __file_create(s1);
-  int fd = __file_open(s1);
+  int fd = __file_open(s1, "r+");
   __assert(ret1 == 1);
   __assert(fd == 3);
 
