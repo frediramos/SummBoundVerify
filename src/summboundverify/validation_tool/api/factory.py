@@ -68,12 +68,7 @@ class ValidationAPI:
 
         return impl
 
-    def _check_missing(
-        self,
-        available: set[str],
-        required: set[str],
-        err: str,
-    ) -> None:
+    def _check_missing(self, available: set[str], required: set[str], err: str):
         missing = required - available
         if missing:
             raise RuntimeError(f"{err}: {missing}")

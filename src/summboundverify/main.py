@@ -72,9 +72,9 @@ def run_validation_gen(args: Namespace):
 
 def run_angr(binary: Path, args: Namespace):
 
-    from summboundverify.validation_tool import angrEngine
+    from summboundverify.validation_tool import AngrEngine
 
-    engine = angrEngine(
+    engine = AngrEngine(
         binary,
         timeout=args.timeout,
         results_dir=args.results,

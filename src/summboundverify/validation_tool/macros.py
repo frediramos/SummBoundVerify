@@ -1,1 +1,1 @@
-SYM_VAR = 'symvar'
+SYM_VAR = "symvar"
