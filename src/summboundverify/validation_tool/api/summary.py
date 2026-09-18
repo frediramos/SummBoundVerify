@@ -92,7 +92,10 @@ class CSummary(SimProcedure):
             explicit_name = False
 
         sym_var = self.state.solver.BVS(
-            name, length, explicit_name=explicit_name)
+            name,
+            length,
+            explicit_name=explicit_name
+        )
         return sym_var
 
     def is_symbolic(self, var):
