@@ -1,25 +1,4 @@
-#define NULL ((void*)0)
-#define INT_SIZE (sizeof(int) * 8)
-#define LONG_SIZE (sizeof(long) * 8)
-#define CHAR_SIZE (sizeof(char) * 8)
-#define PTR_SIZE (sizeof(void*) * 8)
-
-#include <stdio.h>
-
-typedef void *symbolic;
-typedef int state_t;
-typedef unsigned int cnstr_t;
-typedef unsigned int result_t;
-typedef unsigned int list_t;
-
-symbolic __sym_var(size_t size) { return 0; }
-symbolic __sym_var_named(char *name, size_t size) { return 0; }
-symbolic __sym_var_array(char *name, size_t index, size_t size) { return 0; }
-
-void __assert(cnstr_t cnstr) { }
-void __report_error(const char* filename, unsigned int line, const char* message){ return; }
-
-int __file_create(char* filename){ return 0; }
+#include "sra.h"
 
 #define SIZE 3
 

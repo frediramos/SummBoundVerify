@@ -10,16 +10,22 @@ FLAGS  := -Wno-int-conversion
 SUMMBV := summbv -run --binary
 
 BINS  := bins
+LIB	  := lib
 TESTS := $(patsubst %.c,%.test,$(wildcard *.c))
 
-.PHONY: compile run clean
+SRA := $(LIB)/sra.c -I$(LIB)
+
+.PHONY: sra compile run clean
+
+sra:
+	./$(LIB)/sra.py
 
 %.test: %.c
-	$(CC) $(FLAGS) $< -o $(BINS)/$@
+	$(CC) $(FLAGS) $< $(SRA) -o $(BINS)/$@
 
-compile: $(TESTS)
+compile: sra $(TESTS)
 
-run:
+run: 
 	@status=0; \
 	passed=0; \
 	failed=0; \
@@ -33,7 +39,7 @@ run:
 	\
 	for test in $$tests; do \
 		$(MAKE) -s $$test; \
-		echo -e "$(YELLOW)->$(RESET) $(MAGENTA)$$test$(RESET)"; \
+		echo -e -n "$(YELLOW)->$(RESET) $(MAGENTA)$$test$(RESET)  "; \
 		\
 		if [ $$single -eq 1 ]; then \
 			$(SUMMBV) $(BINS)/$$test; \
@@ -51,7 +57,6 @@ run:
 			status=1; \
 			echo -e "$(RED)Failed!$(RESET)"; \
 		fi; \
-		echo; \
 	done; \
 	\
 	echo -e "$(GREEN)Passed:$(RESET) $$passed"; \
