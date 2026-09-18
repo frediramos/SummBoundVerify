@@ -1,7 +1,13 @@
+from pathlib import Path
 from functools import cache
 from types import SimpleNamespace
 
-from summboundverify.utils.files import current_dir
+from summboundverify.utils.files import (
+    write_file,
+    read_file,
+    current_dir
+)
+
 from .helpers import get_stubs, get_code
 
 PREFIX = "__"
@@ -136,3 +142,33 @@ def api_map() -> SimpleNamespace:
         values[func] = name
 
     return SimpleNamespace(**values)
+
+
+SRA_C = "sra.c"
+SRA_H = "sra.h"
+
+
+def make_lib(directory: str | Path, mkdir=True):
+    d = Path(directory)
+
+    macros_ = macros()
+    types = '\n'.join(type_stubs())
+    decls = read_file(APIFiles.sra)
+    functions = '\n'.join(sra_stubs().values())
+
+    hcode = (
+        f"#ifndef SRA_H\n"
+        f"#define SRA_H\n\n"
+        f"{macros_}\n"
+        f"{types}\n"
+        f"{decls}\n"
+        "#endif\n"
+    )
+
+    ccode = (
+        f"#include \"{SRA_H}\"\n\n"
+        f"{functions}\n"
+    )
+
+    write_file(d / SRA_H, hcode, mkdir=mkdir)
+    write_file(d / SRA_C, ccode, mkdir=mkdir)
