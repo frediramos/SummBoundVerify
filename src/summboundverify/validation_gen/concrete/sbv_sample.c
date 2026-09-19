@@ -163,17 +163,17 @@ static sbv_value draw_value(char *name, size_t bits, long index, int indexed) {
     return value;
 }
 
-sbv_value sym_var_named(char *name, size_t bits) {
+sbv_value __sym_var_named(char *name, size_t bits) {
     return draw_value(name, bits, 0, 0);
 }
 
-sbv_value sym_var_array(char *name, size_t index, size_t bits) {
+sbv_value __sym_var_array(char *name, size_t index, size_t bits) {
     return draw_value(name, bits, (long)index, 1);
 }
 
 /* Bounding the domain --------------------------------------------------- */
 
-void assume(int cnstr) {
+void __assume(int cnstr) {
     if (cnstr)
         return;
 
@@ -182,7 +182,7 @@ void assume(int cnstr) {
 }
 
 void _assert(int cnstr) {
-    assume(cnstr);
+    __assume(cnstr);
 }
 
 void sbv_exit(int code) {
@@ -313,12 +313,12 @@ size_t n_allocd(void *ptr) {
 
 void allocd(void *ptr, size_t size) {
     (void)size;
-    assume(ptr != NULL);
+    __assume(ptr != NULL);
 }
 
 /* Recording the outcome ------------------------------------------------- */
 
-void mem_addr(char *name, void *addr, size_t len) {
+void __mem_addr(char *name, void *addr, size_t len) {
     region_t *r;
 
     if (g_nregions >= SBV_MAX_REGIONS)

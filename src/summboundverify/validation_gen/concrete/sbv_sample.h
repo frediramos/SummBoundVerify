@@ -42,7 +42,7 @@ typedef long sbv_value;
  * Bits beyond the requested width are zero, so assigning the result to a
  * narrower type loses nothing that was ever there.
  */
-sbv_value sym_var_named(char *name, size_t bits);
+sbv_value __sym_var_named(char *name, size_t bits);
 
 /*
  * The value of element `index` of the input array `name`.
@@ -50,7 +50,7 @@ sbv_value sym_var_named(char *name, size_t bits);
  * Recorded under the same (name, index) pair the symbolic side uses for it,
  * so an array is matched element by element rather than as an opaque blob.
  */
-sbv_value sym_var_array(char *name, size_t index, size_t bits);
+sbv_value __sym_var_array(char *name, size_t index, size_t bits);
 
 /* Bounding the domain --------------------------------------------------- */
 
@@ -62,7 +62,7 @@ sbv_value sym_var_array(char *name, size_t index, size_t bits);
  * A sample that ignored them would satisfy no path and be reported as an
  * input the summary fails to cover -- a finding manufactured by the harness.
  */
-void assume(int cnstr);
+void __assume(int cnstr);
 
 /* Same, in the form a summary would write it. */
 void _assert(int cnstr);
@@ -132,7 +132,7 @@ void allocd(void *ptr, size_t size);
  * Registered before the call and read after it, mirroring how get_cnstr lifts
  * memory contents on the symbolic side.
  */
-void mem_addr(char *name, void *addr, size_t len);
+void __mem_addr(char *name, void *addr, size_t len);
 
 /*
  * Close the record for one test: the return value at `ret` (`bits` wide, or
