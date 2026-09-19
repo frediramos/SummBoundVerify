@@ -12,7 +12,7 @@ where = ["src"]
 summboundverify = [
     "api/*.c",
     "api/*.h",
-    "validation_gen/utils/fake_libc_include/**/*",
+    "utils/fake_libc_include/**/*",
 ]
 
 [project]
