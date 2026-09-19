@@ -13,7 +13,8 @@ RUN apt-get update && \
         build-essential \
         clang zip unzip \
         sudo wget curl git vim \
-        gcc-multilib libc6-dev-i386 && \
+        gcc-multilib libc6-dev-i386 \
+        afl++ && \
     locale-gen en_US.UTF-8 && \
     rm -rf /var/lib/apt/lists/*
 
@@ -31,7 +32,7 @@ COPY . .
 
 # Upgrade pip + install package
 RUN pip install --upgrade pip && \
-    pip install .
+    pip install -e .
 
 
 # Configure bash prompt

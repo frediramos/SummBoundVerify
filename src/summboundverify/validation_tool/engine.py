@@ -51,6 +51,16 @@ class AngrEngine:
 
         self.api: ValidationAPI
 
+    @property
+    def constraints(self) -> dict:
+        '''The formulas this run built, by the name the test stored them under.
+        '''
+        api = getattr(self, 'api', None)
+        if api is None:
+            return {}
+
+        return {**api.ctx.CONSTRAINTS, **api.ctx.STORED_CNSTR}
+
     @staticmethod
     def _ignore_list(ignore: str | Path | None) -> list[str]:
         if not ignore:

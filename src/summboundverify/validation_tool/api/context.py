@@ -78,7 +78,25 @@ class ValidationCTX:
     SUMM_PATHS: int = 0
     CNCR_PATHS: int = 0
 
+    # What the run learned, kept past the per-test reset
+    # ------------------------------------------------------
+    # STORED_CNSTR is wiped between tests so they cannot contaminate each
+    # other, which also means the formulas are gone by the time run() returns.
+    # They are worth keeping: the one stored under `summ_testN` is the
+    # summary's path condition and symbolic return, which is exactly what a
+    # sampling check needs -- so a `both` run need not compute it twice.
+    CONSTRAINTS: dict = field(default_factory=dict)
+
+    # Fields reset() leaves alone: they outlive a single test by design.
+    PRESERVED = frozenset({'CONSTRAINTS'})
+
+    def archive(self):
+        '''Keep this test's formulas before the reset takes them.'''
+        self.CONSTRAINTS.update(self.STORED_CNSTR)
+
     def reset(self):
         fresh = type(self)()
         for field in fields(self):
+            if field.name in self.PRESERVED:
+                continue
             setattr(self, field.name, getattr(fresh, field.name))

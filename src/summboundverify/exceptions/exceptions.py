@@ -1,8 +1,11 @@
-from typing import Any
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from claripy import ClaripyError
 from pycparser.c_parser import ParseError
+
+# Defer heavy imports
+if TYPE_CHECKING:
+    from claripy import ClaripyError
 
 from summboundverify.utils.summary import FunctionType
 
@@ -65,7 +68,7 @@ class ClaripyConstraintError(RunError):
     def __init__(
         self,
         claripy_function: str,
-        claripy_exception: ClaripyError,
+        claripy_exception: 'ClaripyError',
         caller: str | None = None,
     ):
         message = f"Error in Claripy function '{claripy_function}'.\n"
@@ -236,4 +239,14 @@ class DuplicateFunctionDefinitionError(GenError):
 class DuplicateFunctionDeclarationError(GenError):
     def __init__(self, name: str, file: Path):
         message = f"Multiple functions named '{name}' declared in file: {file}"
+        super().__init__(message)
+
+
+class UnsupportedFloatingPointError(GenError):
+    def __init__(self, location: str):
+        self.location = location
+        message = (
+            f"Floating point values are unsupported.\n"
+            f"Floating point found in {location}"
+        )
         super().__init__(message)
