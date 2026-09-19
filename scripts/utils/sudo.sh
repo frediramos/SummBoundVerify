@@ -20,8 +20,10 @@
 [[ -n "${__sudo_loaded:-}" ]] && return
 __sudo_loaded=1
 
-__sudo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${__sudo_dir}/colors.sh"
+# Get directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "${SCRIPT_DIR}/colors.sh"
 
 SUDO=""
 SUDO_OK=1
