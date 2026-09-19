@@ -223,11 +223,12 @@ class FunctionParser:
 
         assert ret_def is not None
 
-        # Only a value returned directly: a `double *` hands back an address,
-        # which travels through a `symbolic` intact.
-        if isinstance(ret_def, TypeDecl)                 and isinstance(ret_def.type, IdentifierType):
+        # Pointer return types are represented by their symbolic address,
+        # so only non-pointer return types need to be checked.
+        if isinstance(ret_def, TypeDecl) and isinstance(ret_def.type, IdentifierType):
             typename, pointer = _resolve(
-                " ".join(ret_def.type.names), self._typedefs.aliases
+                " ".join(ret_def.type.names),
+                self._typedefs.aliases
             )
             if not pointer:
                 check_supported(typename, "return type")
