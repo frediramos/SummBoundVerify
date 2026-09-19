@@ -1,19 +1,20 @@
 import claripy
 
-from typing import Callable, Any
-
 from angr import SimProcedure
-from claripy import ClaripyError
+
+from claripy.ast.bv import BV as BitVector
 
 from summboundverify.exceptions import (
     InvalidSymbolicVariableSizeError,
     InvalidArchVariableSizeError,
-    ClaripyConstraintError,
-    UnsatConstraintError
+    UnsatConstraintError,
+    ReportError,
 )
 
+from .utils import SymbString
+from .context import ValidationCTX
+
 from ..macros import SYM_VAR
-from . context import ValidationCTX
 
 
 class CSummary(SimProcedure):
@@ -35,6 +36,40 @@ class CSummary(SimProcedure):
             addr, n,
             endness=self.state.arch.memory_endness
         )
+
+    def load_string(self, addr, include_null: bool = False) -> SymbString:
+        """
+        Load a null-terminated string from memory.
+        Can be symbolic.
+
+        `include_null`: Whether to include the null byte in the result.
+        """
+        i = 0
+        chars = []
+        endness = self.state.arch.memory_endness
+
+        while True:
+            byte: BitVector = self.state.memory.load(
+                addr + i,
+                1,
+                endness=endness,
+            )
+
+            if self.is_symbolic(byte):
+                chars.append(byte)
+            else:
+                code = self.state.solver.eval(byte)
+
+                if code == 0:
+                    if include_null:
+                        chars.append("\x00")
+                    break
+
+                chars.append(chr(code))
+
+            i += 1
+
+        return SymbString(chars)
 
     def store(self, addr, value, n=1):
         self.state.memory.store(
@@ -63,11 +98,19 @@ class CSummary(SimProcedure):
             explicit_name = False
 
         sym_var = self.state.solver.BVS(
-            name, length, explicit_name=explicit_name)
+            name,
+            length,
+            explicit_name=explicit_name
+        )
         return sym_var
 
     def is_symbolic(self, var):
         return self.state.solver.symbolic(var)
+
+    def concretize(self, var):
+        constraints = tuple(self.state.solver.constraints)
+        concrete = self.state.solver.eval(var, extra_constraints=(constraints))
+        return concrete
 
     def maximize(self, var):
         constraints = tuple(self.state.solver.constraints)
@@ -91,8 +134,8 @@ class CSummary(SimProcedure):
     def is_sat(self, cnstr):
         return self.state.solver.satisfiable(extra_constraints=(cnstr,))
 
-    def _assert(self, cnstr):
-        if not self.state.solver.satisfiable(extra_constraints=(cnstr,)):
+    def assert_constraint(self, cnstr):
+        if not self.is_certain(cnstr):
             raise UnsatConstraintError("_assert", cnstr)
 
     def push_pc(self):
@@ -112,10 +155,5 @@ class CSummary(SimProcedure):
         c = self.state.globals['pc_stack'].pop()  # type: ignore
         self.state.solver.reload_solver(c)
 
-    def constraint(self, op: Callable[..., Any], *args):
-        try:
-            result = op(*args)
-        except ClaripyError as e:
-            fname = op.__name__
-            raise ClaripyConstraintError(fname, e)
-        return result
+    def report_error(self, filename: str, line: int, message: str):
+        raise ReportError(filename, line, message)

@@ -49,7 +49,7 @@ from summboundverify.exceptions import MissingFunctionError
 from summboundverify.utils.summary import FunctionType
 
 from summboundverify.validation_gen.utils import parse_c_file
-from summboundverify.validation_gen.function_parser.visitors import (
+from summboundverify.utils.visitors import (
     Function,
     FunctionVisitor,
 )

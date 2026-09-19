@@ -13,22 +13,17 @@ from pycparser.c_ast import (
     TypeDecl,
 )
 
+from summboundverify.api import macros, type_stubs, required_stubs, sra_stubs
+from summboundverify.utils.visitors import FuncCallsVisitor
+
 from .utils import *
-from .utils.visitors import FuncCallsVisitor
-
 from .generator import Generator
-from .function_parser import FunctionParser
+from .parser import FunctionParser
+from .api import halt_all, save_current_state
 
-from .api_gen import (
-    halt_all,
-    save_current_state,
-    type_defs,
-    complete_api,
-    validation_api,
-)
 
-from .test_gen import TestGen
-from .test_gen.arg_gen.visitors.structs import StructVisitor
+from .test import TestGen
+from .test.args.visitors.structs import StructVisitor
 
 
 class ValidationGenerator(Generator):
@@ -73,34 +68,32 @@ class ValidationGenerator(Generator):
         self.engine = engine
 
     def get_api_calls(self, funcs):
-        fdefs = []
-        fcalls = set()
+        api_calls = set()
 
-        # Always include the validation API
-        fdefs += sorted(validation_api.values())
-        fdefs.append('')
+        complete_api = sra_stubs()
+        required_api = required_stubs()
 
         for i, func in enumerate(funcs, 1):
-
-            # Visit and fetch all function calls
             visitor = FuncCallsVisitor()
             visitor.visit(func)
+
             called = visitor.fcalls()
 
-            if not called and i == len(funcs):
-                called = complete_api.keys()
+            if i == len(funcs) and not called:
+                called = complete_api
 
-            # Filter non API functions
-            called = filter(lambda x: x in complete_api.keys(), called)
+            api_calls.update(
+                c for c in called
+                if c in complete_api and c not in required_api
+            )
 
-            # Filter functions already included with the validation API
-            called = filter(lambda x: x not in validation_api, called)
+        validation_defs = list(required_api.values())
+        api_defs = [
+            complete_api[call]
+            for call in api_calls
+        ]
 
-            fcalls.update(called)
-
-        fdefs += [complete_api[c] for c in sorted(fcalls)]
-
-        return fdefs
+        return sorted(validation_defs + api_defs)
 
     def gen_summary_prototype(self, defs):
         """Declare the summary before the test body calls it.
@@ -169,39 +162,28 @@ class ValidationGenerator(Generator):
     def gen_headers(self, defs):
 
         if self.engine == 'concrete':
-            # No stubs and no typedefs: the sampling harness is compiled
-            # against sbv_sample.h, which declares the handful of primitives a
-            # generated test actually uses with the concrete meanings they
-            # have once the values are concrete.
             headers = []
 
         else:
-            # Add core api functions.
-            headers = list(type_defs)
-            headers.append('')
+            headers = [macros(), *type_stubs(), '']
 
-            # Add API calls
             if not self.no_api:
                 headers += self.get_api_calls(defs)
                 headers.append('')
 
-            # The summary-only test may not carry the summary's definition --
-            # with `--lib` it is a separate translation unit and all we have
-            # is its name. Declare it rather than let the call fall back to an
-            # implicit int-returning one.
             if self.engine == 'summary':
                 headers += self.gen_summary_prototype(defs)
 
         # Add macros
-        headers.append(defineMacro(POINTER_SIZE_MACRO, self.pointersize))
-        headers.append(defineMacro(FUEL_MACRO, self.fuel))
+        headers.append(define_macro(POINTER_SIZE_MACRO, self.pointersize))
+        headers.append(define_macro(FUEL_MACRO, self.fuel))
 
-        headers += self.genMacros(ARRAY_SIZE_MACRO, self.arraysize)
-        headers += self.genMacros(MAX_MACRO, self.maxnum)
+        headers += self.gen_macros(ARRAY_SIZE_MACRO, self.arraysize)
+        headers += self.gen_macros(MAX_MACRO, self.maxnum)
 
         return headers
 
-    def genMacros(self, macro, values=[]):
+    def gen_macros(self, macro, values=[]):
         macros = []
         for i, v in enumerate(values):
 
@@ -210,19 +192,19 @@ class ValidationGenerator(Generator):
 
                 for x, y in enumerate(v):
                     name = f'{macro}_{i+1}_VAR{x+1}'
-                    stringlst.append(defineMacro(name, y))
+                    stringlst.append(define_macro(name, y))
                 string = ''.join(stringlst)
 
             else:
                 name = f'{macro}_{i+1}'
-                string = defineMacro(name, v)
+                string = define_macro(name, v)
 
             macros.append(string)
 
         return macros
 
     # Generate the tests code
-    def genTests(self, args, ret_type):
+    def gen_tests(self, args, ret_type):
 
         test_defs = []
         main_body = []
@@ -245,7 +227,7 @@ class ValidationGenerator(Generator):
             testName = f'test_{i}'
 
             # Gen test code
-            testCode = self.genTest(testName, args, ret_type, i)
+            testCode = self.gen_test(testName, args, ret_type, i)
             test_defs.append(testCode)
 
             # Call test function from main
@@ -300,7 +282,8 @@ class ValidationGenerator(Generator):
         else:
             return dict
 
-    def genTest(self, testname, args, ret_type, id):
+    def gen_test(self, testname, args, ret_type, id):
+
         array_size = self.get_array_size(id)
         null_bytes = self.get_null_byte(id)
         default = self.get_dict_value(id, self.default)
@@ -378,7 +361,7 @@ class ValidationGenerator(Generator):
         structs += StructVisitor(self.tmp_summary).symbolic_structs()
 
         # Gen test definitions and calls from main
-        test_defs, main_body = self.genTests(args, ret_type)
+        test_defs, main_body = self.gen_tests(args, ret_type)
 
         # main() is declared int, so it has to return one: without this the
         # fuzz build warns on every single compile, and a harness that always

@@ -6,13 +6,13 @@ typedef unsigned int list_t;
 
 void unfold_memw_memcpy(char *s, list_t lst)
 {
-  if (lst_empty(lst))
+  if (__lst_empty(lst))
   {
   }
   else
   {
-    list_t var1 = lst_hd(lst);
-    list_t var2 = lst_tl(lst);
+    list_t var1 = __lst_hd(lst);
+    list_t var2 = __lst_tl(lst);
     *s = var1;
     unfold_memw_memcpy(s + 1, var2);
   }
@@ -20,18 +20,18 @@ void unfold_memw_memcpy(char *s, list_t lst)
 
 list_t fold_memseg_memcpy(char *s, unsigned int n)
 {
-  if (is_certain(_ULE_(n, 0)))
+  if (__is_certain(_ULE_(n, 0)))
   {
-    list_t lst = lst_mk();
+    list_t lst = __lst_mk();
     return lst;
   }
   else
   {
-    assume(_NOT_(_ULE_(n, 0)));
+    __assume(_NOT_(_ULE_(n, 0)));
     char var1 = *s;
     list_t var2 = fold_memseg_memcpy(s + 1, n - 1);
-    list_t lst = lst_cons(var1, var2);
-    _assert(_NOT_(lst_empty(lst)));
+    list_t lst = __lst_cons(var1, var2);
+    __assert(_NOT_(__lst_empty(lst)));
     return lst;
   }
 }
@@ -39,7 +39,7 @@ list_t fold_memseg_memcpy(char *s, unsigned int n)
 void *memcpy(void *dest, void *src, unsigned int n)
 {
   list_t var1 = fold_memseg_memcpy(src, n);
-  allocd(dest, n);
+  __allocd(dest, n);
   unfold_memw_memcpy(dest, var1);
   void *ret = dest;
   return ret;

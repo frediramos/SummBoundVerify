@@ -195,7 +195,7 @@ class lst_hd(ListSummary):
 
 class lst_len(ListSummary):
 
-    def lst_len(self, lst):
+    def run(self, lst):
         lst = self._lst_extract_SAO(lst)
 
         if self._lst_is_ite(lst):

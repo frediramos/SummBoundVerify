@@ -23,6 +23,10 @@ class GenError(ValidationError):
 class RunError(ValidationError):
     pass
 
+# -----------------------------------------------------------------------------------
+# Run Exceptions
+# -----------------------------------------------------------------------------------
+
 
 class TimeoutError(RunError):
     def __init__(self, timeout: int):
@@ -61,12 +65,22 @@ class UnsatConstraintError(RunError):
 
 
 class ClaripyConstraintError(RunError):
-    def __init__(self, function: str, claripy_exception: ClaripyError):
-        message = (
-            f"Error in constraint function '{function}'.\n"
-            f"The Claripy backend errored with the following message:\n"
+    def __init__(
+        self,
+        claripy_function: str,
+        claripy_exception: 'ClaripyError',
+        caller: str | None = None,
+    ):
+        message = f"Error in Claripy function '{claripy_function}'.\n"
+
+        if caller:
+            message += f"Called from C function '{caller}'.\n"
+
+        message += (
+            "The Claripy backend reported the following error:\n"
             f"{claripy_exception}"
         )
+
         super().__init__(message)
 
 
@@ -89,11 +103,79 @@ class MemoryPermissionsError(RunError):
         )
         super().__init__(message)
 
-# ---
+
+class ReportError(RunError):
+    def __init__(self, file, line, msg):
+        message = (
+            f"Runtime error detected in '{file}' at line {line}:\n"
+            f"{msg}"
+        )
+        super().__init__(message)
+
+
+class InvalidOpenFlagError(RunError):
+    def __init__(self, flag):
+        message = (
+            f"Unsupported file open flag: '{flag}'\n"
+        )
+        super().__init__(message)
+
+
+class InvalidArgumentError(RunError):
+    argument: str
+
+    def __init__(self, function: str, value):
+        message = (
+            f"The function '{function}' takes only concrete "
+            f"'{self.argument}' values.\n"
+            f"Invalid argument found: {value}"
+        )
+        super().__init__(message)
+
+
+class SymbolicPointerError(InvalidArgumentError):
+    argument = "pointer"
+
+
+class InvalidFdError(InvalidArgumentError):
+    argument = "file descriptor"
+
+
+class InvalidFpError(InvalidArgumentError):
+    argument = "file pointer (FILE*)"
+
+
+class InvalidCountError(InvalidArgumentError):
+    argument = "count"
+
+
+class InvalidOffsetError(InvalidArgumentError):
+    argument = "offset"
+
+
+class InvalidSizeError(InvalidArgumentError):
+    argument = "size"
+
+
+class InvalidPointerError(InvalidArgumentError):
+    argument = "pointer"
+
+
+class InvalidModeError(InvalidArgumentError):
+    argument = "mode_t"
+
+
+class InvalidFlagsError(InvalidArgumentError):
+    argument = "open flags"
+
+
+# -----------------------------------------------------------------------------------
+# Generation Exceptions
+# -----------------------------------------------------------------------------------
 
 
 class FileParseError(GenError):
-    def __init__(self, file: Path, pycparser_error: ParseError):
+    def __init__(self, file: str | Path, pycparser_error: ParseError):
         self.file = file
         err = str(pycparser_error)
         message = (

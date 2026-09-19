@@ -1,14 +1,14 @@
 """Validation engines.
 
-Imports are deferred: `angrEngine` pulls in angr, which is slow to import and
+Imports are deferred: `AngrEngine` pulls in angr, which is slow to import and
 entirely unnecessary for a `--engine fuzz` run.
 """
 
 
 def __getattr__(name):
-    if name == 'angrEngine':
-        from .engine import angrEngine
-        return angrEngine
+    if name == 'AngrEngine':
+        from .engine import AngrEngine
+        return AngrEngine
 
     if name == 'aflEngine':
         from .fuzz_engine import aflEngine
@@ -22,6 +22,6 @@ def __getattr__(name):
 
 
 __all__ = [
-    'angrEngine', 'aflEngine',
+    'AngrEngine', 'aflEngine',
     'summary_formulas', 'validate_by_sampling', 'log_report',
 ]

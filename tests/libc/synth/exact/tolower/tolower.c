@@ -1,28 +1,28 @@
 int fold_tolower_tolower(int c)
 {
   int c1;
-  if (is_certain(_AND_(_GE_(c, 65), _LE_(c, 90))))
+  if (__is_certain(_AND_(_GE_(c, 65), _LE_(c, 90))))
   {
     c1 = c + (97 - 65);
   }
   else
   {
-    if (is_certain(_NOT_(_AND_(_GE_(c, 65), _LE_(c, 90)))))
+    if (__is_certain(_NOT_(_AND_(_GE_(c, 65), _LE_(c, 90)))))
     {
       c1 = c;
     }
     else
     {
-      push_pc();
-      assume(_AND_(_GE_(c, 65), _LE_(c, 90)));
+      __push_pc();
+      __assume(_AND_(_GE_(c, 65), _LE_(c, 90)));
       c1 = c + (97 - 65);
       int aux1 = c1;
-      pop_pc();
-      push_pc();
-      assume(_NOT_(_AND_(_GE_(c, 65), _LE_(c, 90))));
+      __pop_pc();
+      __push_pc();
+      __assume(_NOT_(_AND_(_GE_(c, 65), _LE_(c, 90))));
       c1 = c;
       int aux2 = c1;
-      pop_pc();
+      __pop_pc();
       c1 = _ITE_VAR_(_AND_(_GE_(c, 65), _LE_(c, 90)), aux1, aux2);
     }
   }

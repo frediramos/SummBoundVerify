@@ -23,7 +23,7 @@ from z3 import simplify
 
 from summboundverify.validation_gen import CCompiler
 
-from .engine import angrEngine
+from .engine import AngrEngine
 from .fuzz_engine import aflEngine
 from .guided import MAX_ROUNDS, top_up
 from .sample_check import check_samples, report, test_name
@@ -49,7 +49,7 @@ def summary_formulas(
     binary = summary_test.with_suffix('.test')
     CCompiler(arch, summary_test, binary, [str(lib) for lib in (libs or [])]).compile()
 
-    engine = angrEngine(
+    engine = AngrEngine(
         str(binary), timeout=timeout, results_dir=str(results_dir),
     )
     engine.run()

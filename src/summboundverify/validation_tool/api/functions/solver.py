@@ -5,8 +5,6 @@ from summboundverify.exceptions import DuplicateSymbolicVariableError
 from ..summary import CSummary
 from ..context import ValidationCTX
 
-from .utils import get_name
-
 
 class sym_var(CSummary):
     def __init__(self, ctx: ValidationCTX):
@@ -29,6 +27,15 @@ class is_symbolic(CSummary):
         else:
             ret = 0
         self.ret(ret)
+
+
+class concretize(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
+
+    def run(self, var):
+        value = self.concretize(var)
+        self.ret(value)
 
 
 class maximize(CSummary):
@@ -97,17 +104,6 @@ class is_sat(CSummary):
         self.ret(ret)
 
 
-class _assert(CSummary):
-    def __init__(self, ctx: ValidationCTX):
-        super().__init__(ctx)
-
-    def run(self, cnstr: BitVector):
-        cnstr_id = self.state.solver.eval(cnstr)
-        cnstr = self.ctx.CNSTR_MAP[cnstr_id]
-        self._assert(cnstr)
-        self.ret()
-
-
 class push_pc(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)
@@ -133,10 +129,9 @@ class sym_var_named(CSummary):
     def run(self, name_addr, length_bv: BitVector):
         length = self.state.solver.eval(length_bv)
 
-        name = get_name(self.state, name_addr)
-        # A duplicate name would silently overwrite the earlier variable; report
-        # it as a RunError so the caller can surface it (and the refinement loop
-        # can act on it) instead of crashing with a bare AssertionError.
+        name = str(self.load_string(name_addr))
+
+        # Catch duplicate symvar names
         if name in self.ctx.SYM_VARS.keys():
             raise DuplicateSymbolicVariableError(name)
 
@@ -157,7 +152,7 @@ class sym_var_array(CSummary):
         length = self.state.solver.eval(length_bv)
         index = self.state.solver.eval(index)
 
-        name = get_name(self.state, name_addr)
+        name = str(self.load_string(name_addr))
         bvname = f'{name}_{index}'
 
         sym_var = self.sym_var(length, bvname)
@@ -169,3 +164,32 @@ class sym_var_array(CSummary):
         sym_var = sym_var.zero_extend(self.state.arch.bits - length)
 
         self.ret(sym_var)
+
+
+class __assert(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
+
+    def run(self, cnstr: BitVector):
+        if not self.is_symbolic(cnstr):
+            cnstr_id = self.state.solver.eval(cnstr)
+            constraint = self.ctx.CNSTR_MAP[cnstr_id]
+        else:
+            constraint = (cnstr == 1)
+        self.assert_constraint(constraint)
+        self.ret()
+
+
+class report_error(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
+
+    def run(self, fname_bv: BitVector, line_bv: BitVector, message_bv: BitVector):
+        fname_addr = self.state.solver.eval_one(fname_bv)
+        line = self.state.solver.eval_one(line_bv)
+        message_addr = self.state.solver.eval_one(message_bv)
+
+        fname = str(self.load_string(fname_addr))
+        message = str(self.load_string(message_addr))
+
+        self.report_error(fname, line, message)

@@ -10,8 +10,9 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 summboundverify = [
-    "resources/*.md",
-    "validation_gen/utils/fake_libc_include/**/*",
+    "api/*.c",
+    "api/*.h",
+    "utils/fake_libc_include/**/*",
     "validation_gen/concrete/*.c",
     "validation_gen/concrete/*.h",
 ]

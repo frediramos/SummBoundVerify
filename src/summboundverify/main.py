@@ -174,9 +174,9 @@ def run_fuzz(
 
 def run_angr(binary: Path, args: Namespace) -> tuple[Path, dict]:
 
-    from summboundverify.validation_tool import angrEngine
+    from summboundverify.validation_tool import AngrEngine
 
-    engine = angrEngine(
+    engine = AngrEngine(
         binary,
         timeout=args.timeout,
         results_dir=args.results,
@@ -440,9 +440,8 @@ def main():
         if len(engines) > 1 and args.run:
             print_summary(results.get('se'), results.get('fuzz'))
 
-    except Exception as e:
+    except Exception:
         print(traceback.format_exc())
-        print(e)
         return 1
 
     return 0

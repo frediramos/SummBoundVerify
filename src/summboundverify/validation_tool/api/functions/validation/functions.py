@@ -26,8 +26,6 @@ from summboundverify.exceptions import InvalidSymbolicVariableSizeError
 from ...summary import CSummary
 from ...context import ValidationCTX
 
-from ..utils import get_name
-
 from .models import to_signed_int
 from .output import ValidationOutput
 from .result import Under, Over, Exact, Unkown
@@ -155,7 +153,7 @@ class store_cnstr(CSummary):
 
         cnstr = self.ctx.CNSTR_MAP[cnstr_id]
 
-        name = get_name(self.state, name_addr)
+        name = str(self.load_string(name_addr))
 
         # Store cnstrcition in dict
         if name not in self.ctx.STORED_CNSTR.keys():
@@ -239,7 +237,7 @@ class mem_addr(CSummary):
     def run(self, name_addr, mem_addr, size):
 
         size = self.state.solver.eval(size)
-        name = get_name(self.state, name_addr)
+        name = str(self.load_string(name_addr))
 
         triple = (name, mem_addr, size)
         self.ctx.MEMORY_TRIPLES.append(triple)
@@ -313,8 +311,8 @@ class check_implications(CSummary):
 
     def run(self, key1, key2):
 
-        key1 = get_name(self.state, key1)
-        key2 = get_name(self.state, key2)
+        key1 = str(self.load_string(key1))
+        key2 = str(self.load_string(key2))
 
         if 'summ' in key1.lower():
             summ = key1

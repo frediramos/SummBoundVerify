@@ -1,13 +1,13 @@
 int fold_tolower_tolower(int c)
 {
-  if (is_certain(_AND_(_GE_(c, 65), _LE_(c, 90))))
+  if (__is_certain(_AND_(_GE_(c, 65), _LE_(c, 90))))
   {
     int c1 = c + (97 - 65);
     return c1;
   }
   else
   {
-    assume(_NOT_(_AND_(_GE_(c, 65), _LE_(c, 90))));
+    __assume(_NOT_(_AND_(_GE_(c, 65), _LE_(c, 90))));
     int c1 = c;
     return c1;
   }

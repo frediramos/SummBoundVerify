@@ -6,9 +6,9 @@ from summboundverify.validation_gen import CCompiler as ValidationCompiler
 
 def __getattr__(name):
     # Deferred so that importing the package does not pull in angr.
-    if name in ('ValidationRunner', 'angrEngine'):
-        from summboundverify.validation_tool import angrEngine
-        return angrEngine
+    if name in ('ValidationRunner', 'AngrEngine'):
+        from summboundverify.validation_tool import AngrEngine
+        return AngrEngine
 
     if name in ('FuzzRunner', 'aflEngine'):
         from summboundverify.validation_tool import aflEngine
