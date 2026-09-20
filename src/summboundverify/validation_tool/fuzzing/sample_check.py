@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum
 
-from z3 import BoolRef, ExprRef, Or, Solver, sat, unsat
+from z3 import BoolRef, ExprRef, Or, Solver, sat
 from z3.z3util import get_vars
 
 logger = logging.getLogger(__name__)

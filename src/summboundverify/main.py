@@ -12,7 +12,7 @@ from summboundverify.options import parse_input_args
 from summboundverify.logger import Colors, section, setup_logging
 
 from summboundverify.utils import DescribedEnum
-from summboundverify.validation_tool.fuzz_engine import afl_available
+from summboundverify.validation_tool.fuzzing import afl_available
 
 from . import se, fuzzing
 

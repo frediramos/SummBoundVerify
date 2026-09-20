@@ -23,10 +23,11 @@ from z3 import simplify
 
 from summboundverify.validation_gen import CCompiler
 
-from .engine import AngrEngine
-from .fuzz_engine import aflEngine
-from .guided import MAX_ROUNDS, top_up
+from .engine import AflEngine
 from .sample_check import check_samples, report, test_name
+
+from .guided import MAX_ROUNDS, top_up
+from ..se.engine import AngrEngine
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,8 @@ def summary_formulas(
     is separable.
     """
     binary = summary_test.with_suffix('.test')
-    CCompiler(arch, summary_test, binary, [str(lib) for lib in (libs or [])]).compile()
+    CCompiler(arch, summary_test, binary, [
+              str(lib) for lib in (libs or [])]).compile()
 
     engine = AngrEngine(
         str(binary), timeout=timeout, results_dir=str(results_dir),
@@ -126,7 +128,7 @@ def validate_by_sampling(
     `guided` bounds the rounds spent constructing inputs for summary paths the
     campaign never exercised; zero leaves the campaign's own corpus untouched.
     """
-    engine = aflEngine(
+    engine = AflEngine(
         concrete_test,
         libs=libs,
         arch=arch,

@@ -1,7 +1,7 @@
-from .engine import AngrEngine
-from .fuzz_engine import aflEngine
+from .se.engine import AngrEngine
 
-from .sampling import (
+from .fuzzing.engine import AflEngine
+from .fuzzing.sampling import (
     log_report,
     summary_formulas,
     validate_by_sampling
@@ -10,7 +10,7 @@ from .sampling import (
 
 __all__ = [
     'AngrEngine',
-    'aflEngine',
+    'AflEngine',
     'summary_formulas',
     'validate_by_sampling',
     'log_report'

@@ -34,15 +34,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from summboundverify.exceptions import CompilationError, RunError
-
-from summboundverify.validation_gen.concrete import (
+from .afl import (
     CONCRETE_DIR,
     DRIVER_SOURCE,
     SAMPLER_SOURCE,
     SAMPLER_HEADER,
     TEST_ENTRY,
 )
+
+from summboundverify.exceptions import CompilationError, RunError
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +155,7 @@ class Sample:
         }
 
 
-class aflEngine():
+class AflEngine():
 
     def __init__(
         self,

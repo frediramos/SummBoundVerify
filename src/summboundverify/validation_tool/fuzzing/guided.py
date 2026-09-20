@@ -174,7 +174,7 @@ def top_up(
     Empty when there is nothing to aim at: no stored formula, no recorded
     layout to build a tape from, or every path already reached.
     """
-    from .fuzz_engine import sample_key
+    from .engine import sample_key
 
     by_test: dict[str, list] = {}
     for sample in samples:

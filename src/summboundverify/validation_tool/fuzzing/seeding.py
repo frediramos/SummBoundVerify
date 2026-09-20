@@ -47,7 +47,7 @@ from z3 import (
     is_app,
     is_bv,
     is_bv_value,
-    sat,
+    sat
 )
 from z3.z3util import get_vars
 
