@@ -61,7 +61,7 @@ class Options(metaclass=MetaOptions):
     config = ('-', 'config', OptionTypes.SIMPLE)
 
     # Validation Run
-    engine = ('--', 'engine', OptionTypes.SIMPLE)
+    engine = ('--', 'engine', OptionTypes.LIST)
     execs = ('--', 'execs', OptionTypes.SIMPLE)
     run = ('-', 'run', OptionTypes.BOOL)
     binary = ('--', 'binary', OptionTypes.SIMPLE)

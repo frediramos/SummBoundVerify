@@ -3,22 +3,26 @@ import json
 import logging
 import traceback
 
-from argparse import Namespace
+from enum import Enum
 from pathlib import Path
+from argparse import Namespace
 
 from summboundverify.exceptions import RunError
-from summboundverify.logger import Colors, section, setup_logging
 from summboundverify.options import parse_input_args
+from summboundverify.logger import Colors, section, setup_logging
+
+from summboundverify.utils import DescribedEnum
+from summboundverify.validation_tool.fuzz_engine import afl_available
 
 from . import se, fuzzing
 
 
 logger = logging.getLogger(__name__)
 
-ENGINE_TITLES = {
-    "se": "Symbolic execution (angr)",
-    "fuzz": "Fuzzing (AFL++)",
-}
+
+class Engine(DescribedEnum):
+    SE = ("se", "Symbolic execution (angr)")
+    FUZZ = ("fuzz", "Fuzzing (AFL++)")
 
 
 def load_results(path: Path | None) -> dict:
@@ -95,12 +99,12 @@ def print_summary(
     rows: dict[str, dict] = {}
 
     for key, entry in se.items():
-        rows.setdefault(test_id(key), {})["se"] = (
+        rows.setdefault(test_id(key), {})[Engine.SE] = (
             se_verdict(entry)
         )
 
     for key, entry in fuzz.items():
-        rows.setdefault(test_id(key), {})["fuzz"] = (
+        rows.setdefault(test_id(key), {})[Engine.FUZZ] = (
             fuzz_verdict(entry)
         )
 
@@ -110,8 +114,14 @@ def print_summary(
     section("Summary")
 
     for name, verdicts in rows.items():
-        se_text, se_color = verdicts.get("se", unknown)
-        fuzz_text, fuzz_color = verdicts.get("fuzz", unknown)
+        se_text, se_color = verdicts.get(
+            Engine.SE,
+            unknown,
+        )
+        fuzz_text, fuzz_color = verdicts.get(
+            Engine.FUZZ,
+            unknown,
+        )
 
         print(
             f"  {name:<{width}}"
@@ -142,65 +152,13 @@ def print_summary(
     print(file=sys.stderr, flush=True)
 
 
-def plan_engines(args: Namespace) -> list[str]:
-    from summboundverify.validation_tool.se_support import (
-        se_obstacles_in,
-    )
+def plan_engines(args: Namespace) -> list[Engine]:
+    engines = [Engine(e) for e in args.engine]
 
-    engines = (
-        ["se", "fuzz"]
-        if args.engine == "both"
-        else [args.engine]
-    )
+    if Engine.FUZZ in engines and not afl_available():
+        raise RunError("AFL++ is not installed...")
 
-    if "se" not in engines or not args.func:
-        return engines
-
-    obstacles = se_obstacles_in(
-        args.func,
-        args.funcname,
-    )
-
-    if not obstacles:
-        return engines
-
-    name = args.funcname or Path(args.func).stem
-
-    engines = [
-        engine
-        for engine in engines
-        if engine != "se"
-    ]
-
-    logger.warning(
-        "Skipping symbolic execution: %s %s.\n"
-        "angr cannot finish this target, so it would run "
-        "until the timeout and report nothing.",
-        name,
-        "; ".join(obstacles),
-    )
-
-    if engines:
-        return engines
-
-    from summboundverify.validation_tool.fuzz_engine import (
-        afl_available,
-    )
-
-    if not afl_available():
-        raise RunError(
-            f"Symbolic execution was skipped ({obstacles[0]}) "
-            "and fuzzing, the engine that handles such targets, "
-            "needs AFL++ (Debian/Ubuntu: apt install afl++). "
-            "Nothing was validated."
-        )
-
-    logger.warning(
-        "Falling back to fuzzing, the only engine left for %s",
-        name,
-    )
-
-    return ["fuzz"]
+    return engines
 
 
 def main():
@@ -215,28 +173,25 @@ def main():
 
         engines = plan_engines(args)
 
-        results: dict[str, Path | None] = {}
+        results: dict[Engine, Path | None] = {}
         constraints = {}
 
-        if "se" in engines:
-            if len(engines) > 1:
-                section(ENGINE_TITLES["se"])
+        if Engine.SE in engines:
+            section(Engine.SE.desc)
+            results[Engine.SE], constraints = se.run(args)
 
-            results["se"], constraints = se.run(args)
+        if Engine.FUZZ in engines:
+            section(Engine.FUZZ.desc)
 
-        if "fuzz" in engines:
-            if len(engines) > 1:
-                section(ENGINE_TITLES["fuzz"])
-
-            results["fuzz"] = fuzzing.run(
+            results[Engine.FUZZ] = fuzzing.run(
                 args,
                 constraints,
             )
 
         if len(engines) > 1 and args.run:
             print_summary(
-                results.get("se"),
-                results.get("fuzz"),
+                results.get(Engine.SE),
+                results.get(Engine.FUZZ),
             )
 
     except Exception:

@@ -45,11 +45,13 @@ def section(title: str, color: str = Colors.teal) -> None:
     piped (stdout is block-buffered, stderr is not).
     '''
     bar = '=' * (len(title) + 4)
-    print(
-        f"\n{color}{bar}\n  {title}\n{bar}{Colors.reset}\n",
-        file=sys.stderr,
-        flush=True,
+    text = (
+        f"\n{color}\n"
+        f"{bar}\n"
+        f"  {title}\n{bar}"
+        f"{Colors.reset}\n"
     )
+    print(text, file=sys.stderr, flush=True)
 
 
 def format_string(debug: bool):
