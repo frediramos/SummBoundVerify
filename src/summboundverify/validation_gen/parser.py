@@ -2,12 +2,13 @@ from pathlib import Path
 from dataclasses import dataclass, field
 
 from pycparser.c_ast import (
-    IdentifierType,
     Node,
-    NodeVisitor,
-    ParamList,
     TypeDecl,
+    ParamList,
+    NodeVisitor,
+    IdentifierType,
 )
+
 from pycparser.c_generator import CGenerator
 
 from summboundverify.exceptions import (
@@ -20,7 +21,7 @@ from summboundverify.utils.unsupported import check_supported
 from summboundverify.utils.visitors import FunctionVisitor, Function
 
 from .test.args import SymbolicArgGen
-from .utils import parse_file
+from .utils import parse_c_file
 
 _CGEN = CGenerator()
 
@@ -108,7 +109,7 @@ class FunctionParser:
         self.concrete = Path(concrete) if concrete else None
         self.summary = Path(summary) if summary else None
 
-        # Filled by _load_functions, from whichever files are present.
+        # Filled by _load_functions from the present files
         self._typedefs = _Typedefs()
 
         self.cnctr_functions = (
@@ -122,7 +123,7 @@ class FunctionParser:
         )
 
     def _load_functions(self, file: Path) -> dict[str, Function]:
-        ast = parse_file(str(file))
+        ast = parse_c_file(str(file))
         self._typedefs.visit(ast)
         return FunctionVisitor(ast, file).functions()
 
@@ -152,7 +153,6 @@ class FunctionParser:
         return visitor.types
 
     def arguments(self, concrete: Function | None, summary: Function | None) -> ParamList:
-
         concrete_args = []
         summary_args = []
         args_def = None

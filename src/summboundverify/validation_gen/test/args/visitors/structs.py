@@ -19,7 +19,7 @@ from summboundverify.utils.unsupported import check_supported
 
 from summboundverify.validation_gen.utils import (
     return_value,
-    parse_file,
+    parse_c_file,
     create_function
 )
 
@@ -41,7 +41,7 @@ class StructVisitor(NodeVisitor):
 
         if file:
             file = Path(file)
-            ast = parse_file(file)
+            ast = parse_c_file(file)
             vis = StructParser()
             vis.visit(ast)
 
