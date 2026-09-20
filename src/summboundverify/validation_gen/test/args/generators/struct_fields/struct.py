@@ -19,33 +19,20 @@ class StructFieldGen(DefaultGen):
         self.struct_name = struct_name
         self.field = field
 
-    def _field_lvalue(self):
-        """Build the struct-field access.
+    def gen(self):
+        # struct->field = create_struct(fuel)
+        code = []
+        name = f'struct_{self.struct_name}_instance'
 
-        For ``struct_name="foo"`` and ``field="bar"``, produces:
-
-            struct_foo_instance->bar
-        """
-        return StructRef(
-            name=ID(f"struct_{self.struct_name}_instance"),
-            type="->",
-            field=ID(self.field),
+        # Declare Variable
+        lvalue = StructRef(
+            name=ID(f'{name}'),
+            type='->',
+            field=ID(f'{self.field}')
         )
 
-    def gen(self):
-        """Generate initialization code for the nested struct field.
-
-        For example:
-
-            struct_foo_instance->bar = create_struct_bar(fuel);
-        """
-        lvalue = self._field_lvalue()
         rvalue = self.init_struct_rvalue(self.vartype)
+        decl = Decl(name, [], [], [], [], lvalue, rvalue, None)
+        code.append(decl)
 
-        return [
-            Decl(
-                name=f"struct_{self.struct_name}_instance",
-                quals=[], align=[], storage=[], funcspec=[],
-                type=lvalue, init=rvalue, bitsize=None,
-            )
-        ]
+        return code

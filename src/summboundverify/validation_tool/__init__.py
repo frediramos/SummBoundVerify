@@ -22,6 +22,9 @@ def __getattr__(name):
 
 
 __all__ = [
-    'AngrEngine', 'aflEngine',
-    'summary_formulas', 'validate_by_sampling', 'log_report',
+    'AngrEngine',
+    'aflEngine',
+    'summary_formulas',
+    'validate_by_sampling',
+    'log_report'
 ]

@@ -84,8 +84,6 @@ def run_validation_gen(args: Namespace, engine: str = 'se',
     return outputfile
 
 
-
-
 def sampler_libs(args: Namespace) -> list:
     '''The libraries the sampling harness needs: everything but the summary.
 
@@ -123,8 +121,6 @@ def sampler_libs(args: Namespace) -> list:
         keep.append(lib)
 
     return keep
-
-
 
 
 def run_fuzz(
@@ -379,7 +375,8 @@ def plan_engines(args: Namespace) -> list[str]:
             f"(Debian/Ubuntu: apt install afl++). Nothing was validated."
         )
 
-    logger.warning("Falling back to fuzzing, the only engine left for %s", name)
+    logger.warning(
+        "Falling back to fuzzing, the only engine left for %s", name)
     return ['fuzz']
 
 
@@ -403,7 +400,6 @@ def main():
 
         for engine in engines:
 
-            # A single engine's output is unambiguous on its own.
             if len(engines) > 1:
                 section(ENGINE_TITLES[engine])
 

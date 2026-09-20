@@ -92,15 +92,9 @@ def sbv_record(
     returns_void: bool,
     returns_pointer: bool = False,
 ):
-    """Record this run's return value and tagged memory.
-
-    The sampling counterpart of get_cnstr: same moment, same operands, but it
-    writes down what the concrete function actually produced instead of a
-    formula denoting what it could produce.
-
-    `returns_pointer` travels with the value because the checker cannot tell
-    an address from an integer by looking at the bytes, and the two are not
-    checked the same way.
+    """
+    Record this run's return value and tagged memory.
+    The concrete counterpart of `get_cnstr` for fuzzing.
     """
     if returns_void:
         args = [Constant('int', str(0)), Constant('int', str(0))]
