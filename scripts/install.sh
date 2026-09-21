@@ -16,7 +16,7 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo -e "${BLUE}Usage:${RESET} $0"
     echo -e "${BLUE}Steps:${RESET}"
     echo -e "   ${YELLOW}1)${RESET} check prerequisites"
-    echo -e "   ${YELLOW}2)${RESET} install requirements"
+    echo -e "   ${YELLOW}2)${RESET} install requirements (32-bit support, AFL++)"
     echo -e "   ${YELLOW}3)${RESET} create symlink"
     exit 0
 fi
@@ -46,6 +46,7 @@ fi
 ./utils/prerequisites.sh
 
 ./installers/m32.sh
+./installers/afl.sh
 ./installers/package.sh
 
 echo -e "${GREEN}✔ SummBoundVerify installed successfully!${RESET}"

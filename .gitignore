@@ -60,3 +60,11 @@ dist/
 # Virtual environments
 .venv/
 venv/
+
+#Fuzz engine artifacts
+/**/*-fuzz*
+/**/*.fuzz*
+/**/*.aflwork*
+/**/*-summary.c
+/**/*-concrete.c
+/**/*_check.json

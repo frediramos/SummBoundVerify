@@ -36,6 +36,8 @@ def parse_boolean(line: str):
 
 def parse_simple(line: str):
     _, arg = _get_simple(line)
+    if arg.isnumeric():
+        arg = int(arg)
     return arg
 
 
@@ -71,7 +73,6 @@ def read_config_file(file: str):
 
 
 def parse_config_file(conf) -> dict:
-
     lines = read_config_file(conf)
     config = {}
 

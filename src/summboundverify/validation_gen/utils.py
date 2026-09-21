@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pycparser import parse_file as pycparser_parse_file
 from pycparser.c_ast import (
     Decl,
@@ -13,7 +15,7 @@ from pycparser.c_ast import (
 )
 from pycparser.c_parser import ParseError
 
-from summboundverify.utils.files import fake_libc_path
+from summboundverify.utils.files import fake_libc_path, tmp_file
 from summboundverify.exceptions import FileParseError
 
 SIZE_MACRO = 'SIZE'
@@ -21,6 +23,32 @@ FUEL_MACRO = 'FUEL'
 MAX_MACRO = 'MAX_NUM'
 ARRAY_SIZE_MACRO = 'ARRAY_SIZE'
 POINTER_SIZE_MACRO = 'POINTER_SIZE'
+
+
+def add_fake_include(file):
+    """Copy `file` with a `#include <stdlib.h>` prepended, and return the copy.
+
+    Input files routinely use `size_t`, `NULL` and friends without including
+    anything, which pycparser cannot parse on its own. The include pulls those
+    in from the fake libc headers. The caller owns the temporary file.
+    """
+    fake_include = '#include <stdlib.h>\n'
+    tmp = tmp_file(f"__{Path(file).name}")
+    tmp.write_text(fake_include + Path(file).read_text())
+    return tmp
+
+
+def parse_c_file(file):
+    """Parse a C source file the way the generator does.
+
+    Anything that reads a *user-supplied* C file must go through this rather
+    than `parse_file`, which assumes the file is already self-contained.
+    """
+    tmp = add_fake_include(file)
+    try:
+        return parse_file(tmp)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 def parse_file(file):

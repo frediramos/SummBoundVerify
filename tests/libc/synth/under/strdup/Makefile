@@ -52,3 +52,4 @@ test-run: clean
 
 clean:
 	$(RM) *.o *.test $(TEST) $(EXEC) $(RESULT)
+	$(RM) -r *.aflwork *.fuzz *-fuzz.c *fuzz_result.json

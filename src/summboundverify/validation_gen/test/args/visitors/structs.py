@@ -15,9 +15,11 @@ from pycparser.c_ast import (
 
 )
 
+from summboundverify.utils.unsupported import check_supported
+
 from summboundverify.validation_gen.utils import (
     return_value,
-    parse_file,
+    parse_c_file,
     create_function
 )
 
@@ -39,7 +41,7 @@ class StructVisitor(NodeVisitor):
 
         if file:
             file = Path(file)
-            ast = parse_file(file)
+            ast = parse_c_file(file)
             vis = StructParser()
             vis.visit(ast)
 
@@ -113,12 +115,20 @@ class StructVisitor(NodeVisitor):
         return n_func_def_ast
 
     # Create functions do instantiate all structs
-
     def symbolic_structs(self):
 
-        code = [s for s in map(lambda x: self.init_function(
-            x, self.structs[x], self.structs, self.aliases),
-            self.structs) if s is not None]
+        code = [
+            s for s in map(
+                lambda x: self.init_function(
+                    x,
+                    self.structs[x],
+                    self.structs,
+                    self.aliases
+                ),
+                self.structs
+            )
+            if s is not None
+        ]
 
         return self.structDefs + code
 
@@ -221,31 +231,50 @@ class StructFieldsVisitor(NodeVisitor):
     # TypeDecl (Common node)
     def visit_TypeDecl(self, node):
         self.visit(node.type)
+        assert self.argtype is not None
+
+        # After the aliases are resolved, so a typedefed double is caught too.
+        check_supported(
+            self.argtype,
+            f"field '{self.struct_name}.{self.field}'"
+        )
 
         if len(self.sizes) == 0:
             if self.struct:
-                generator = StructFieldGen(self.argname, self.argtype,
-                                           self.struct_name, self.field)
-                self.code = generator.gen()
-                return
+                code = StructFieldGen(
+                    self.argname,
+                    self.argtype,
+                    self.struct_name,
+                    self.field
+                ).gen()
             else:
-                generator = PrimitiveFieldGen(self.argname, self.argtype,
-                                              self.struct_name, self.field)
-                self.code = generator.gen()
-                return
-
+                code = PrimitiveFieldGen(
+                    self.argname,
+                    self.argtype,
+                    self.struct_name,
+                    self.field
+                ).gen()
         else:
             if self.ptr:
-                generator = PtrFieldGen(self.argname, self.argtype, self.struct_name,
-                                        self.field, self.sizes, self.struct)
-                self.code = generator.gen()
-                return
-
+                code = PtrFieldGen(
+                    self.argname,
+                    self.argtype,
+                    self.struct_name,
+                    self.field,
+                    self.sizes,
+                    self.struct
+                ).gen()
             else:
-                generator = ArrayFieldGen(self.argname, self.argtype, self.struct_name,
-                                          self.field, self.sizes, self.struct)
-                self.code = generator.gen()
-                return
+                code = ArrayFieldGen(
+                    self.argname,
+                    self.argtype,
+                    self.struct_name,
+                    self.field,
+                    self.sizes,
+                    self.struct
+                ).gen()
+
+        self.code = code
 
     # ArrayDecl
     def visit_ArrayDecl(self, node):
@@ -262,7 +291,6 @@ class StructFieldsVisitor(NodeVisitor):
         return
 
     # Struct Type
-
     def visit_Struct(self, node):
         self.argtype = f'struct {node.name}'
         self.struct = True

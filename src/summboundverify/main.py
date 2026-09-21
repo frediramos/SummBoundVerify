@@ -1,117 +1,205 @@
 import sys
+import json
+import logging
 import traceback
 
+from enum import Enum
 from pathlib import Path
-from typing import Literal
 from argparse import Namespace
 
-from summboundverify.logger import setup_logging
+from summboundverify.exceptions import RunError
 from summboundverify.options import parse_input_args
-from summboundverify.validation_gen import ValidationGenerator, CCompiler
+from summboundverify.logger import Colors, section, setup_logging
 
-Arch = Literal['x86', 'x64']
+from summboundverify.utils import DescribedEnum
+from summboundverify.validation_tool.fuzzing import afl_available
 
-
-def compile_validation_test(arch: Arch, file: Path, libs: list[str]):
-    name = file.stem + '.test'
-    out = file.parent / name
-    comp = CCompiler(arch, file, out, libs)
-    comp.compile()
-    return out
+from . import se, fuzzing
 
 
-# Takes command line / config file arguments
-def run_validation_gen(args: Namespace):
-    '''
-    Take command line args and run the test generation
-    @args: \'argparse\' Namespace object
-    '''
-    concrete_function = Path(args.func) if args.func else None
-    target_summary = Path(args.summ) if args.summ else None
-    outputfile = Path(args.o)
-    summname = args.summname
-    funcname = args.funcname
+logger = logging.getLogger(__name__)
 
-    if not concrete_function and not target_summary:
-        err = "ERROR: At least the code for a concrete function or summary MUST be provided"
-        sys.exit(err)
 
-    if not concrete_function and not funcname:
-        err = (
-            "ERROR: No concrete function code or name provided\n"
-            "INFO: In the absence of the code, a name must be specified in order to call the function"
-        )
-        sys.exit(err)
+class Engine(DescribedEnum):
+    SE = ("se", "Symbolic execution (angr)")
+    FUZZ = ("fuzz", "Fuzzing (AFL++)")
 
-    if not target_summary and not summname:
-        err = (
-            "ERROR: No summary code or name provided\n"
-            "INFO: In the absence of the code, a name must be specified in order to call the summary"
-        )
-        sys.exit(err)
 
-    valgenerator = ValidationGenerator(
-        concrete_function,
-        target_summary,
-        outputfile,
-        arraysize=args.arraysize,
-        nullbytes=args.nullbytes,
-        maxnum=args.maxvalue,
-        maxnames=args.maxnames,
-        default=args.defaultvalues,
-        concrete_arrays=args.concretearray,
-        memory=args.memory,
-        cncrt_name=funcname,
-        summ_name=summname,
-        no_api=args.noapi
+def load_results(path: Path | None) -> dict:
+    if not path or not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def test_id(key: str) -> str:
+    _, _, test = key.rpartition(".")
+    return test or key
+
+
+def se_verdict(entry: dict) -> tuple[str, str]:
+    result = entry.get("result", "unknown")
+    color = (
+        Colors.green
+        if result == "exact"
+        else Colors.yellow
+    )
+    return result, color
+
+
+def fuzz_verdict(entry: dict) -> tuple[str, str]:
+    verdict = entry.get("verdict", "unknown")
+    checked = entry.get("checked") or 0
+
+    detail = (
+        f" ({checked} sample(s))"
+        if checked
+        else ""
     )
 
-    valgenerator.gen()
-    return outputfile
+    if verdict == "mismatched":
+        findings = entry.get("findings") or []
+        bindings = (
+            findings[0].get("bindings")
+            if findings
+            else None
+        )
+
+        if bindings:
+            detail += " [{}]".format(
+                ", ".join(
+                    f"{k}={v}"
+                    for k, v in bindings.items()
+                )
+            )
+
+        color = Colors.red
+
+    elif verdict == "starved":
+        color = Colors.yellow
+
+    else:
+        color = Colors.green
+
+    return f"{verdict}{detail}", color
 
 
-def run_angr(binary: Path, args: Namespace):
+def print_summary(
+    se_results: Path | None,
+    fuzz_results: Path | None,
+):
+    se = load_results(se_results)
+    fuzz = load_results(fuzz_results)
 
-    from summboundverify.validation_tool import AngrEngine
+    if not se and not fuzz:
+        return
 
-    engine = AngrEngine(
-        binary,
-        timeout=args.timeout,
-        results_dir=args.results,
-        stats_dir=args.stats,
-        convert_ascii=args.ascii,
-    )
+    rows: dict[str, dict] = {}
 
-    engine.run()
+    for key, entry in se.items():
+        rows.setdefault(test_id(key), {})[Engine.SE] = (
+            se_verdict(entry)
+        )
+
+    for key, entry in fuzz.items():
+        rows.setdefault(test_id(key), {})[Engine.FUZZ] = (
+            fuzz_verdict(entry)
+        )
+
+    unknown = ("not run", Colors.white)
+    width = max(len(name) for name in rows)
+
+    section("Summary")
+
+    for name, verdicts in rows.items():
+        se_text, se_color = verdicts.get(
+            Engine.SE,
+            unknown,
+        )
+        fuzz_text, fuzz_color = verdicts.get(
+            Engine.FUZZ,
+            unknown,
+        )
+
+        print(
+            f"  {name:<{width}}"
+            f"  symbolic: {se_color}{se_text:<12}{Colors.reset}"
+            f"  fuzz: {fuzz_color}{fuzz_text}{Colors.reset}",
+            file=sys.stderr,
+        )
+
+        if (
+            se_text == "exact"
+            and fuzz_text.startswith("mismatched")
+        ):
+            print(
+                f"  {Colors.red}"
+                "the engines disagree: one of them is wrong"
+                f"{Colors.reset}",
+                file=sys.stderr,
+            )
+
+        if fuzz_text.startswith("starved"):
+            print(
+                f"  {Colors.yellow}"
+                "sampling checked nothing; its verdict "
+                f"carries no weight{Colors.reset}",
+                file=sys.stderr,
+            )
+
+    print(file=sys.stderr, flush=True)
+
+
+def plan_engines(args: Namespace) -> list[Engine]:
+    engines = [Engine(e) for e in args.engine]
+
+    if Engine.FUZZ in engines and not afl_available():
+        raise RunError("AFL++ is not installed...")
+
+    return engines
 
 
 def main():
     try:
-        # Parse all input (cli and config file)
         args = parse_input_args()
-
         setup_logging(args.debug)
 
-        # Run a given binary and exit
+        # Run a given binary directly.
         if args.run and args.binary:
-            run_angr(args.binary, args)
+            se.run_angr(args.binary, args)
             return 0
 
-        # Gen validation test
-        test = run_validation_gen(args)
+        engines = plan_engines(args)
 
-        # Compile
-        if args.compile:
-            arch = args.compile
-            libs = args.lib
-            binary = compile_validation_test(arch, test, libs)
+        results: dict[Engine, Path | None] = {}
+        constraints = {}
 
-            # Run if specified
-            if args.run:
-                run_angr(binary, args)
+        if Engine.SE in engines:
+            section(Engine.SE.desc)
+            results[Engine.SE], constraints = se.run(args)
+
+        if Engine.FUZZ in engines:
+            section(Engine.FUZZ.desc)
+
+            results[Engine.FUZZ] = fuzzing.run(
+                args,
+                constraints,
+            )
+
+        if len(engines) > 1 and args.run:
+            print_summary(
+                results.get(Engine.SE),
+                results.get(Engine.FUZZ),
+            )
 
     except Exception:
         print(traceback.format_exc())
         return 1
 
     return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
