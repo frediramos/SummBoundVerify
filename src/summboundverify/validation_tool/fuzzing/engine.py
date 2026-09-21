@@ -1,14 +1,10 @@
 """Sampling the concrete function with AFL++.
 
-Counterpart to `angrEngine`, but not its mirror image. The symbolic engine
-executes both the summary and the concrete function and proves an implication
-between them. This one never touches the summary: it compiles the concrete
-function on its own, lets AFL++ explore it, and writes down what it returned
-for the inputs it was given.
+Compiles the concrete function on its own, lets AFL++ explore it, and writes down what it returned for the inputs it was given.
 
 The result is a set of `(input, output)` pairs. What makes them useful is that
 they are named the same way the summary's symbolic run names its variables --
-`n` for a scalar, `str_0` for an array element -- so a pair can be matched
+`n` for a scalar, `str_0` for an array element. A pair can be matched
 against the formula angr produced without either side knowing about the other.
 
 AFL++ is an input *generator* here, not an oracle. Recording every execution
@@ -60,7 +56,7 @@ FLOAT_SEEDS = {
     'nan': float('nan'),
 }
 
-AFL_CC = 'afl-clang-fast'
+     = 'afl-clang-fast'
 AFL_FUZZ = 'afl-fuzz'
 
 STATS_RE = re.compile(

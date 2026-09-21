@@ -32,10 +32,7 @@ def sampler_libs(args: Namespace) -> list[str]:
         path = Path(lib)
 
         try:
-            defined = FunctionVisitor(
-                parse_c_file(path),
-                path,
-            ).functions()
+            defined = FunctionVisitor(parse_c_file(path), path).functions()
         except Exception:
             # Unparseable is not the same as "is the summary".
             # Keeping it is the recoverable mistake; dropping a

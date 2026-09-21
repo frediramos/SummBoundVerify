@@ -41,28 +41,32 @@ def summary_formulas(
     timeout: int | None = None,
     results_dir: str | Path = '.',
 ) -> dict:
-    """Execute the summary symbolically and keep what it proved.
-
-    Returns the formulas by the name the test stored them under -- the same
-    thing a `both` run gets for free from its symbolic pass, which is why this
-    is separable.
+    """
+    Execute the summary symbolically and keep what it proved.
+    Returns the formulas by the name the test stored them under.
     """
     binary = summary_test.with_suffix('.test')
-    CCompiler(arch, summary_test, binary, [
-              str(lib) for lib in (libs or [])]).compile()
+    CCompiler(
+        arch,
+        summary_test,
+        binary,
+        [str(lib) for lib in (libs or [])]
+    ).compile()
 
     engine = AngrEngine(
-        str(binary), timeout=timeout, results_dir=str(results_dir),
+        str(binary),
+        timeout=timeout,
+        results_dir=str(results_dir)
     )
     engine.run()
 
     log_constraints(engine.constraints)
-
     return engine.constraints
 
 
 def format_constraints(constraints: dict) -> str:
-    """The summary's path conditions, laid out one path at a time.
+    """
+    The summary's path conditions, laid out one path at a time.
 
     Symbolic execution prints the equivalent as part of its verdict ("Summary
     Constraints"); sampling checks every sample against these same formulas
@@ -82,7 +86,8 @@ def format_constraints(constraints: dict) -> str:
 
         paths = [
             '\t[{}] {}'.format(
-                index, str(simplify(formula)).replace('\n', '\n\t    ')
+                index,
+                str(simplify(formula)).replace('\n', '\n\t    ')
             )
             for index, formula in enumerate(formulas, start=1)
         ]
