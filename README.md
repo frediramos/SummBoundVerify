@@ -277,7 +277,7 @@ A summary can be validated in two ways, selected with `--engine`:
 ```sh
 summbv -config config.txt --engine se     # symbolic execution (default)
 summbv -config config.txt --engine fuzz   # fuzzing
-summbv -config config.txt --engine both   # both, side by side
+summbv -config config.txt --engine se fuzz # both, side by side
 ```
 
 **`se`** runs *both* the summary and the concrete implementation under `angr`
@@ -325,7 +325,7 @@ int size_t`, so the symbolic side is 32-bit whatever the host is, and only a
 ### Relevant flags
 
 ```
---engine se | fuzz | both   // which engine to run (default: se)
+--engine se | fuzz          // engine(s) to run; "se fuzz" runs both (default: se)
 --execs 10000               // inputs to try when sampling (default: 10000)
 --timeout 1800              // seconds, per engine
 ```
@@ -333,9 +333,6 @@ int size_t`, so the symbolic side is 32-bit whatever the host is, and only a
 Symbolic execution is skipped automatically — *even when asked for
 explicitly* — on targets `angr` cannot finish, currently recursive functions
 and floating point. The substitution is announced rather than made quietly.
-
-See [docs/SAMPLING.md](docs/SAMPLING.md) for the architecture, the harness
-contract, how inputs are chosen, and the known limits.
 
 <br>
 <br>
@@ -453,7 +450,7 @@ concretearray {1:[0]}     // --concretearray  (Place concrete values in selected
 lib lib.c                 // --lib            (Path to external files required for compilation)
 compile x86               // --compile        (Compile the generated test)
 memory true               // -memory          (Evaluate memory side-effects)
-engine se | fuzz | both   // --engine         (Validation engine (default: se))
+engine se | fuzz          // --engine         (Validation engine(s); "se fuzz" runs both (default: se))
 execs 10000               // --execs          (Inputs to try when sampling)
 timeout 1800              // -timeout         (Execution timeout, in seconds)
 ```

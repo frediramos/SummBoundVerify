@@ -883,7 +883,6 @@ class SymbolicFS(angr.SimStatePlugin):
                 if exists:
                     return self.create_concrete_fd(filename, flags)
 
-        print("here")
         return self.create_symbolic_fd(filename, flags)
 
     def open_symbolic(self, filename: SymbString, flags: int) -> int:
