@@ -13,6 +13,7 @@ from claripy.ast import Bool, BV
 from angr.storage.file import Flags
 
 from summboundverify.exceptions import (
+    UnsatFSError,
     InvalidFdError,
     InvalidFpError,
     InvalidSizeError,
@@ -344,6 +345,13 @@ class SymbolicFS(angr.SimStatePlugin):
             extra_constraints=(neg_cnstr,)
         )
 
+    def sym_var(self, name: str, size: int):
+        return self.state.solver.BVS(
+            name,
+            size,
+            explicit_name=True
+        )
+
     def bvv_int(self, value: int):
         """Create a bit-vector containing a C `int` value."""
         int_bits = self.state.arch.sizeof["int"]
@@ -485,6 +493,56 @@ class SymbolicFS(angr.SimStatePlugin):
     # ---------------------------------------------------------------------------
     # Constraints
     # ---------------------------------------------------------------------------
+    
+    def to_constraint(self) -> Bool:
+        """Lifts the current state of the FS to a boolean constraint."""
+
+        int_size = self.state.arch.sizeof["int"]
+        char_size = 8
+        fd_cases = []
+
+        for fd, fde in self.fds.items():
+            prefix = f"file_fd{fd}"
+
+            flags = self.sym_var(f"{prefix}_flags", int_size)
+            mode = self.sym_var(f"{prefix}_mode", int_size)
+
+            cases = [
+                flags == self.bvv_int(fde.flags),
+                mode == self.bvv_int(fde.mode),
+            ]
+
+            content_cases = []
+
+            for entry in fde.entries:
+                bytes = []
+                offset = self.sym_var(f"{prefix}_offset", int_size)
+
+                for i, c in enumerate(entry.file.bytes):
+                    c = self.bvv_char(c)
+                    byte = self.sym_var(f"{prefix}_byte_{i}", char_size)
+                    bytes.append(byte == c)
+                
+                content = offset == self.bvv_int(entry.offset)
+
+                if bytes:
+                    content = claripy.And(content, *bytes)
+
+                content_cases.append((entry.cond, content))
+                
+            if content_cases:
+                ite = claripy.ite_cases(content_cases, true())
+                cases.append(ite)
+
+            fd_cases.append(claripy.And(*cases))
+
+        constraint = claripy.And(*fd_cases)
+
+        if not self.state.solver.satisfiable(extra_constraints=(constraint,)):
+           raise UnsatFSError() 
+        
+        return constraint
+
 
     def file_exists_constraint(self, filename: str | SymbString) -> Bool:
         """
@@ -1192,3 +1250,4 @@ class SymbolicFS(angr.SimStatePlugin):
             return -1
 
         return fde.flags
+

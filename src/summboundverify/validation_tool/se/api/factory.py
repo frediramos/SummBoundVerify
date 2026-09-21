@@ -68,7 +68,7 @@ class ValidationAPI:
 
         return impl
 
-    def _check_missing(self, available: set[str], required: set[str], err: str):
+    def _check_missing(self, required: set[str], available: set[str], err: str):
         missing = required - available
         if missing:
             raise RuntimeError(f"{err}: {missing}")
@@ -76,16 +76,16 @@ class ValidationAPI:
     def _check_sra_hooked(self, hooked: set[str]) -> None:
         err = "The following required API functions are not hooked"
         self._check_missing(
-            self._add_prefix(hooked),
             set(required_stubs()),
+            self._add_prefix(hooked),
             err
         )
 
     def _check_sra_implemented(self) -> None:
         err = "The following API functions are not implemented"
         self._check_missing(
-            self._add_prefix(set(self._implemented())),
             set(all_stubs()),
+            self._add_prefix(set(self._implemented())),
             err
         )
 

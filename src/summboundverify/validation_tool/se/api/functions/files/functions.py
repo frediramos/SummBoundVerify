@@ -170,3 +170,9 @@ class file_flags(FileSummary):
         fd = self.load_numeric(fd_bv)
         flags = self.fs.file_flags(fd)
         return flags
+
+
+class fs_to_constraint(FileSummary):
+    def run(self):
+        c = self.fs.to_constraint()
+        print(f"lifted fs: {c}")

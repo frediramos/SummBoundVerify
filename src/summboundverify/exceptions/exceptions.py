@@ -133,6 +133,12 @@ class InvalidArgumentError(RunError):
         super().__init__(message)
 
 
+class UnsatFSError(RunError):
+    def __init__(self):
+        message = "The symbolic file system is in an unsat state."
+        super().__init__(message)
+
+
 class SymbolicPointerError(InvalidArgumentError):
     argument = "pointer"
 
