@@ -123,7 +123,7 @@ def run(args: Namespace, constraints: dict | None = None) -> Path | None:
     If constraints were produced by symbolic execution in the same
     invocation, reuse them instead of executing the summary again.
     """
-    from summboundverify.validation_tool import sampling
+    from summboundverify.validation_tool.fuzzing import sampling
 
     summary_test, concrete_test = outputfiles(args)
     constraints = constraints or {}
