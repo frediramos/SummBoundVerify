@@ -493,7 +493,7 @@ class SymbolicFS(angr.SimStatePlugin):
     # ---------------------------------------------------------------------------
     # Constraints
     # ---------------------------------------------------------------------------
-    
+
     def to_constraint(self) -> Bool:
         """Lifts the current state of the FS to a boolean constraint."""
 
@@ -516,20 +516,26 @@ class SymbolicFS(angr.SimStatePlugin):
 
             for entry in fde.entries:
                 bytes = []
-                offset = self.sym_var(f"{prefix}_offset", int_size)
 
-                for i, c in enumerate(entry.file.bytes):
+                offset = self.sym_var(f"{prefix}_offset", int_size)
+                size = self.sym_var(f"{prefix}_size", int_size)
+                file_bytes = entry.file.bytes
+
+                for i, c in enumerate(file_bytes):
                     c = self.bvv_char(c)
                     byte = self.sym_var(f"{prefix}_byte_{i}", char_size)
                     bytes.append(byte == c)
-                
-                content = offset == self.bvv_int(entry.offset)
+
+                content = claripy.And(
+                    offset == self.bvv_int(entry.offset),
+                    size == self.bvv_int(len(file_bytes))
+                )
 
                 if bytes:
                     content = claripy.And(content, *bytes)
 
                 content_cases.append((entry.cond, content))
-                
+
             if content_cases:
                 ite = claripy.ite_cases(content_cases, true())
                 cases.append(ite)
@@ -539,10 +545,9 @@ class SymbolicFS(angr.SimStatePlugin):
         constraint = claripy.And(*fd_cases)
 
         if not self.state.solver.satisfiable(extra_constraints=(constraint,)):
-           raise UnsatFSError() 
-        
-        return constraint
+            raise UnsatFSError()
 
+        return constraint
 
     def file_exists_constraint(self, filename: str | SymbString) -> Bool:
         """
@@ -1250,4 +1255,3 @@ class SymbolicFS(angr.SimStatePlugin):
             return -1
 
         return fde.flags
-
