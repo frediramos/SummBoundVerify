@@ -100,10 +100,23 @@ class get_cnstr(CSummary):
         from ..files.fs import SymbolicFS
 
         fs = self.state.fs
-        if not isinstance(fs, SymbolicFS) or not (fs.fds or fs.closed_fds):
-            return []
+        constraints = []
 
-        return [fs.to_constraint()]
+        if isinstance(fs, SymbolicFS) and (fs.fds or fs.closed_fds):
+            constraints.append(fs.to_constraint())
+
+        if isinstance(fs, SymbolicFS) and self.ctx.FILE_TAGS:
+            int_size = self.state.arch.sizeof["int"]
+            for name, path in self.ctx.FILE_TAGS:
+                exists_val = fs.exists_file(path)
+                exists_var = self.state.solver.BVS(
+                    f"file_{name}_exists", int_size, explicit_name=True,
+                )
+                if isinstance(exists_val, int):
+                    exists_val = claripy.BVV(exists_val, int_size)
+                constraints.append(exists_var == exists_val)
+
+        return constraints
 
     def run(self, var_addr, length):
 

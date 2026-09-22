@@ -20,6 +20,7 @@ from .args.generators.types.array import ArrayTypeGen
 
 from ..api import (
     mem_addr,
+    file_addr,
     file_create,
     file_open,
     file_write,
@@ -115,6 +116,21 @@ class TestGen(ABC):
                     'data': fblock.get('data', {}),
                 })
         return results
+
+    def _file_name_args(self) -> list[str]:
+        """Collect argspec entries where the argument is a file path (type: name)."""
+        results = []
+        for name, spec in self.argspec.items():
+            if spec.get('semantic') != 'file':
+                continue
+            fblock = spec.get('file', {})
+            if fblock.get('type') == 'name':
+                results.append(name)
+        return results
+
+    def _tag_files(self) -> list[Node]:
+        """Generate __file_addr calls for name-type file args."""
+        return [file_addr(name) for name in self._file_name_args()]
 
     def _gen_file_setup(self) -> tuple[list[Node], set[str]]:
         """Generate file setup code for descriptor/pointer file args.

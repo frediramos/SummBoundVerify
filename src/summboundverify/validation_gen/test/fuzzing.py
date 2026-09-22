@@ -65,6 +65,8 @@ class SummaryFuzzTestGen(TestGen):
         if mem_args:
             body.extend(self._tag_memory(mem_args, size_macro))
 
+        body.extend(self._tag_files())
+
         body.extend(self._summary_body(call_args, test_id))
         body.append(return_value(None))
 
@@ -133,6 +135,8 @@ class ConcreteFuzzTestGen(TestGen):
         mem_args = self._memory_args(sym_args)
         if mem_args:
             body.extend(self._tag_memory(mem_args, size_macro))
+
+        body.extend(self._tag_files())
 
         body.extend(self._body(call_args, test_id))
         body.append(return_value(None))

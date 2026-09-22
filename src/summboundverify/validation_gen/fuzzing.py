@@ -45,6 +45,7 @@ class ConcreteFuzzGenerator(ValidationGenerator):
         headers = [
             "#include <fcntl.h>",
             "#include <unistd.h>",
+            "#include <stdio.h>",
             "#include <sys/types.h>",
             "",
             define_macro(POINTER_SIZE_MACRO, self.pointersize),
