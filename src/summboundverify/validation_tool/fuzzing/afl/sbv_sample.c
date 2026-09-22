@@ -503,6 +503,8 @@ int sbv_sample_exec(const unsigned char *data, size_t len,
     reset(data, len, record);
     g_total_execs++;
 
+    sbv_init_sandbox();
+
     if (setjmp(g_reject_jmp) != 0) {
         if (record)
             printf("E rejected\n");
