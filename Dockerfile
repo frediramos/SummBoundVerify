@@ -30,6 +30,9 @@ WORKDIR /root/summboundverify
 
 COPY . .
 
+RUN ./scripts/installers/afl.sh
+
+
 # Upgrade pip + install package
 RUN pip install --upgrade pip && \
     pip install -e .

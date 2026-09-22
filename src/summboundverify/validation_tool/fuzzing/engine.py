@@ -56,7 +56,7 @@ FLOAT_SEEDS = {
     'nan': float('nan'),
 }
 
-     = 'afl-clang-fast'
+AFL_CC  = 'afl-clang-fast'
 AFL_FUZZ = 'afl-fuzz'
 
 STATS_RE = re.compile(

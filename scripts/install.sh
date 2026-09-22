@@ -12,8 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/utils/colors.sh"
 
 # Show help
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo -e "${BLUE}Usage:${RESET} $0"
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then echo -e "${BLUE}Usage:${RESET} $0"
     echo -e "${BLUE}Steps:${RESET}"
     echo -e "   ${YELLOW}1)${RESET} check prerequisites"
     echo -e "   ${YELLOW}2)${RESET} install requirements (32-bit support, AFL++)"

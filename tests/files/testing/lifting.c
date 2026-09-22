@@ -23,6 +23,7 @@ int main(){
   s1[SIZE-1] = '\0';
   s2[SIZE-1] = '\0';
   s3[SIZE-1] = '\0';
+  s4[SIZE-1] = '\0';
 
   int ret1 = __file_create(s1);
   int ret2 = __file_create(s2);
