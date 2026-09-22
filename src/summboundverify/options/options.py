@@ -3,8 +3,6 @@ class OptionTypes:
     BOOL = 'boolean'
     SIMPLE = 'simple'
     LIST = 'list'
-    NESTED = 'nested'
-    DICT = 'dict'
 
 
 class MetaOptions(type):
@@ -48,16 +46,10 @@ class Options(metaclass=MetaOptions):
     summ = ('-', 'summ', OptionTypes.SIMPLE)
     summname = ('--', 'summname', OptionTypes.SIMPLE)
     funcname = ('--', 'funcname', OptionTypes.SIMPLE)
-    arraysize = ('--', 'arraysize', OptionTypes.NESTED)
-    nullbytes = ('--', 'nullbytes', OptionTypes.NESTED)
-    defaultvalues = ('--', 'defaultvalues', OptionTypes.NESTED)
-    maxvalue = ('--', 'maxvalue', OptionTypes.LIST)
-    maxnames = ('--', 'maxnames', OptionTypes.LIST)
-    concretearray = ('--', 'concretearray', OptionTypes.DICT)
     lib = ('--', 'lib', OptionTypes.LIST)
     noapi = ('-', 'noapi', OptionTypes.BOOL)
     compile = ('--', 'compile', OptionTypes.SIMPLE)
-    memory = ('-', 'memory', OptionTypes.BOOL)
+    argspec = ('--', 'argspec', OptionTypes.SIMPLE)
     config = ('-', 'config', OptionTypes.SIMPLE)
 
     # Validation Run

@@ -34,9 +34,6 @@ def sampler_libs(args: Namespace) -> list[str]:
         try:
             defined = FunctionVisitor(parse_c_file(path), path).functions()
         except Exception:
-            # Unparseable is not the same as "is the summary".
-            # Keeping it is the recoverable mistake; dropping a
-            # helper would result in a link error.
             keep.append(lib)
             continue
 
@@ -63,24 +60,32 @@ def outputfiles(args: Namespace) -> tuple[Path, Path]:
     )
 
 
+def _load_argspec(args: Namespace) -> tuple[dict, dict]:
+    from summboundverify.argspec import load_argspec, extract_constraints
+    spec = load_argspec(getattr(args, 'argspec', None))
+    return spec, extract_constraints(spec)
+
+
 def generate_summary_test(args: Namespace, outputfile: Path) -> Path:
     concrete_function = Path(args.func) if args.func else None
     target_summary = Path(args.summ) if args.summ else None
+
+    argspec, constraints = _load_argspec(args)
 
     generator = SummaryFuzzGenerator(
         concrete_function,
         target_summary,
         outputfile,
-        arraysize=args.arraysize,
-        nullbytes=args.nullbytes,
-        maxnum=args.maxvalue,
-        maxnames=args.maxnames,
-        default=args.defaultvalues,
-        concrete_arrays=args.concretearray,
-        memory=args.memory,
+        arraysize=constraints.get('arraysize', [5]),
+        nullbytes=constraints.get('nullbytes', []),
+        maxnum=constraints.get('maxnum', []),
+        maxnames=constraints.get('maxnames', []),
+        default=constraints.get('defaults', {}),
+        concrete_arrays=constraints.get('concrete_arrays', {}),
         cncrt_name=args.funcname,
         summ_name=args.summname,
         no_api=args.noapi,
+        argspec=argspec,
     )
 
     generator.gen()
@@ -92,20 +97,22 @@ def generate_concrete_test(args: Namespace, outputfile: Path) -> Path:
     concrete_function = Path(args.func) if args.func else None
     target_summary = Path(args.summ) if args.summ else None
 
+    argspec, constraints = _load_argspec(args)
+
     generator = ConcreteFuzzGenerator(
         concrete_function,
         target_summary,
         outputfile,
-        arraysize=args.arraysize,
-        nullbytes=args.nullbytes,
-        maxnum=args.maxvalue,
-        maxnames=args.maxnames,
-        default=args.defaultvalues,
-        concrete_arrays=args.concretearray,
-        memory=args.memory,
+        arraysize=constraints.get('arraysize', [5]),
+        nullbytes=constraints.get('nullbytes', []),
+        maxnum=constraints.get('maxnum', []),
+        maxnames=constraints.get('maxnames', []),
+        default=constraints.get('defaults', {}),
+        concrete_arrays=constraints.get('concrete_arrays', {}),
         cncrt_name=args.funcname,
         summ_name=args.summname,
         no_api=args.noapi,
+        argspec=argspec,
     )
 
     generator.gen()
@@ -154,8 +161,6 @@ def run(args: Namespace, constraints: dict | None = None) -> Path | None:
             results_dir=args.results,
         )
     except ValueError as exc:
-        # A width disagreement is systematic, not a property of one
-        # sample. The two halves were built for different word sizes.
         raise RunError(str(exc))
 
     sampling.log_report(results)

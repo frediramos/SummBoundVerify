@@ -2,6 +2,7 @@ from pycparser.c_ast import (
     ID,
     Decl,
     UnaryOp,
+    PtrDecl,
     FuncCall,
     ExprList,
     TypeDecl,
@@ -129,3 +130,62 @@ def mem_addr(name, size):
             ID(size)
         ])
     )
+
+
+def file_addr(name, path_var=None):
+    call = ID(api_map().file_addr)
+    path = ID(path_var) if path_var else ID(name)
+    return FuncCall(
+        call,
+        ExprList([
+            Constant('string', f'"{name}"'),
+            path,
+        ])
+    )
+
+
+def file_create(fname_var):
+    call = ID(api_map().file_create)
+    return FuncCall(call, ExprList([ID(fname_var)]))
+
+
+def file_open(fd_name, fname_var, flags="w"):
+    call = ID(api_map().file_open)
+    int_t = IdentifierType(names=['int'])
+    lvalue = TypeDecl(fd_name, [], None, int_t)
+    rvalue = FuncCall(
+        call,
+        ExprList([ID(fname_var), Constant('string', f'"{flags}"')]),
+    )
+    return Decl(fd_name, [], [], [], [], lvalue, rvalue, None)
+
+
+def file_write(fd_var, buf_var, count):
+    call = ID(api_map().file_write)
+    return FuncCall(
+        call,
+        ExprList([
+            ID(fd_var),
+            ID(buf_var),
+            Constant('int', str(count)),
+        ]),
+    )
+
+
+def file_set_offset(fd_var, offset=0):
+    call = ID(api_map().file_set_offset)
+    return FuncCall(
+        call,
+        ExprList([
+            ID(fd_var),
+            Constant('int', str(offset)),
+        ]),
+    )
+
+
+def FILE_from_fd(name, fd_var):
+    call = ID(api_map().FILE_from_fd)
+    file_t = IdentifierType(names=['FILE'])
+    ptr = PtrDecl([], TypeDecl(name, [], None, file_t))
+    rvalue = FuncCall(call, ExprList([ID(fd_var)]))
+    return Decl(name, [], [], [], [], ptr, rvalue, None)

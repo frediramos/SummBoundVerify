@@ -76,6 +76,7 @@ void *__mem_alloc(size_t nbytes) { return 0; }
 void __assert(cnstr_t cnstr) { }
 void __assume(cnstr_t cnstr) { }
 void __cond_write(void *ptr, symbolic c, cnstr_t pc) { }
+void __file_addr(char *name, const char *path) { }
 void __halt_all(state_t state) { }
 void __mem_addr(char *name, void *addr, size_t n) { }
 void __mem_free(void *ptr) { }
@@ -87,7 +88,7 @@ void __store_cnstr(char *name, cnstr_t constraint) { }
 
 #define POINTER_SIZE 5
 #define FUEL 5
-#define ARRAY_SIZE_1 3
+#define ARRAY_SIZE_1 5
 
 int concrete_tolower(int c)
 {

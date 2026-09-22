@@ -578,6 +578,54 @@ class SymbolicFS(angr.SimStatePlugin):
         condition = claripy.And(eq, neq)
         return condition
 
+    def named_file_constraints(self, tags: list) -> list:
+        """Lift file state for tagged paths into name-keyed constraints.
+
+        Each tag is (name, path) where path is a str or SymbString.
+        Produces ``file_{name}_exists`` (8-bit, 1 or 0) and
+        ``file_{name}_byte_{i}`` (8-bit) per content byte of an open fd.
+        """
+        char_size = 8
+        cnstrs = []
+
+        for name, path in tags:
+            prefix = f"file_{name}"
+
+            exists_var = self.sym_var(f"{prefix}_exists", char_size)
+            exists_result = self.exists_file(path)
+            if isinstance(exists_result, int):
+                cnstrs.append(exists_var == BVV(exists_result, char_size))
+            else:
+                cnstrs.append(exists_var == claripy.Extract(
+                    char_size - 1, 0, exists_result
+                ))
+
+            for fd, fde in self.fds.items():
+                if not self.is_sat(eq_strings(fde.open_name, path)):
+                    continue
+
+                content_cases = []
+                for entry in fde.entries:
+                    byte_cnstrs = []
+                    for i, c in enumerate(entry.file.bytes):
+                        byte_var = self.sym_var(
+                            f"{prefix}_byte_{i}", char_size
+                        )
+                        byte_cnstrs.append(byte_var == self.bvv_char(c))
+
+                    content = (
+                        claripy.And(*byte_cnstrs) if byte_cnstrs
+                        else true()
+                    )
+                    content_cases.append((entry.cond, content))
+
+                if content_cases:
+                    ite = claripy.ite_cases(content_cases, true())
+                    cnstrs.append(ite)
+                break
+
+        return cnstrs
+
     def file_not_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating that `filename` does not exist."""
         exists = self.file_exists_constraint(filename)

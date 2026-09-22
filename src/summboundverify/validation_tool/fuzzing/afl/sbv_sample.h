@@ -135,6 +135,15 @@ void allocd(void *ptr, size_t size);
 void __mem_addr(char *name, void *addr, size_t len);
 
 /*
+ * Tag a file path for post-call observation.
+ *
+ * After the function under test returns, the file at `path` is checked for
+ * existence and its contents are recorded. `name` is the join key matching
+ * the symbolic side's `file_{name}_exists` and `file_{name}_byte_{i}`.
+ */
+void __file_addr(char *name, const char *path);
+
+/*
  * Close the record for one test: the return value at `ret` (`bits` wide, or
  * 0/NULL for a void function) plus the current contents of every region
  * registered since the last record.

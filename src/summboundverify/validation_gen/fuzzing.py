@@ -25,8 +25,8 @@ class SummaryFuzzGenerator(ValidationGenerator):
             args,
             ret_type,
             summ_name,
-            self.memory,
             self.maxnames,
+            argspec=self.argspec,
         )
 
 
@@ -55,6 +55,6 @@ class ConcreteFuzzGenerator(ValidationGenerator):
             args,
             ret_type,
             cncrt_name,
-            self.memory,
             self.maxnames,
+            argspec=self.argspec,
         )

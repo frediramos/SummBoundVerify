@@ -22,6 +22,7 @@ REQUIRED_FUNCTIONS = [
     "check_implications",
     "print_counterexamples",
     "mem_addr",
+    "file_addr",
     "sym_var_array",
     "sym_var_named"
 ]

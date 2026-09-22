@@ -12,10 +12,10 @@ RESULT = $(EXEC)_result.json
 EXPECTED_TEST = expected_test.c
 EXPECTED_RSLT = expected_result.json
 
-CONFIG = config.txt
+CONFIG = config.yaml
 LIB    = lib.c
 
-SUMMBV = summbv -config $(CONFIG) -o $(TEST) -memory
+SUMMBV = summbv -config $(CONFIG) -o $(TEST)
 
 .PHONY: gen run test test-run clean
 

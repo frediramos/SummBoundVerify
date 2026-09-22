@@ -1,4 +1,0 @@
-func concrete.c
-summname memcpy
-maxvalue 5
-compile x86

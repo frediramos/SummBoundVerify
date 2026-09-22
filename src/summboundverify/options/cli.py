@@ -9,7 +9,7 @@ def parse_cmdline_args(input=None):
         return f'{option[0]}{option[1]}'
 
     parser = argparse.ArgumentParser(
-        prog='summvb', description='Generate Summary Validation Tests'
+        prog='summbv', description='Generate Summary Validation Tests'
     )
 
     generation = parser.add_argument_group('Test Generation')
@@ -30,24 +30,6 @@ def parse_cmdline_args(input=None):
     generation.add_argument(flag(Options.funcname), metavar='name', type=str,
                             help='Name of the concrete function in the given path')
 
-    generation.add_argument(flag(Options.arraysize), metavar='value | [val1,val2]', nargs='+', required=False, default=[5],
-                            help='Maximum array size of each test (default:5)')
-
-    generation.add_argument(flag(Options.nullbytes), metavar='index | [idx1,idx2]', nargs='+', required=False, default=[],
-                            help='Specify array indexes to place null bytes')
-
-    generation.add_argument(flag(Options.defaultvalues), metavar='{var:value}', nargs='+', required=False, default={},
-                            help='Specify default const values for input variables')
-
-    generation.add_argument(flag(Options.maxvalue), metavar='value', nargs='+', required=False, default=[],
-                            help='Provide an upper bound for numeric values')
-
-    generation.add_argument(flag(Options.maxnames), metavar='name', nargs='+', required=False, default=[],
-                            help='Numeric value names to be constrained')
-
-    generation.add_argument(flag(Options.concretearray), metavar='{var:[indexes]}', nargs='+', required=False, default={},
-                            help='Place concrete values in selected array indexes')
-
     generation.add_argument(flag(Options.lib), metavar='path', nargs='+', type=str, required=False,
                             help='Path to external files needed to compile the test binary')
 
@@ -57,11 +39,11 @@ def parse_cmdline_args(input=None):
     generation.add_argument(flag(Options.compile), const='x86', choices=['x86', 'x64'], nargs='?',
                             help='Compile the generated test')
 
-    generation.add_argument(flag(Options.memory), action='store_true',
-                            help='Evaluate a summary with memory manipulation side-effects')
+    generation.add_argument(flag(Options.argspec), metavar='path', type=str, required=False, default=None,
+                            help='YAML file describing argument semantics and constraints')
 
     generation.add_argument(flag(Options.config), metavar='path', type=str, required=False,
-                            help='Config file')
+                            help='YAML config file')
 
     validation.add_argument(flag(Options.engine), metavar='name', nargs='+', choices=['se', 'fuzz'], default=['se'],
                             help='Validation engine: se (symbolic execution) or fuzz (fuzzing) (default: se)')

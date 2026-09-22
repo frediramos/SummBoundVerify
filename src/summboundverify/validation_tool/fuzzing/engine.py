@@ -56,7 +56,7 @@ FLOAT_SEEDS = {
     'nan': float('nan'),
 }
 
-AFL_CC  = 'afl-clang-fast'
+AFL_CC = 'afl-clang-fast'
 AFL_FUZZ = 'afl-fuzz'
 
 STATS_RE = re.compile(
@@ -119,6 +119,20 @@ class Value:
 
 
 @dataclass
+class FileValue:
+    """One tagged file's post-call state: existence and content bytes."""
+
+    exists: bool
+    raw: bytes
+
+    def as_dict(self) -> dict:
+        return {
+            'exists': self.exists,
+            'bytes': self.raw.hex(),
+        }
+
+
+@dataclass
 class Sample:
     """What one execution of one test did.
 
@@ -133,6 +147,7 @@ class Sample:
     rejected: bool = False
     inputs: dict[str, Value] = field(default_factory=dict)
     memory: dict[str, Value] = field(default_factory=dict)
+    files: dict[str, FileValue] = field(default_factory=dict)
     ret: Value | None = None
 
     # An address, rather than a value. The number is meaningless across runs,
@@ -146,6 +161,7 @@ class Sample:
             'rejected': self.rejected,
             'inputs': {k: v.as_dict() for k, v in self.inputs.items()},
             'memory': {k: v.as_dict() for k, v in self.memory.items()},
+            'files': {k: v.as_dict() for k, v in self.files.items()},
             'ret': self.ret.as_dict() if self.ret else None,
             'ret_is_pointer': self.ret_is_pointer,
         }
@@ -466,6 +482,14 @@ class AflEngine():
                 name, nbytes, raw = parts
                 current.memory[name] = Value(
                     int(nbytes) * 8, bytes.fromhex(raw)
+                )
+
+            elif kind == 'F' and len(parts) >= 3:
+                name, exists_str, nbytes_str = parts[0], parts[1], parts[2]
+                raw = parts[3] if len(parts) > 3 else ''
+                current.files[name] = FileValue(
+                    exists=int(exists_str) == 1,
+                    raw=bytes.fromhex(raw) if raw else b'',
                 )
 
             elif kind == 'R' and len(parts) == 3:

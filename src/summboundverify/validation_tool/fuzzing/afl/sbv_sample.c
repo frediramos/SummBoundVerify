@@ -27,9 +27,14 @@
 
 #include "sbv_sample.h"
 
+#include <errno.h>
+#include <fcntl.h>
 #include <setjmp.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 /* The build redirects the target's exit() here with -Dexit=sbv_exit. This
  * file defines the stand-in, so it must see the name unredirected. */
@@ -37,6 +42,8 @@
 
 #define SBV_MAX_REGIONS 16
 #define SBV_MAX_REGION_LEN 4096
+#define SBV_MAX_FILE_PATHS 16
+#define SBV_MAX_FILE_CONTENT 4096
 #define SBV_MAX_CHUNKS 64
 #define SBV_ARENA_SIZE (1u << 20)
 #define SBV_NAME_LEN 64
@@ -97,6 +104,57 @@ typedef struct {
 
 static region_t g_regions[SBV_MAX_REGIONS];
 static int g_nregions;
+
+/* Tagged file paths ----------------------------------------------------- */
+
+typedef struct {
+    char name[SBV_NAME_LEN];
+    char path[SBV_NAME_LEN];
+} file_path_t;
+
+static file_path_t g_file_paths[SBV_MAX_FILE_PATHS];
+static int g_nfile_paths;
+
+/* File sandbox ---------------------------------------------------------- */
+
+static int g_sandbox_ready;
+
+static void sbv_init_sandbox(void) {
+    char tmpl[] = "/tmp/sbv_sandbox_XXXXXX";
+    char *dir;
+
+    if (g_sandbox_ready)
+        return;
+
+    dir = mkdtemp(tmpl);
+    if (!dir) {
+        fprintf(stderr, "sbv: cannot create sandbox dir\n");
+        return;
+    }
+
+    if (chdir(dir) != 0) {
+        fprintf(stderr, "sbv: cannot chdir to sandbox\n");
+        return;
+    }
+
+    g_sandbox_ready = 1;
+}
+
+static int sbv_path_safe(const char *path) {
+    if (!path || !path[0])
+        return 0;
+    if (path[0] == '/')
+        return 0;
+    if (strstr(path, ".."))
+        return 0;
+    return 1;
+}
+
+static void sbv_cleanup_files(void) {
+    int i;
+    for (i = 0; i < g_nfile_paths; i++)
+        unlink(g_file_paths[i].path);
+}
 
 /* Emitting records ------------------------------------------------------ */
 
@@ -333,6 +391,22 @@ void __mem_addr(char *name, void *addr, size_t len) {
     r->len = len;
 }
 
+void __file_addr(char *name, const char *path) {
+    file_path_t *fp;
+
+    if (g_nfile_paths >= SBV_MAX_FILE_PATHS)
+        return;
+
+    if (!sbv_path_safe(path))
+        return;
+
+    sbv_init_sandbox();
+
+    fp = &g_file_paths[g_nfile_paths++];
+    sbv_strcpy(fp->name, sizeof(fp->name), name);
+    sbv_strcpy(fp->path, sizeof(fp->path), path);
+}
+
 /*
  * Returning an address is different in kind from returning a value.
  *
@@ -351,6 +425,8 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
 
     if (!g_record) {
         g_nregions = 0;
+        sbv_cleanup_files();
+        g_nfile_paths = 0;
         return;
     }
 
@@ -360,6 +436,28 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
         put_hex(g_regions[i].addr, g_regions[i].len);
         putchar('\n');
     }
+
+    for (i = 0; i < g_nfile_paths; i++) {
+        int exists = access(g_file_paths[i].path, F_OK) == 0 ? 1 : 0;
+        int nbytes = 0;
+        unsigned char buf[SBV_MAX_FILE_CONTENT];
+
+        if (exists) {
+            int fd = open(g_file_paths[i].path, O_RDONLY);
+            if (fd >= 0) {
+                int n = read(fd, buf, sizeof(buf));
+                if (n > 0) nbytes = n;
+                close(fd);
+            }
+        }
+
+        printf("F %s %d %d ", g_file_paths[i].name, exists, nbytes);
+        if (nbytes > 0)
+            put_hex(buf, (size_t)nbytes);
+        putchar('\n');
+    }
+
+    sbv_cleanup_files();
 
     if (ret != 0 && bits != 0) {
         unsigned char bytes[sizeof(long double)];
@@ -377,6 +475,7 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
 
     printf("E ok %s\n", test);
     g_nregions = 0;
+    g_nfile_paths = 0;
 }
 
 /* Driver interface ------------------------------------------------------ */
@@ -387,6 +486,7 @@ static void reset(const unsigned char *data, size_t len, int record) {
     g_input_pos = 0;
 
     g_nregions = 0;
+    g_nfile_paths = 0;
     g_record = record;
 
     /* Rewind the arena wholesale: each execution allocates from scratch, and
