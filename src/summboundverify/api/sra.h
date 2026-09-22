@@ -309,13 +309,13 @@ void __mem_free(void *ptr);
 size_t __n_allocd(void *ptr);
 
 /**
- * Throws an exception if the memory pointed to by `ptr` does not have
+ * Throws an exception if the `n` bytes of memory starting at `ptr` do not have
  * read/write permissions.
  *
  * The input `ptr` does not need to be a heap pointer allocated by
  * `__mem_alloc`.
  */
-size_t __allocd(void *ptr);
+size_t __allocd(void *ptr, size_t n);
 
 
 /* ============================================================================
