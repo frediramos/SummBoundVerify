@@ -43,6 +43,10 @@ class ConcreteFuzzGenerator(ValidationGenerator):
     # Fuzzing does not need the symbolic API/type stubs.
     def gen_headers(self, _):
         headers = [
+            "#include <fcntl.h>",
+            "#include <unistd.h>",
+            "#include <sys/types.h>",
+            "",
             define_macro(POINTER_SIZE_MACRO, self.pointersize),
             define_macro(FUEL_MACRO, self.fuel)
         ]

@@ -25,6 +25,7 @@ import re
 import shutil
 import struct
 import subprocess as sp
+import tempfile
 
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -201,7 +202,8 @@ class AflEngine():
         self.constraints = constraints or {}
 
         self.binary = self.testfile.with_suffix('.fuzz')
-        self.workdir = self.testfile.parent / f'{self.testfile.stem}.aflwork'
+        self._tmpdir = tempfile.mkdtemp(prefix=f'{self.testfile.stem}_afl_')
+        self.workdir = Path(self._tmpdir)
 
         self.samples: list[Sample] = []
         self.crashes: list[Path] = []

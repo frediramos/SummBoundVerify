@@ -17,3 +17,5 @@ data:
 len:
   type: size_t
   semantic: scalar
+  scalar:
+    maxvalue: 5

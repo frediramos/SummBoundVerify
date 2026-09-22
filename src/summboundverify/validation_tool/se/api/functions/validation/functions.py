@@ -100,7 +100,7 @@ class get_cnstr(CSummary):
         from ..files.fs import SymbolicFS
 
         fs = self.state.fs
-        if not isinstance(fs, SymbolicFS) or not fs.fds:
+        if not isinstance(fs, SymbolicFS) or not (fs.fds or fs.closed_fds):
             return []
 
         return [fs.to_constraint()]

@@ -106,6 +106,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         self.fnames: FileNames = []
         self.fds: dict[int, FdEntries] = {}
+        self.closed_fds: dict[int, FdEntries] = {}
 
         # Map of object id() values for correct cloning
         self.shared: SharedFiles = {}
@@ -168,6 +169,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         fs.fnames = self._clone_fnames(self.fnames)
         fs.fds = self._clone_fds(self.fds, file_map, entry_map)
+        fs.closed_fds = self._clone_fds(self.closed_fds, file_map, entry_map)
         fs.shared = self._clone_shared(self.shared, file_map)
 
         return fs
@@ -501,7 +503,9 @@ class SymbolicFS(angr.SimStatePlugin):
         char_size = 8
         fd_cases = []
 
-        for fd, fde in self.fds.items():
+        all_fds = {**self.fds, **self.closed_fds}
+
+        for fd, fde in all_fds.items():
             prefix = f"file_fd{fd}"
 
             flags = self.sym_var(f"{prefix}_flags", int_size)
@@ -519,17 +523,18 @@ class SymbolicFS(angr.SimStatePlugin):
                 offset = self.sym_var(f"{prefix}_offset", int_size)
 
                 for i, c in enumerate(entry.file.bytes):
-                    c = self.bvv_char(c)
+                    if isinstance(c, (int, str)):
+                        c = self.bvv_char(c)
                     byte = self.sym_var(f"{prefix}_byte_{i}", char_size)
                     bytes.append(byte == c)
-                
+
                 content = offset == self.bvv_int(entry.offset)
 
                 if bytes:
                     content = claripy.And(content, *bytes)
 
                 content_cases.append((entry.cond, content))
-                
+
             if content_cases:
                 ite = claripy.ite_cases(content_cases, true())
                 cases.append(ite)
@@ -1027,7 +1032,7 @@ class SymbolicFS(angr.SimStatePlugin):
         for entry in self.fds[fd].entries:
             self.unmark_shared(entry.file, fd)
 
-        del self.fds[fd]
+        self.closed_fds[fd] = self.fds.pop(fd)
         return 0
 
     def write_file(self, fd: int | BV, buffer: str | SymbString, count: int | BV) -> int:

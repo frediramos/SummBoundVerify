@@ -1,4 +1,5 @@
 func: concrete.c
+summ: save_data.c
 summname: save_data
 compile: x86
 argspec: argspec.yaml
