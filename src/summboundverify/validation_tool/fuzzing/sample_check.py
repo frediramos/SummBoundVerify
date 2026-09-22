@@ -169,6 +169,43 @@ def _fs_bindings(sample, declared: dict) -> tuple[list, bool]:
     return bindings, content_unchecked
 
 
+def _fd_bindings(sample, declared: dict) -> tuple[list, dict]:
+    """Pin tracked fd observations: flags, mode, offset and content bytes.
+
+    The key in sample.fds is 'fd3', 'fd4', ... matching the symbolic
+    side's 'file_fd3_flags', 'file_fd3_byte_0', etc.
+    """
+    bindings = []
+    values = {}
+
+    for name, fdv in sample.fds.items():
+        prefix = f'file_{name}'
+
+        flags_var = declared.get(f'{prefix}_flags')
+        if flags_var is not None:
+            bindings.append(flags_var == fdv.flags)
+            values[f'{prefix}_flags'] = fdv.flags
+
+        mode_var = declared.get(f'{prefix}_mode')
+        if mode_var is not None:
+            bindings.append(mode_var == fdv.mode)
+            values[f'{prefix}_mode'] = fdv.mode
+
+        offset_var = declared.get(f'{prefix}_offset')
+        if offset_var is not None:
+            bindings.append(offset_var == fdv.offset)
+            values[f'{prefix}_offset'] = fdv.offset
+
+        for index, byte in enumerate(fdv.raw):
+            var = declared.get(f'{prefix}_byte_{index}')
+            if var is None:
+                continue
+            bindings.append(var == byte)
+            values[f'{prefix}_byte_{index}'] = byte
+
+    return bindings, values
+
+
 def check_sample(formula: BoolRef, sample) -> Check:
     """Does the summary admit this sample?"""
     if sample.rejected:
@@ -191,6 +228,9 @@ def check_sample(formula: BoolRef, sample) -> Check:
     outputs = _memory_bindings(sample, declared)
     fs_binds, fs_content_unchecked = _fs_bindings(sample, declared)
     outputs.extend(fs_binds)
+    fd_binds, fd_values = _fd_bindings(sample, declared)
+    outputs.extend(fd_binds)
+    bindings.update(fd_values)
 
     ret = declared.get('Ret')
     pointer_return = getattr(sample, 'ret_is_pointer', False)

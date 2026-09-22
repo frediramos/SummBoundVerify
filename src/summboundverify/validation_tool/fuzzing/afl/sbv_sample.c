@@ -6,6 +6,7 @@
  *   V <name> <index|-> <bits> <off> <len> <hex>   one per drawn input,
  *                                       where off/len locate it on the tape
  *   M <name> <nbytes> <hex>            one per tagged region, contents after
+ *   D <fdN> <flags> <mode> <offset> <nbytes> <hex>  one per tracked fd
  *   R <bits> <is_pointer> <hex>        absent for a void function
  *   E ok <test>                        closes the block and names it
  *
@@ -24,12 +25,16 @@
  */
 
 #undef main
+#undef open
+#undef write
+#undef close
 
 #include "sbv_sample.h"
 
 #include <errno.h>
 #include <fcntl.h>
 #include <setjmp.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -154,6 +159,89 @@ static void sbv_cleanup_files(void) {
     int i;
     for (i = 0; i < g_nfile_paths; i++)
         unlink(g_file_paths[i].path);
+}
+
+/* File descriptor tracking ---------------------------------------------- */
+
+#define SBV_MAX_FD_TRACKS 16
+
+typedef struct {
+    int    fd;
+    char   path[SBV_NAME_LEN];
+    int    flags;
+    int    mode;
+    size_t offset;
+    int    closed;
+} fd_track_t;
+
+static fd_track_t g_fd_tracks[SBV_MAX_FD_TRACKS];
+static int g_nfd_tracks;
+static int g_fd_tracking;
+
+static fd_track_t *fd_track_find(int fd) {
+    int i;
+    for (i = 0; i < g_nfd_tracks; i++)
+        if (g_fd_tracks[i].fd == fd)
+            return &g_fd_tracks[i];
+    return NULL;
+}
+
+int sbv_open(const char *path, int flags, ...) {
+    int fd, mode = 0;
+
+    if (flags & O_CREAT) {
+        va_list ap;
+        va_start(ap, flags);
+        mode = va_arg(ap, int);
+        va_end(ap);
+        fd = open(path, flags, mode);
+    } else {
+        fd = open(path, flags);
+    }
+
+    if (g_fd_tracking && fd >= 0 && g_nfd_tracks < SBV_MAX_FD_TRACKS) {
+        fd_track_t *t = &g_fd_tracks[g_nfd_tracks++];
+        t->fd = fd;
+        if (path)
+            sbv_strcpy(t->path, sizeof(t->path), path);
+        else
+            t->path[0] = '\0';
+        t->flags = flags;
+        t->mode = mode;
+        t->offset = 0;
+        t->closed = 0;
+    }
+
+    return fd;
+}
+
+ssize_t sbv_write(int fd, const void *buf, size_t count) {
+    ssize_t n = write(fd, buf, count);
+
+    if (g_fd_tracking && n > 0) {
+        fd_track_t *t = fd_track_find(fd);
+        if (t)
+            t->offset += (size_t)n;
+    }
+
+    return n;
+}
+
+int sbv_close(int fd) {
+    if (g_fd_tracking) {
+        fd_track_t *t = fd_track_find(fd);
+        if (t)
+            t->closed = 1;
+    }
+
+    return close(fd);
+}
+
+static void sbv_cleanup_fd_files(void) {
+    int i;
+    for (i = 0; i < g_nfd_tracks; i++)
+        if (g_fd_tracks[i].path[0])
+            unlink(g_fd_tracks[i].path);
 }
 
 /* Emitting records ------------------------------------------------------ */
@@ -427,6 +515,8 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
         g_nregions = 0;
         sbv_cleanup_files();
         g_nfile_paths = 0;
+        sbv_cleanup_fd_files();
+        g_nfd_tracks = 0;
         return;
     }
 
@@ -459,6 +549,33 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
 
     sbv_cleanup_files();
 
+    for (i = 0; i < g_nfd_tracks; i++) {
+        int symfd = 3 + i;
+        int nbytes = 0;
+        unsigned char buf[SBV_MAX_FILE_CONTENT];
+
+        if (g_fd_tracks[i].path[0]) {
+            int rfd = open(g_fd_tracks[i].path, O_RDONLY);
+            if (rfd >= 0) {
+                int n = read(rfd, buf, sizeof(buf));
+                if (n > 0) nbytes = n;
+                close(rfd);
+            }
+        }
+
+        printf("D fd%d %d %d %lu %d ",
+               symfd,
+               g_fd_tracks[i].flags,
+               g_fd_tracks[i].mode,
+               (unsigned long)g_fd_tracks[i].offset,
+               nbytes);
+        if (nbytes > 0)
+            put_hex(buf, (size_t)nbytes);
+        putchar('\n');
+    }
+
+    sbv_cleanup_fd_files();
+
     if (ret != 0 && bits != 0) {
         unsigned char bytes[sizeof(long double)];
         size_t nbytes = (bits + 7) / 8;
@@ -476,6 +593,7 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
     printf("E ok %s\n", test);
     g_nregions = 0;
     g_nfile_paths = 0;
+    g_nfd_tracks = 0;
 }
 
 /* Driver interface ------------------------------------------------------ */
@@ -487,6 +605,8 @@ static void reset(const unsigned char *data, size_t len, int record) {
 
     g_nregions = 0;
     g_nfile_paths = 0;
+    g_nfd_tracks = 0;
+    g_fd_tracking = 1;
     g_record = record;
 
     /* Rewind the arena wholesale: each execution allocates from scratch, and

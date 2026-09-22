@@ -24,6 +24,9 @@
  */
 
 #undef main
+#undef open
+#undef write
+#undef close
 
 /* The driver owns the real exit(), not the target's stand-in. */
 #undef exit

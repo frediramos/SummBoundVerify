@@ -28,6 +28,7 @@
 #define SBV_SAMPLE_H
 
 #include <stddef.h>
+#include <sys/types.h>
 
 /* Widest value a drawn scalar can be handed back as. Pointer-sized, matching
  * `symbolic` in the stub prelude, so an argument declared in the generated
@@ -153,6 +154,18 @@ void __file_addr(char *name, const char *path);
  * checked the same way -- see the note in sbv_sample.c.
  */
 void sbv_record(char *test, void *ret, size_t bits, int is_pointer);
+
+/* File descriptor interception ------------------------------------------ */
+
+/*
+ * Wrappers around open/write/close that track fd activity during a test.
+ *
+ * The build redirects the target's calls here with -Dopen=sbv_open etc.
+ * sbv_sample.c and driver.c #undef these to reach the real libc versions.
+ */
+int sbv_open(const char *path, int flags, ...);
+ssize_t sbv_write(int fd, const void *buf, size_t count);
+int sbv_close(int fd);
 
 /* Driver interface ------------------------------------------------------ */
 

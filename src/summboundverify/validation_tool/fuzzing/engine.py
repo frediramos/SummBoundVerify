@@ -134,6 +134,24 @@ class FileValue:
 
 
 @dataclass
+class FdValue:
+    """One tracked fd's post-call state: flags, mode, offset, content."""
+
+    flags: int
+    mode: int
+    offset: int
+    raw: bytes
+
+    def as_dict(self) -> dict:
+        return {
+            'flags': self.flags,
+            'mode': self.mode,
+            'offset': self.offset,
+            'bytes': self.raw.hex(),
+        }
+
+
+@dataclass
 class Sample:
     """What one execution of one test did.
 
@@ -149,6 +167,7 @@ class Sample:
     inputs: dict[str, Value] = field(default_factory=dict)
     memory: dict[str, Value] = field(default_factory=dict)
     files: dict[str, FileValue] = field(default_factory=dict)
+    fds: dict[str, FdValue] = field(default_factory=dict)
     ret: Value | None = None
 
     # An address, rather than a value. The number is meaningless across runs,
@@ -163,6 +182,7 @@ class Sample:
             'inputs': {k: v.as_dict() for k, v in self.inputs.items()},
             'memory': {k: v.as_dict() for k, v in self.memory.items()},
             'files': {k: v.as_dict() for k, v in self.files.items()},
+            'fds': {k: v.as_dict() for k, v in self.fds.items()},
             'ret': self.ret.as_dict() if self.ret else None,
             'ret_is_pointer': self.ret_is_pointer,
         }
@@ -230,6 +250,12 @@ class AflEngine():
             # AFL++ would read the dead process as a crash. sbv_exit discards
             # the run instead. sbv_sample.c and driver.c #undef this.
             '-Dexit=sbv_exit',
+
+            # Intercept file operations so the harness can track which fds
+            # were opened, written to and closed during the test.
+            '-Dopen=sbv_open',
+            '-Dwrite=sbv_write',
+            '-Dclose=sbv_close',
 
             '-Wno-int-conversion',
             '-Wno-unused-variable',
@@ -491,6 +517,17 @@ class AflEngine():
                 raw = parts[3] if len(parts) > 3 else ''
                 current.files[name] = FileValue(
                     exists=int(exists_str) == 1,
+                    raw=bytes.fromhex(raw) if raw else b'',
+                )
+
+            elif kind == 'D' and len(parts) >= 5:
+                name = parts[0]
+                flags_str, mode_str, offset_str, nbytes_str = parts[1:5]
+                raw = parts[5] if len(parts) > 5 else ''
+                current.fds[name] = FdValue(
+                    flags=int(flags_str),
+                    mode=int(mode_str),
+                    offset=int(offset_str),
                     raw=bytes.fromhex(raw) if raw else b'',
                 )
 
