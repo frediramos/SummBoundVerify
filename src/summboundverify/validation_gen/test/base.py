@@ -165,13 +165,14 @@ class TestGen(ABC):
             setup.append(file_create(fname_var))
 
             if ftype == 'descriptor':
-                # int <name> = __file_open(fname, "w")
-                setup.append(file_open(name, fname_var))
+                flags = "w+" if data_spec else "w"
+                setup.append(file_open(name, fname_var, flags))
                 fd_var = name
             else:
                 # FILE* pointer: use a temp fd, then convert
                 fd_var = f"__fd_{name}"
-                setup.append(file_open(fd_var, fname_var))
+                flags = "w+" if data_spec else "w"
+                setup.append(file_open(fd_var, fname_var, flags))
 
             # Optional initial data
             if data_spec:

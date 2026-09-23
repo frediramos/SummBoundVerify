@@ -22,9 +22,13 @@ REQUIRED_FUNCTIONS = [
     "check_implications",
     "print_counterexamples",
     "mem_addr",
-    "file_addr",
     "sym_var_array",
-    "sym_var_named"
+    "sym_var_named",
+    "file_addr",
+    "file_create",
+    "file_open",
+    "file_write",
+    "file_set_offset",
 ]
 
 CURRENT = current_dir(__file__)

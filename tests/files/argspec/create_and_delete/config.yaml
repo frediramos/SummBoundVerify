@@ -1,0 +1,5 @@
+func: concrete.c
+summ: create_and_delete.c
+summname: create_and_delete
+compile: x86
+argspec: argspec.yaml

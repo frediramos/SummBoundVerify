@@ -1,0 +1,5 @@
+func: concrete.c
+summ: read_from_fd.c
+summname: read_from_fd
+compile: x86
+argspec: argspec.yaml
