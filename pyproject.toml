@@ -13,8 +13,8 @@ summboundverify = [
     "api/*.c",
     "api/*.h",
     "utils/fake_libc_include/**/*",
-    "validation_gen/concrete/*.c",
-    "validation_gen/concrete/*.h",
+    "validation_tool/fuzzing/afl/*.c",
+    "validation_tool/fuzzing/afl/*.h",
 ]
 
 [project]
