@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from argparse import Namespace
 
+from summboundverify.argspec import load_argspec, extract_constraints
 from summboundverify.validation_gen import (
     Arch,
     CCompiler,
@@ -48,7 +49,6 @@ def generate_test(args: Namespace, outputfile: Path | None = None) -> Path:
             "specified in order to call the summary"
         )
 
-    from summboundverify.argspec import load_argspec, extract_constraints
     argspec = load_argspec(getattr(args, 'argspec', None))
     constraints = extract_constraints(argspec)
 

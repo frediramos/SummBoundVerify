@@ -1,3 +1,4 @@
+import yaml
 import logging
 
 from .options import Options
@@ -11,12 +12,6 @@ def parse_config_file(conf: str) -> dict:
     Returns a dict whose keys are Option names and whose values are
     the parsed configuration values.
     """
-    try:
-        import yaml
-    except ImportError:
-        raise ImportError(
-            "PyYAML is required for config file support: pip install pyyaml"
-        )
 
     with open(conf) as f:
         data = yaml.safe_load(f)

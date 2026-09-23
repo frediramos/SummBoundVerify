@@ -7,8 +7,7 @@ how to size symbolic arrays, and how to bound numeric values.
 See ``ARGSPEC.md`` at the repository root for the full schema reference.
 """
 
-from __future__ import annotations
-
+import yaml
 from pathlib import Path
 
 VALID_SEMANTICS = ('scalar', 'memory', 'file')
@@ -21,8 +20,8 @@ _ALLOWED_TOP_KEYS = _GENERIC_KEYS | _SEMANTIC_KEYS
 
 
 def load_argspec(path: str | Path | None) -> dict:
-    """Load an argspec YAML file and return a validated dict keyed by arg name.
-
+    """
+    Load an argspec YAML file and return a validated dict keyed by arg name.
     Returns an empty dict when *path* is None or the file is absent.
     """
     if path is None:
@@ -31,13 +30,6 @@ def load_argspec(path: str | Path | None) -> dict:
     path = Path(path)
     if not path.exists():
         return {}
-
-    try:
-        import yaml
-    except ImportError:
-        raise ImportError(
-            "PyYAML is required for --argspec support: pip install pyyaml"
-        )
 
     with open(path) as f:
         data = yaml.safe_load(f)
