@@ -41,6 +41,8 @@ class file_create(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr, include_null=True)
         status = self.fs.create_file(filename)
+        print(self.fs)
+        print(status)
         return status
 
 
@@ -63,6 +65,8 @@ class file_open(FileSummary):
         filename = self.load_string(filename_addr, include_null=True)
         flags = self.load_string(flags_addr)
         status = self.fs.open_file(filename, flags)
+        print(self.fs)
+        print(status)
         return status
 
 

@@ -42,7 +42,8 @@ class SymbString:
                 )
             else:
                 raise TypeError(
-                    f"Invalid character type: {type(char).__name__}")
+                    f"Invalid character type: {type(char).__name__}"
+                )
 
         return ''.join(chars)
 
@@ -51,6 +52,16 @@ class SymbString:
             self.__str__()
         except:
             return True
+        return False
+
+    def is_empty(self):
+        if len(self._string) == 0:
+            return True
+
+        c = self._string[0]
+        if isinstance(c, str) and c == '\0':
+            return True
+
         return False
 
     def __repr__(self) -> str:

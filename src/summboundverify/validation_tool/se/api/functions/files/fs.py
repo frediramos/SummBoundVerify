@@ -6,9 +6,9 @@ from textwrap import indent
 from typing import Iterator, Literal
 from dataclasses import dataclass, field
 
-from cle.backends.externs.simdata.io_file import io_file_data_for_arch
-from claripy import BVV, true, false
 from claripy.ast import Bool, BV
+from claripy import BVV, BoolV, true, false
+from cle.backends.externs.simdata.io_file import io_file_data_for_arch
 
 from angr.storage.file import Flags
 
@@ -44,6 +44,7 @@ type ConcreteNameEntry = dict[str, bool]
 @dataclass(frozen=True, slots=True)
 class SymbolicNameEntry:
     filename: SymbString
+    cond: Bool
     exists: bool
 
 
@@ -192,7 +193,7 @@ class SymbolicFS(angr.SimStatePlugin):
         return entry.copy()
 
     def _clone_symbolic_fname_entry(self, entry: SymbolicNameEntry) -> SymbolicNameEntry:
-        return SymbolicNameEntry(copy(entry.filename), entry.exists)
+        return SymbolicNameEntry(copy(entry.filename), entry.cond, entry.exists)
 
     # File Descriptors
 
@@ -396,12 +397,13 @@ class SymbolicFS(angr.SimStatePlugin):
         """Return the possible name/existence pairs represented by `entry`."""
         if isinstance(entry, dict):
             fnames = entry.items()
+            fnames = [(k, v, true()) for k, v in entry.items()]
         else:
             assert isinstance(entry, SymbolicNameEntry)
-            fnames = [(entry.filename, entry.exists)]
+            fnames = [(entry.filename, entry.exists, entry.cond)]
         return fnames
 
-    def possible_fnames(self, filename: str | SymbString) -> list[str | SymbString]:
+    def possible_fnames(self, filename: str | SymbString) -> list[tuple[str | SymbString, Bool]]:
         """
         Return file names that may refer to `filename`.
 
@@ -413,8 +415,8 @@ class SymbolicFS(angr.SimStatePlugin):
         for f in reversed(self.fnames):
             names = self.fname_entry_to_list(f)
             fnames.extend(
-                name
-                for (name, exists) in names
+                (name, cond)
+                for (name, exists, cond) in names
                 if exists and self.is_sat(eq_strings(name, filename))
             )
 
@@ -557,6 +559,31 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return constraint
 
+    def empty_string(self, s: SymbString) -> tuple[bool, bool]:
+        """
+        Returns a tuple describing if a symb string is empty
+        ("for sure", "can be")
+        """
+        if s.is_empty():
+            return True, True
+
+        if self.is_certain(s[0] == '\0'):
+            return True, True
+
+        if self.is_sat(s[0] == '\0'):
+            return False, True
+
+        return False, False
+
+    def not_empty(self, s: SymbString) -> Bool:
+        """Not empty constraint"""
+        empty = s.is_empty()
+        if empty:
+            return BoolV(empty)
+        c = s[0]
+        assert isinstance(c, BV)
+        return c != '\0'
+
     def file_exists_constraint(self, filename: str | SymbString) -> Bool:
         """
         Return a constraint indicating whether `filename` exists.
@@ -568,8 +595,11 @@ class SymbolicFS(angr.SimStatePlugin):
         for entry in reversed(self.fnames):
             fnames = self.fname_entry_to_list(entry)
 
-            for name, exists in fnames:
-                cond = eq_strings(filename, name)
+            for name, exists, empty in fnames:
+                cond = claripy.And(
+                    eq_strings(filename, name),
+                    empty
+                )
 
                 if not exists:
                     if self.is_certain(cond):
@@ -590,54 +620,6 @@ class SymbolicFS(angr.SimStatePlugin):
 
         condition = claripy.And(eq, neq)
         return condition
-
-    def named_file_constraints(self, tags: list) -> list:
-        """Lift file state for tagged paths into name-keyed constraints.
-
-        Each tag is (name, path) where path is a str or SymbString.
-        Produces ``file_{name}_exists`` (8-bit, 1 or 0) and
-        ``file_{name}_byte_{i}`` (8-bit) per content byte of an open fd.
-        """
-        char_size = 8
-        cnstrs = []
-
-        for name, path in tags:
-            prefix = f"file_{name}"
-
-            exists_var = self.sym_var(f"{prefix}_exists", char_size)
-            exists_result = self.exists_file(path)
-            if isinstance(exists_result, int):
-                cnstrs.append(exists_var == BVV(exists_result, char_size))
-            else:
-                cnstrs.append(exists_var == claripy.Extract(
-                    char_size - 1, 0, exists_result
-                ))
-
-            for fd, fde in self.fds.items():
-                if not self.is_sat(eq_strings(fde.open_name, path)):
-                    continue
-
-                content_cases = []
-                for entry in fde.entries:
-                    byte_cnstrs = []
-                    for i, c in enumerate(entry.file.bytes):
-                        byte_var = self.sym_var(
-                            f"{prefix}_byte_{i}", char_size
-                        )
-                        byte_cnstrs.append(byte_var == self.bvv_char(c))
-
-                    content = (
-                        claripy.And(*byte_cnstrs) if byte_cnstrs
-                        else true()
-                    )
-                    content_cases.append((entry.cond, content))
-
-                if content_cases:
-                    ite = claripy.ite_cases(content_cases, true())
-                    cnstrs.append(ite)
-                break
-
-        return cnstrs
 
     def file_not_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating that `filename` does not exist."""
@@ -737,6 +719,9 @@ class SymbolicFS(angr.SimStatePlugin):
             entry = {filename: True}
             self.fnames.append(entry)
 
+        if not filename:
+            return -1
+
         if self.is_fnames_emtpy():
             append_new()
             return 1
@@ -760,23 +745,36 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return -1
 
-    def create_symbolic_file(self, filename: SymbString) -> int:
+    def create_symbolic_file(self, filename: SymbString) -> int | BV:
         """Create a symbolic file."""
 
-        def append_new():
-            entry = SymbolicNameEntry(filename, True)
+        def append_new(can_be_empty: bool):
+            if not can_be_empty:
+                cond = true()
+            else:
+                cond = self.not_empty(filename)
+            entry = SymbolicNameEntry(filename, cond, True)
             self.fnames.append(entry)
 
+            if can_be_empty:
+                ret = claripy.If(cond, self.bvv_int(1), self.bvv_int(-1))
+            else:
+                ret = 1
+            return ret
+
+        forsure, canbe = self.empty_string(filename)
+
+        if forsure:
+            return -1
+
         if self.is_fnames_emtpy():
-            append_new()
-            return 1
+            return append_new(canbe)
 
         cnstr = self.file_not_exists_constraint(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
-            append_new()
-            return 1
+            return append_new(canbe)
 
         return -1
 
@@ -806,12 +804,26 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return -1
 
-    def delete_symbolic(self, filename: SymbString) -> int:
+    def delete_symbolic(self, filename: SymbString) -> int | BV:
         """Delete a symbolic file and return 1 on success or -1 on failure."""
 
-        def append_new():
-            entry = SymbolicNameEntry(filename, False)
+        def append_new(can_be_empty: bool):
+            if not can_be_empty:
+                cond = true()
+            else:
+                cond = self.not_empty(filename)
+            entry = SymbolicNameEntry(filename, cond, True)
             self.fnames.append(entry)
+
+            if can_be_empty:
+                ret = claripy.If(cond, self.bvv_int(1), self.bvv_int(-1))
+            else:
+                ret = 1
+            return ret
+
+        forsure, canbe = self.empty_string(filename)
+        if forsure:
+            return -1
 
         if self.is_fnames_emtpy():
             return -1
@@ -820,8 +832,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
-            append_new()
-            return 1
+            return append_new(canbe)
 
         return -1
 
@@ -901,8 +912,11 @@ class SymbolicFS(angr.SimStatePlugin):
                     entries.append(entry)
                     update_ongoing(cond)
 
-            for name in fnames:
-                cond = eq_strings(filename, name)
+            for name, empty in fnames:
+                cond = claripy.And(
+                    eq_strings(filename, name),
+                    empty
+                )
 
                 if can_add(cond):
                     entry = FdEntry(name, cond, 0, File())
@@ -920,7 +934,7 @@ class SymbolicFS(angr.SimStatePlugin):
     # FS Functions
     # ---------------------------------------------------------------------------
 
-    def create_file(self, filename: str | SymbString) -> int:
+    def create_file(self, filename: str | SymbString) -> int | BV:
         """
         Create a file and return its file descriptor.
 
@@ -938,7 +952,7 @@ class SymbolicFS(angr.SimStatePlugin):
         assert isinstance(filename, SymbString)
         return self.create_symbolic_file(filename)
 
-    def delete_file(self, filename: str | SymbString) -> int:
+    def delete_file(self, filename: str | SymbString) -> int | BV:
         """
         Delete a file.
 
@@ -995,6 +1009,9 @@ class SymbolicFS(angr.SimStatePlugin):
         if self.is_fnames_emtpy():
             return -1
 
+        if not filename:
+            return -1
+
         if self.is_concrete_fname(self.current_fname):
             assert isinstance(self.current_fname, dict)
             if filename in self.current_fname:
@@ -1012,7 +1029,7 @@ class SymbolicFS(angr.SimStatePlugin):
         ret = self.create_symbolic_fd(filename, flags)
         return ret
 
-    def open_file(self, filename: str | SymbString, flag_string: str | SymbString) -> int:
+    def open_file(self, filename: str | SymbString, flag_string: str | SymbString) -> int | BV:
         """
         Open a file and returns a concrete descriptor.
 
@@ -1024,7 +1041,16 @@ class SymbolicFS(angr.SimStatePlugin):
         if isinstance(filename, str) or not filename.is_symbolic():
             return self.open_concrete(str(filename), flags)
 
-        return self.open_symbolic(filename, flags)
+        forsure, canbe = self.empty_string(filename)
+
+        if forsure:
+            return -1
+
+        fd = self.open_symbolic(filename, flags)
+        cond = self.not_empty(filename)
+
+        ret = claripy.If(cond, fd, self.bvv_int(-1)) if canbe else fd
+        return ret
 
     def close_file(self, fd: int | BV) -> int:
         """
