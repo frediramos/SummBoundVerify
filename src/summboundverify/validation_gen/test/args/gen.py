@@ -40,11 +40,13 @@ class SymbolicArgGen:
         null_bytes: list[Any] | None = None,
         max_macro: Any = None,
         max_args: list[Any] | None = None,
+        skip: set[str] | None = None,
     ) -> None:
         self._args = args or []
 
         self._max_macro = max_macro
         self._max_args = max_args or []
+        self._skip = skip or set()
 
         self._size_values = self._iterator(size_macro)
         self._null_values = self._iterator(null_bytes)
@@ -108,6 +110,10 @@ class SymbolicArgGen:
 
             argname = visitor.argname
             assert argname is not None
+
+            if argname in self._skip:
+                self._call_args.append(argname)
+                continue
 
             if default_value == "&":
                 argname = f"&{argname}"

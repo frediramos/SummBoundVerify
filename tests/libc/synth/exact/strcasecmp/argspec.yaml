@@ -1,0 +1,13 @@
+s1:
+  type: char*
+  semantic: memory
+  memory:
+    type: read
+    size: 3
+
+s2:
+  type: char*
+  semantic: memory
+  memory:
+    type: read
+    size: 3

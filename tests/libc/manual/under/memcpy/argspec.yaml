@@ -1,0 +1,19 @@
+dest:
+  type: void*
+  semantic: memory
+  memory:
+    type: write
+    size: 5
+
+src:
+  type: void*
+  semantic: memory
+  memory:
+    type: read
+    size: 5
+
+n:
+  type: size_t
+  semantic: scalar
+  scalar:
+    maxvalue: 5

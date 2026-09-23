@@ -1,0 +1,4 @@
+func: concrete.c
+summname: tolower
+compile: x86
+argspec: argspec.yaml

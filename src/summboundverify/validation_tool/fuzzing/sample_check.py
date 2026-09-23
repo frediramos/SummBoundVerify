@@ -72,7 +72,7 @@ def is_input(name: str) -> bool:
     `Ret` and the `mem_*` bytes are outputs: they are what the summary claims
     about a run, not what the run was given.
     """
-    return name != 'Ret' and not name.startswith('mem_')
+    return name != 'Ret' and not name.startswith('mem_') and not name.startswith('file_')
 
 
 def _bind(var: ExprRef, value: int, bits: int, name: str) -> BoolRef | None:
@@ -139,6 +139,73 @@ def _memory_bindings(sample, declared: dict) -> list:
     return bindings
 
 
+def _fs_bindings(sample, declared: dict) -> tuple[list, bool]:
+    """Pin the tagged file observations: existence and content bytes.
+
+    Returns (bindings, content_unchecked).  ``content_unchecked`` is True
+    when the concrete side recorded file content but the formula declares
+    no ``file_{name}_byte_*`` variables for it — typically because the
+    summary closed the fd before ``get_cnstr``.
+    """
+    bindings = []
+    content_unchecked = False
+
+    for name, fv in sample.files.items():
+        exists_var = declared.get(f'file_{name}_exists')
+        if exists_var is not None:
+            bindings.append(exists_var == (1 if fv.exists else 0))
+
+        if fv.raw:
+            found_any = False
+            for index, byte in enumerate(fv.raw):
+                var = declared.get(f'file_{name}_byte_{index}')
+                if var is None:
+                    continue
+                bindings.append(var == byte)
+                found_any = True
+            if not found_any:
+                content_unchecked = True
+
+    return bindings, content_unchecked
+
+
+def _fd_bindings(sample, declared: dict) -> tuple[list, dict]:
+    """Pin tracked fd observations: flags, mode, offset and content bytes.
+
+    The key in sample.fds is 'fd3', 'fd4', ... matching the symbolic
+    side's 'file_fd3_flags', 'file_fd3_byte_0', etc.
+    """
+    bindings = []
+    values = {}
+
+    for name, fdv in sample.fds.items():
+        prefix = f'file_{name}'
+
+        flags_var = declared.get(f'{prefix}_flags')
+        if flags_var is not None:
+            bindings.append(flags_var == fdv.flags)
+            values[f'{prefix}_flags'] = fdv.flags
+
+        mode_var = declared.get(f'{prefix}_mode')
+        if mode_var is not None:
+            bindings.append(mode_var == fdv.mode)
+            values[f'{prefix}_mode'] = fdv.mode
+
+        offset_var = declared.get(f'{prefix}_offset')
+        if offset_var is not None:
+            bindings.append(offset_var == fdv.offset)
+            values[f'{prefix}_offset'] = fdv.offset
+
+        for index, byte in enumerate(fdv.raw):
+            var = declared.get(f'{prefix}_byte_{index}')
+            if var is None:
+                continue
+            bindings.append(var == byte)
+            values[f'{prefix}_byte_{index}'] = byte
+
+    return bindings, values
+
+
 def check_sample(formula: BoolRef, sample) -> Check:
     """Does the summary admit this sample?"""
     if sample.rejected:
@@ -159,6 +226,11 @@ def check_sample(formula: BoolRef, sample) -> Check:
 
     # Can it produce what the function produced?
     outputs = _memory_bindings(sample, declared)
+    fs_binds, fs_content_unchecked = _fs_bindings(sample, declared)
+    outputs.extend(fs_binds)
+    fd_binds, fd_values = _fd_bindings(sample, declared)
+    outputs.extend(fd_binds)
+    bindings.update(fd_values)
 
     ret = declared.get('Ret')
     pointer_return = getattr(sample, 'ret_is_pointer', False)
@@ -170,16 +242,20 @@ def check_sample(formula: BoolRef, sample) -> Check:
     if not outputs:
         solver.pop()
 
-        # A pointer return with nothing tagged leaves nothing comparable, and
-        # saying so is the whole point: reporting a pass here would claim the
-        # summary survived a check that never happened.
-        reason = (
-            "the function returns an address, which means nothing across "
-            "runs, and no memory was tagged to compare instead -- run with "
-            "-memory to check what it wrote"
-            if pointer_return else
-            "the summary constrains nothing observable for this input"
-        )
+        if fs_content_unchecked:
+            reason = (
+                "a tagged file has content on disk but the summary's "
+                "formula declares no byte variables for it -- the file "
+                "was probably closed before get_cnstr ran"
+            )
+        elif pointer_return:
+            reason = (
+                "the function returns an address, which means nothing across "
+                "runs, and no memory was tagged to compare instead -- use an "
+                "argspec with 'semantic: memory' to check what it wrote"
+            )
+        else:
+            reason = "the summary constrains nothing observable for this input"
 
         return Check(Verdict.skipped, sample, reason, bindings)
 

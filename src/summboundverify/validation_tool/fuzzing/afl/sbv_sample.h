@@ -28,6 +28,7 @@
 #define SBV_SAMPLE_H
 
 #include <stddef.h>
+#include <sys/types.h>
 
 /* Widest value a drawn scalar can be handed back as. Pointer-sized, matching
  * `symbolic` in the stub prelude, so an argument declared in the generated
@@ -135,6 +136,15 @@ void allocd(void *ptr, size_t size);
 void __mem_addr(char *name, void *addr, size_t len);
 
 /*
+ * Tag a file path for post-call observation.
+ *
+ * After the function under test returns, the file at `path` is checked for
+ * existence and its contents are recorded. `name` is the join key matching
+ * the symbolic side's `file_{name}_exists` and `file_{name}_byte_{i}`.
+ */
+void __file_addr(char *name, const char *path);
+
+/*
  * Close the record for one test: the return value at `ret` (`bits` wide, or
  * 0/NULL for a void function) plus the current contents of every region
  * registered since the last record.
@@ -144,6 +154,18 @@ void __mem_addr(char *name, void *addr, size_t len);
  * checked the same way -- see the note in sbv_sample.c.
  */
 void sbv_record(char *test, void *ret, size_t bits, int is_pointer);
+
+/* File descriptor interception ------------------------------------------ */
+
+/*
+ * Wrappers around open/write/close that track fd activity during a test.
+ *
+ * The build redirects the target's calls here with -Dopen=sbv_open etc.
+ * sbv_sample.c and driver.c #undef these to reach the real libc versions.
+ */
+int sbv_open(const char *path, int flags, ...);
+ssize_t sbv_write(int fd, const void *buf, size_t count);
+int sbv_close(int fd);
 
 /* Driver interface ------------------------------------------------------ */
 

@@ -76,6 +76,7 @@ void *__mem_alloc(size_t nbytes) { return 0; }
 void __assert(cnstr_t cnstr) { }
 void __assume(cnstr_t cnstr) { }
 void __cond_write(void *ptr, symbolic c, cnstr_t pc) { }
+void __file_addr(char *name, const char *path) { }
 void __halt_all(state_t state) { }
 void __mem_addr(char *name, void *addr, size_t n) { }
 void __mem_free(void *ptr) { }
@@ -87,7 +88,8 @@ void __store_cnstr(char *name, cnstr_t constraint) { }
 
 #define POINTER_SIZE 5
 #define FUEL 5
-#define ARRAY_SIZE_1 3
+#define ARRAY_SIZE_1_VAR1 3
+#define ARRAY_SIZE_1_VAR2 3
 
 int concrete_strcasecmp(char *s1, char *s2)
 {
@@ -108,20 +110,20 @@ int concrete_strcasecmp(char *s1, char *s2)
 
 void test_1()
 {
-  char s1[ARRAY_SIZE_1];
-  for (int s1_idx_1 = 0; s1_idx_1 < ARRAY_SIZE_1; s1_idx_1++)
+  char s1[ARRAY_SIZE_1_VAR1];
+  for (int s1_idx_1 = 0; s1_idx_1 < ARRAY_SIZE_1_VAR1; s1_idx_1++)
   {
     s1[s1_idx_1] = __sym_var_array("s1", s1_idx_1, sizeof(char) * 8);
   }
 
-  s1[ARRAY_SIZE_1 - 1] = '\0';
-  char s2[ARRAY_SIZE_1];
-  for (int s2_idx_1 = 0; s2_idx_1 < ARRAY_SIZE_1; s2_idx_1++)
+  s1[ARRAY_SIZE_1_VAR1 - 1] = '\0';
+  char s2[ARRAY_SIZE_1_VAR2];
+  for (int s2_idx_1 = 0; s2_idx_1 < ARRAY_SIZE_1_VAR2; s2_idx_1++)
   {
     s2[s2_idx_1] = __sym_var_array("s2", s2_idx_1, sizeof(char) * 8);
   }
 
-  s2[ARRAY_SIZE_1 - 1] = '\0';
+  s2[ARRAY_SIZE_1_VAR2 - 1] = '\0';
   state_t initial_state = __save_current_state();
   int ret1 = concrete_strcasecmp(s1, s2);
   cnstr_t cnstr1 = __get_cnstr(&ret1, sizeof(int) * 8);

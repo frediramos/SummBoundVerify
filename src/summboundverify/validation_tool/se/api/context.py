@@ -61,6 +61,12 @@ class ValidationCTX:
     MEMORY_TRIPLES: list = field(default_factory=list)
     MEMORY_SYM_VARS: OrderedDict = field(default_factory=OrderedDict)
 
+    # Files
+    # ------------------------------------------------------
+    # File paths tagged for post-call observation
+    # List of tuples: (name, path_string)
+    FILE_TAGS: list = field(default_factory=list)
+
     # Validation results
     # ------------------------------------------------------
     # Results of the implications

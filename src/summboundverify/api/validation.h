@@ -32,6 +32,16 @@ void __store_cnstr(char *name, cnstr_t constraint);
 void __mem_addr(char *name, void *addr, size_t n);
 
 /**
+ * Tags a file path for post-call observation.
+ *
+ * After the function under test executes, the file at `path` is checked
+ * for existence and its contents are compared against the summary's
+ * constraints. `name` is the join key used to match symbolic and
+ * concrete observations.
+ */
+void __file_addr(char *name, const char *path);
+
+/**
  * Checks the correctness implications for the previously stored constraints
  * associated with the keys `summ` and `cncrt`.
  *

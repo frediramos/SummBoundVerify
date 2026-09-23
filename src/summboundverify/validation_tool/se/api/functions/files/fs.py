@@ -106,6 +106,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         self.fnames: FileNames = []
         self.fds: dict[int, FdEntries] = {}
+        self.closed_fds: dict[int, FdEntries] = {}
 
         # Map of object id() values for correct cloning
         self.shared: SharedFiles = {}
@@ -168,6 +169,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         fs.fnames = self._clone_fnames(self.fnames)
         fs.fds = self._clone_fds(self.fds, file_map, entry_map)
+        fs.closed_fds = self._clone_fds(self.closed_fds, file_map, entry_map)
         fs.shared = self._clone_shared(self.shared, file_map)
 
         return fs
@@ -501,7 +503,9 @@ class SymbolicFS(angr.SimStatePlugin):
         char_size = 8
         fd_cases = []
 
-        for fd, fde in self.fds.items():
+        all_fds = {**self.fds, **self.closed_fds}
+
+        for fd, fde in all_fds.items():
             prefix = f"file_fd{fd}"
 
             flags = self.sym_var(f"{prefix}_flags", int_size)
@@ -582,6 +586,54 @@ class SymbolicFS(angr.SimStatePlugin):
 
         condition = claripy.And(eq, neq)
         return condition
+
+    def named_file_constraints(self, tags: list) -> list:
+        """Lift file state for tagged paths into name-keyed constraints.
+
+        Each tag is (name, path) where path is a str or SymbString.
+        Produces ``file_{name}_exists`` (8-bit, 1 or 0) and
+        ``file_{name}_byte_{i}`` (8-bit) per content byte of an open fd.
+        """
+        char_size = 8
+        cnstrs = []
+
+        for name, path in tags:
+            prefix = f"file_{name}"
+
+            exists_var = self.sym_var(f"{prefix}_exists", char_size)
+            exists_result = self.exists_file(path)
+            if isinstance(exists_result, int):
+                cnstrs.append(exists_var == BVV(exists_result, char_size))
+            else:
+                cnstrs.append(exists_var == claripy.Extract(
+                    char_size - 1, 0, exists_result
+                ))
+
+            for fd, fde in self.fds.items():
+                if not self.is_sat(eq_strings(fde.open_name, path)):
+                    continue
+
+                content_cases = []
+                for entry in fde.entries:
+                    byte_cnstrs = []
+                    for i, c in enumerate(entry.file.bytes):
+                        byte_var = self.sym_var(
+                            f"{prefix}_byte_{i}", char_size
+                        )
+                        byte_cnstrs.append(byte_var == self.bvv_char(c))
+
+                    content = (
+                        claripy.And(*byte_cnstrs) if byte_cnstrs
+                        else true()
+                    )
+                    content_cases.append((entry.cond, content))
+
+                if content_cases:
+                    ite = claripy.ite_cases(content_cases, true())
+                    cnstrs.append(ite)
+                break
+
+        return cnstrs
 
     def file_not_exists_constraint(self, filename: str | SymbString) -> Bool:
         """Return a constraint indicating that `filename` does not exist."""
@@ -984,7 +1036,7 @@ class SymbolicFS(angr.SimStatePlugin):
         for entry in self.fds[fd].entries:
             self.unmark_shared(entry.file, fd)
 
-        del self.fds[fd]
+        self.closed_fds[fd] = self.fds.pop(fd)
         return 0
 
     def write_file(self, fd: int | BV, buffer: str | SymbString, count: int | BV) -> int:

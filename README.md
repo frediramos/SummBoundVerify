@@ -6,6 +6,7 @@
   <a href="#docker-container">Docker</a> •
   <a href="#examples">Examples</a> •
   <a href="#validation-engines">Engines</a> •
+  <a href="#argspec">Argspec</a> •
   <a href="#documentation">Docs</a> •
   <a href="#license">License</a>
 </p>
@@ -99,7 +100,8 @@ cd strlen && make
 
 ### Relevant files
 
-- `config.txt` - The test configuration;
+- `config.yaml` - The test configuration;
+- `argspec.yaml` — Argument specification (semantic roles and constraints);
 - `strlen.c` — The summary under test;
 - `concrete.c` — The concrete implementation against which the summary is validated.
 
@@ -108,16 +110,26 @@ The `make` target wraps the following tool invocation:
 
 ```sh
 summbv \
-    --arraysize 3 \ 
     -func concrete.c \
     --summname strlen \
     --lib strlen.c \
-    --compile x86
+    --compile x86 \
+    --argspec argspec.yaml
 ``` 
+
+Where `argspec.yaml` contains:
+```yaml
+str:
+  type: char*
+  semantic: memory
+  memory:
+    type: read
+    size: 3
+```
 
 ### Breakdown
 
-- `arraysize 3` — bounds the size of symbolic arrays to 3;
+- `argspec argspec.yaml` — provides the argument specification, including array size bounds;
 - `func concrete.c` — specifies the concrete implementation file;
 - `summname strlen` — selects the summary (function) name to be called;
 - `lib strlen.c` — provides the summary file;
@@ -142,12 +154,12 @@ The `make run` target behaves like `make`, but additionally executes the generat
 Concretely, it invokes the same command as before, with the extra `-run` flag:
 
 ```sh
-summbv 
-    --arraysize 3 \ 
+summbv \
     -func concrete.c \
     --summname strlen \
     --lib strlen.c \
     --compile x86 \
+    --argspec argspec.yaml \
     -run
 ``` 
 
@@ -188,16 +200,39 @@ In this example, the `make` target wraps the following command:
 
 ```sh
 summbv \
-    -memory
-    --func concrete.c \
-    --summ memcpy.c \
-    --maxvalue 5 \
-    --compile x86
+    -func concrete.c \
+    -summ memcpy.c \
+    --compile x86 \
+    --argspec argspec.yaml
+```
+
+Where `argspec.yaml` contains:
+```yaml
+dest:
+  type: void*
+  semantic: memory
+  memory:
+    type: write
+    size: 5
+
+src:
+  type: void*
+  semantic: memory
+  memory:
+    type: read
+    size: 5
+
+n:
+  type: size_t
+  semantic: scalar
+  scalar:
+    maxvalue: 5
 ```
 
 ### Breakdown
-- `memory` - Tells the tool that the memory pointed to by `dest` and `src` is to be considered for evaluation;
-- `maxvalue 5` — bounds the maximum value for symbolic scalar inputs to `5`.
+- `memory.type: write` tells the tool that the memory pointed to by `dest` is to be considered for evaluation;
+- `scalar.maxvalue: 5` bounds the `n` argument to `≤ 5`;
+- `memory.size: 5` sets the symbolic array size for `dest` and `src`.
 
 The generated validation test is available in:
 
@@ -275,9 +310,9 @@ The output indicates:
 A summary can be validated in two ways, selected with `--engine`:
 
 ```sh
-summbv -config config.txt --engine se     # symbolic execution (default)
-summbv -config config.txt --engine fuzz   # fuzzing
-summbv -config config.txt --engine se fuzz # both, side by side
+summbv -config config.yaml --engine se     # symbolic execution (default)
+summbv -config config.yaml --engine fuzz   # fuzzing
+summbv -config config.yaml --engine se fuzz # both, side by side
 ```
 
 **`se`** runs *both* the summary and the concrete implementation under `angr`
@@ -337,6 +372,46 @@ and floating point. The substitution is announced rather than made quietly.
 <br>
 <br>
 
+# Argspec
+
+An **argspec** is a YAML file that describes each function argument's semantic
+role (`scalar`, `memory`, or `file`) and test-generation constraints (array
+size, max value, null bytes, etc.).
+
+It consolidates per-argument configuration that was previously spread across
+CLI flags and config file options.
+
+```yaml
+# argspec.yaml for memcpy(void *dest, void *src, size_t n)
+dest:
+  type: void*
+  semantic: memory
+  memory:
+    type: write
+    size: 5
+
+src:
+  type: void*
+  semantic: memory
+  memory:
+    type: read
+    size: 5
+
+n:
+  type: size_t
+  semantic: scalar
+  scalar:
+    maxvalue: 5
+```
+
+Pass it with `--argspec argspec.yaml` or add `argspec: argspec.yaml` to a config file.
+
+For the full schema reference, including all supported properties and examples,
+see **[ARGSPEC.md](ARGSPEC.md)**.
+
+<br>
+<br>
+
 # Documentation
 To obtain a full description of our test generation tool one can use the flag `-h`
 ```sh
@@ -351,19 +426,7 @@ Given a concrete function for ``strlen`` and a corresponding summary (files ``st
 summbv -summ strlen.c -func concreten.c
 ```
 
-By default, this will generate a file called `test.c` containing the symbolic test where `strlen` is called with a symbolic string of **size 5**. Additionally, instead of the default value **5**, the length of the symbolic string used as input argument can be specified using the `--arraysize` flag:
-
-```sh
-summbv -summ summ_strlen.c -func concrete_strlen.c --arraysize=3
-```
-
-## Generate multiple tests
-To generate a single test file containing multiple executions for different arrays sizes one can also pass an array of values to the `--arraysize` flag:
-
-```sh
-summbv -summ summ_strlen.c -func concrete_strlen.c --arraysize 3 5 7 -compile
-```
-
+By default, this will generate a file called `test.c` containing the symbolic test where `strlen` is called with a symbolic string of **size 5**. The array size for each argument can be configured in the argspec YAML via the ``memory.size`` property (see [ARGSPEC.md](ARGSPEC.md)).
 
 ## Compile to a binary
 In order to execute the generated tests in a symbolic execution tool, a binary file is usually required. To this end, one can pass the `--compile` flag:
@@ -396,130 +459,92 @@ summbv -summ summ_strlen.c -func concrete_strlen.c -compile --lib lib1.c lib2.c
 
 ## Constrain numeric values
 
-For some ``libc`` functions, using fully symbolic arguments can lead to unbound loops in the concrete functions. To constrain numeric values one can use the ``--maxvalue`` flag. For instance considering a test for the ``memcpy(void *dest, const void *src, size_t len)`` function, the command:
+For some ``libc`` functions, using fully symbolic arguments can lead to unbound loops in the concrete functions. Numeric values are constrained through the argspec YAML, using the ``maxvalue`` property under the ``scalar`` block:
 
-```sh
-summbv -summ summ_memcpy.c -func concrete_memcpy.c --maxvalue=5
+```yaml
+# argspec.yaml
+n:
+  type: size_t
+  semantic: scalar
+  scalar:
+    maxvalue: 5
 ```
 
-will generate a test where the ``len`` argument is constrained to be lower or equal than ``5``.
+This generates a test where the ``n`` argument is constrained to be lower or equal than ``5``.
 
 ## Evaluate memory functions
-By default the summary validation tool only takes into account the generated paths and corresponding return values. Hence, in order to evaluate a summary for a function with memory side effects such ``memcpy``, one can use the ``-memory`` flag:
+By default the summary validation tool only takes into account the generated paths and corresponding return values. To evaluate a summary for a function with memory side effects such as ``memcpy``, use an argspec that marks the relevant pointer arguments with ``semantic: memory``:
+
+```yaml
+# argspec.yaml
+dest:
+  type: void*
+  semantic: memory
+  memory:
+    type: write
+    size: 5
+src:
+  type: void*
+  semantic: memory
+  memory:
+    type: read
+    size: 5
+n:
+  type: size_t
+  semantic: scalar
+  scalar:
+    maxvalue: 5
+```
 
 ```sh
-summbv -summ summ_memcpy.c -func concrete_memcpy.c --maxvalue=5 -memory
+summbv -summ summ_memcpy.c -func concrete_memcpy.c --argspec argspec.yaml
 ```
-This flag marks the relevant memory addresses in the summary's execution so that they are also be evaluated.
+
+The ``memory.type`` field controls which memory regions are tagged for evaluation:
+- ``read`` — read-only, not tagged (e.g. ``src`` in ``memcpy``);
+- ``write`` — read-write, tagged with ``__mem_addr``.
+
+Memory evaluation is enabled automatically when any argument has ``semantic: memory`` with ``memory.type: write``.
 
 ## Configuration Files
 
-In alternative to the command line interface, one can also pass a configuration file using the ``-config`` flag. For instance, considering the configuration file (``config.txt``): 
+In alternative to the command line interface, one can also pass a YAML configuration file using the ``-config`` flag. For instance, considering the configuration file (``config.yaml``):
 
-```
-arraysize 3 5 7
-func concrete_strlen.c
-summ summ_strlen.c
-compile x86
+```yaml
+func: concrete_strlen.c
+summ: summ_strlen.c
+compile: x86
+argspec: argspec.yaml
 ```
 
 The command:
 ```sh
-summbv -config config.txt
+summbv -config config.yaml
 ```
 is equivalent to:
 ```sh
-summbv -summ summ_strlen.c -func concrete_strlen.c --arraysize 3 5 7 -compile
+summbv -summ summ_strlen.c -func concrete_strlen.c --compile x86 --argspec argspec.yaml
 ```
 
 ### All Config file options
 
-The options allowed in the configuration file mirror some flag options offered in the command line interface:
+The options allowed in the configuration file mirror the flag options offered in the command line interface:
 
-```
-func  concrete.c          // -func            (Path to file containing the concrete function)
-summ  summ.c              // -summ            (Path to file containing the target summary)
-summname  strlen          // --summname       (Name of the summary in the given path)
-funcname  summ_strlen     // --funcname       (Name of the concrete function in the given path)
-arraysize 5 | [5,7]       // --arraysize      (Maximum array size of each test (default:5))
-nullbytes 3 | [2,3]       // --nullbytes      (Specify array indexes to place null bytes)
-defaultvalues {1:'NULL'}  // --defaultvalues  (Specify default const values for input variables)
-maxvalue 5                // --maxvalue       (Provide an upper bound for numeric values)
-maxnames len              // --maxnames       (Numeric value names to be constrained)
-concretearray {1:[0]}     // --concretearray  (Place concrete values in selected array indexes)
-lib lib.c                 // --lib            (Path to external files required for compilation)
-compile x86               // --compile        (Compile the generated test)
-memory true               // -memory          (Evaluate memory side-effects)
-engine se | fuzz          // --engine         (Validation engine(s); "se fuzz" runs both (default: se))
-execs 10000               // --execs          (Inputs to try when sampling)
-timeout 1800              // -timeout         (Execution timeout, in seconds)
+```yaml
+func: concrete.c           # -func            (Path to file containing the concrete function)
+summ: summ.c               # -summ            (Path to file containing the target summary)
+summname: strlen            # --summname       (Name of the summary in the given path)
+funcname: summ_strlen       # --funcname       (Name of the concrete function in the given path)
+argspec: argspec.yaml       # --argspec        (YAML file with argument semantics and constraints)
+lib: lib.c                  # --lib            (Path to external files required for compilation)
+compile: x86                # --compile        (Compile the generated test)
+engine: [se, fuzz]          # --engine         (Validation engine(s); default: se)
+execs: 10000                # --execs          (Inputs to try when sampling)
+timeout: 1800               # -timeout         (Execution timeout, in seconds)
 ```
 
-## Special Configurations
-
-## Array Size 
-
-By passing an array of type ``[<val>,<val2>,...]`` instead of a single value, one can specify the array size of each function argument. For instance the configuration:
-```sh
-arraysize [5,7]  // --arraysize [5,7] 
-```
-specifies that the **first** argument in the function must have ``size = 5`` and the **second** must have ``size = 7``.
-
-## Null Bytes
-
-This options allows to specify the array indexes where null bytes should be placed. By passing an array of type ``[<index1>,<index2>,...]`` instead of a single value, one can specify the null bytes' index of each argument. For instance, the configuration:
-```sh
-arraysize [2,3]  // --nullbytes [2,3] 
-```
-specifies that the **first** argument is null terminated at ``index = 2`` and the **second** is null terminated at ``index = 3``.
-
-## Default Values
-This option allows to specify a constant value for an input variable to be initialized with. For instance, assuming that the **first** function argument is ``char **endptr``, the configuration:
-```sh
-defaultvalues {1:'NULL'}  // --defaultvalues {1:'NULL'}
-```
-specifies that in the validation test, the argument ``endptr`` is initialized as:
-
-```sh
-char **endptr = NULL;
-```
-### Special ``&`` init value
-
-In some cases one may need to pass to a function a reference to a declared variable. To this end, assuming that the **first** function argument is ``char **save_ptr``, one can use the configuration:
-
-```sh
-defaultvalues {1:'&'}  // --defaultvalues {1:'&'}
-```
-
-which generates a validation test such that:
-
-```sh
-char *save_ptr;
-foo(&save_ptr, ... );
-```
-
-
-## Concrete Arrays
-By default all positions of an array are symbolic. One can use the ``concretearray`` (``--concretearray``) to make certain array positions concrete.
-
-### Make indexes concrete
-To make specific array indexes hold concrete values one can pass a dictionary of the type ``{<arg>:[<indexes>]}``. For instance, the configuration:
-
-```sh
-concretearray {1:[0,1]}  // --concretearray {1:[0,1]}
-```
-
-generates a test such that an array as the **first** function argument holds concrete values at indexes ``0`` and ``1``.
-
-
-### Make *N* positions concrete
-To make a number of array indexes hold concrete values one can pass a dictionary of the type ``{<arg>:['N']}``, where ``N`` is the number of indexes to be made concrete. For instance, the configuration:
-
-```sh
-concretearray {1:['2']}  // --concretearray {1:['2']}
-```
-
-generates a test such that **two** random indexes of an array as the **first** function argument are concrete.
+> **Note:** Per-argument constraints (array size, max value, null bytes, default values, concrete arrays, etc.)
+> are specified in the argspec YAML file. See [ARGSPEC.md](ARGSPEC.md) for the full schema reference.
 
 
 # License

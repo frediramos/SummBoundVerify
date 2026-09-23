@@ -96,6 +96,28 @@ class get_cnstr(CSummary):
 
         return cnstrs
 
+    def get_fs(self):
+        from ..files.fs import SymbolicFS
+
+        fs = self.state.fs
+        constraints = []
+
+        if isinstance(fs, SymbolicFS) and (fs.fds or fs.closed_fds):
+            constraints.append(fs.to_constraint())
+
+        if isinstance(fs, SymbolicFS) and self.ctx.FILE_TAGS:
+            int_size = self.state.arch.sizeof["int"]
+            for name, path in self.ctx.FILE_TAGS:
+                exists_val = fs.exists_file(path)
+                exists_var = self.state.solver.BVS(
+                    f"file_{name}_exists", int_size, explicit_name=True,
+                )
+                if isinstance(exists_val, int):
+                    exists_val = claripy.BVV(exists_val, int_size)
+                constraints.append(exists_var == exists_val)
+
+        return constraints
+
     def run(self, var_addr, length):
 
         backend_z3 = BackendZ3()
@@ -112,6 +134,9 @@ class get_cnstr(CSummary):
         mem_cnstrs = self.get_memory()
         mem_cnstrs = claripy.And(*mem_cnstrs)
 
+        # Lift file system state for tagged file paths
+        fs_cnstrs = self.get_fs()
+
         c = self.state.solver.constraints
 
         # Ignore Ret for void functions
@@ -123,16 +148,13 @@ class get_cnstr(CSummary):
                 endness=self.state.arch.memory_endness
             )
 
-            # #Symbolic or Single Valued
-            # if not self.state.solver.symbolic(var):
-            # 	var = self.value_fromBV(var)
-            # 	var = self.state.solver.BVV(var, self.state.arch.bits)
-
             ret = self.state.solver.BVS("Ret", length, explicit_name=True)
             self.ctx.RET = ret
             c.append(ret == var)
 
         c.append(mem_cnstrs)
+        if fs_cnstrs:
+            c.append(claripy.And(*fs_cnstrs))
         c = claripy.And(*c)
 
         converted = backend_z3.convert(c)
@@ -245,6 +267,17 @@ class mem_addr(CSummary):
         self.ret()
 
 
+class file_addr(CSummary):
+    def __init__(self, ctx: ValidationCTX):
+        super().__init__(ctx)
+
+    def run(self, name_addr, path_addr):
+        name = str(self.load_string(name_addr))
+        path = self.load_string(path_addr, include_null=True)
+        self.ctx.FILE_TAGS.append((name, path))
+        self.ret()
+
+
 class check_implications(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)
@@ -264,7 +297,7 @@ class check_implications(CSummary):
         converted = [backend_z3.convert(var) for var in new_vars]
 
         def filter_vars(var):
-            unwanted = ['Ret', 'reg', 'mem']
+            unwanted = ['Ret', 'reg', 'mem', 'file']
             for symbol in unwanted:
                 if symbol in str(var):
                     return False

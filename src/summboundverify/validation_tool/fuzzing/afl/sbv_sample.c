@@ -6,6 +6,7 @@
  *   V <name> <index|-> <bits> <off> <len> <hex>   one per drawn input,
  *                                       where off/len locate it on the tape
  *   M <name> <nbytes> <hex>            one per tagged region, contents after
+ *   D <fdN> <flags> <mode> <offset> <nbytes> <hex>  one per tracked fd
  *   R <bits> <is_pointer> <hex>        absent for a void function
  *   E ok <test>                        closes the block and names it
  *
@@ -24,12 +25,21 @@
  */
 
 #undef main
+#undef open
+#undef write
+#undef close
 
 #include "sbv_sample.h"
 
+#include <errno.h>
+#include <fcntl.h>
 #include <setjmp.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 /* The build redirects the target's exit() here with -Dexit=sbv_exit. This
  * file defines the stand-in, so it must see the name unredirected. */
@@ -37,6 +47,8 @@
 
 #define SBV_MAX_REGIONS 16
 #define SBV_MAX_REGION_LEN 4096
+#define SBV_MAX_FILE_PATHS 16
+#define SBV_MAX_FILE_CONTENT 4096
 #define SBV_MAX_CHUNKS 64
 #define SBV_ARENA_SIZE (1u << 20)
 #define SBV_NAME_LEN 64
@@ -97,6 +109,140 @@ typedef struct {
 
 static region_t g_regions[SBV_MAX_REGIONS];
 static int g_nregions;
+
+/* Tagged file paths ----------------------------------------------------- */
+
+typedef struct {
+    char name[SBV_NAME_LEN];
+    char path[SBV_NAME_LEN];
+} file_path_t;
+
+static file_path_t g_file_paths[SBV_MAX_FILE_PATHS];
+static int g_nfile_paths;
+
+/* File sandbox ---------------------------------------------------------- */
+
+static int g_sandbox_ready;
+
+static void sbv_init_sandbox(void) {
+    char tmpl[] = "/tmp/sbv_sandbox_XXXXXX";
+    char *dir;
+
+    if (g_sandbox_ready)
+        return;
+
+    dir = mkdtemp(tmpl);
+    if (!dir) {
+        fprintf(stderr, "sbv: cannot create sandbox dir\n");
+        return;
+    }
+
+    if (chdir(dir) != 0) {
+        fprintf(stderr, "sbv: cannot chdir to sandbox\n");
+        return;
+    }
+
+    g_sandbox_ready = 1;
+}
+
+static int sbv_path_safe(const char *path) {
+    if (!path || !path[0])
+        return 0;
+    if (path[0] == '/')
+        return 0;
+    if (strstr(path, ".."))
+        return 0;
+    return 1;
+}
+
+static void sbv_cleanup_files(void) {
+    int i;
+    for (i = 0; i < g_nfile_paths; i++)
+        unlink(g_file_paths[i].path);
+}
+
+/* File descriptor tracking ---------------------------------------------- */
+
+#define SBV_MAX_FD_TRACKS 16
+
+typedef struct {
+    int    fd;
+    char   path[SBV_NAME_LEN];
+    int    flags;
+    int    mode;
+    size_t offset;
+    int    closed;
+} fd_track_t;
+
+static fd_track_t g_fd_tracks[SBV_MAX_FD_TRACKS];
+static int g_nfd_tracks;
+static int g_fd_tracking;
+
+static fd_track_t *fd_track_find(int fd) {
+    int i;
+    for (i = 0; i < g_nfd_tracks; i++)
+        if (g_fd_tracks[i].fd == fd)
+            return &g_fd_tracks[i];
+    return NULL;
+}
+
+int sbv_open(const char *path, int flags, ...) {
+    int fd, mode = 0;
+
+    if (flags & O_CREAT) {
+        va_list ap;
+        va_start(ap, flags);
+        mode = va_arg(ap, int);
+        va_end(ap);
+        fd = open(path, flags, mode);
+    } else {
+        fd = open(path, flags);
+    }
+
+    if (g_fd_tracking && fd >= 0 && g_nfd_tracks < SBV_MAX_FD_TRACKS) {
+        fd_track_t *t = &g_fd_tracks[g_nfd_tracks++];
+        t->fd = fd;
+        if (path)
+            sbv_strcpy(t->path, sizeof(t->path), path);
+        else
+            t->path[0] = '\0';
+        t->flags = flags;
+        t->mode = mode;
+        t->offset = 0;
+        t->closed = 0;
+    }
+
+    return fd;
+}
+
+ssize_t sbv_write(int fd, const void *buf, size_t count) {
+    ssize_t n = write(fd, buf, count);
+
+    if (g_fd_tracking && n > 0) {
+        fd_track_t *t = fd_track_find(fd);
+        if (t)
+            t->offset += (size_t)n;
+    }
+
+    return n;
+}
+
+int sbv_close(int fd) {
+    if (g_fd_tracking) {
+        fd_track_t *t = fd_track_find(fd);
+        if (t)
+            t->closed = 1;
+    }
+
+    return close(fd);
+}
+
+static void sbv_cleanup_fd_files(void) {
+    int i;
+    for (i = 0; i < g_nfd_tracks; i++)
+        if (g_fd_tracks[i].path[0])
+            unlink(g_fd_tracks[i].path);
+}
 
 /* Emitting records ------------------------------------------------------ */
 
@@ -333,6 +479,22 @@ void __mem_addr(char *name, void *addr, size_t len) {
     r->len = len;
 }
 
+void __file_addr(char *name, const char *path) {
+    file_path_t *fp;
+
+    if (g_nfile_paths >= SBV_MAX_FILE_PATHS)
+        return;
+
+    if (!sbv_path_safe(path))
+        return;
+
+    sbv_init_sandbox();
+
+    fp = &g_file_paths[g_nfile_paths++];
+    sbv_strcpy(fp->name, sizeof(fp->name), name);
+    sbv_strcpy(fp->path, sizeof(fp->path), path);
+}
+
 /*
  * Returning an address is different in kind from returning a value.
  *
@@ -351,6 +513,10 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
 
     if (!g_record) {
         g_nregions = 0;
+        sbv_cleanup_files();
+        g_nfile_paths = 0;
+        sbv_cleanup_fd_files();
+        g_nfd_tracks = 0;
         return;
     }
 
@@ -360,6 +526,55 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
         put_hex(g_regions[i].addr, g_regions[i].len);
         putchar('\n');
     }
+
+    for (i = 0; i < g_nfile_paths; i++) {
+        int exists = access(g_file_paths[i].path, F_OK) == 0 ? 1 : 0;
+        int nbytes = 0;
+        unsigned char buf[SBV_MAX_FILE_CONTENT];
+
+        if (exists) {
+            int fd = open(g_file_paths[i].path, O_RDONLY);
+            if (fd >= 0) {
+                int n = read(fd, buf, sizeof(buf));
+                if (n > 0) nbytes = n;
+                close(fd);
+            }
+        }
+
+        printf("F %s %d %d ", g_file_paths[i].name, exists, nbytes);
+        if (nbytes > 0)
+            put_hex(buf, (size_t)nbytes);
+        putchar('\n');
+    }
+
+    sbv_cleanup_files();
+
+    for (i = 0; i < g_nfd_tracks; i++) {
+        int symfd = 3 + i;
+        int nbytes = 0;
+        unsigned char buf[SBV_MAX_FILE_CONTENT];
+
+        if (g_fd_tracks[i].path[0]) {
+            int rfd = open(g_fd_tracks[i].path, O_RDONLY);
+            if (rfd >= 0) {
+                int n = read(rfd, buf, sizeof(buf));
+                if (n > 0) nbytes = n;
+                close(rfd);
+            }
+        }
+
+        printf("D fd%d %d %d %lu %d ",
+               symfd,
+               g_fd_tracks[i].flags,
+               g_fd_tracks[i].mode,
+               (unsigned long)g_fd_tracks[i].offset,
+               nbytes);
+        if (nbytes > 0)
+            put_hex(buf, (size_t)nbytes);
+        putchar('\n');
+    }
+
+    sbv_cleanup_fd_files();
 
     if (ret != 0 && bits != 0) {
         unsigned char bytes[sizeof(long double)];
@@ -377,6 +592,8 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
 
     printf("E ok %s\n", test);
     g_nregions = 0;
+    g_nfile_paths = 0;
+    g_nfd_tracks = 0;
 }
 
 /* Driver interface ------------------------------------------------------ */
@@ -387,6 +604,9 @@ static void reset(const unsigned char *data, size_t len, int record) {
     g_input_pos = 0;
 
     g_nregions = 0;
+    g_nfile_paths = 0;
+    g_nfd_tracks = 0;
+    g_fd_tracking = 1;
     g_record = record;
 
     /* Rewind the arena wholesale: each execution allocates from scratch, and
@@ -402,6 +622,8 @@ int sbv_sample_exec(const unsigned char *data, size_t len,
                     int (*tests)(void), int record) {
     reset(data, len, record);
     g_total_execs++;
+
+    sbv_init_sandbox();
 
     if (setjmp(g_reject_jmp) != 0) {
         if (record)
