@@ -359,12 +359,16 @@ class SymbolicFS(angr.SimStatePlugin):
         int_bits = self.state.arch.sizeof["int"]
         return BVV(value, int_bits)
 
-    def bvv_char(self, value: int | str):
+    def bvv_char(self, value: int | str | BV):
         """Create a bit-vector containing a C `char` value."""
         if isinstance(value, str):
             assert len(value) == 1
             value = ord(value[0])
-        return BVV(value, 8)
+
+        if isinstance(value, (str, int)):
+            return BVV(value, 8)
+
+        return value
 
     def search_open_concrete_name(self, filename: str) -> FdEntry | None:
         """Return the open file entry matching the concrete `filename`, if any."""
