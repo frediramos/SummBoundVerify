@@ -437,7 +437,7 @@ class SymbolicFS(angr.SimStatePlugin):
         try:
             return self.state.solver.eval_one(value, cast_to=int)
         except Exception:
-            caller = called_by(2)
+            caller = called_by(3)
             raise error(caller, value)
 
     def _concrete_string(self, string, error):
@@ -447,7 +447,7 @@ class SymbolicFS(angr.SimStatePlugin):
         """
         string = SymbString(string)
         if string.is_symbolic():
-            caller = called_by(2)
+            caller = called_by(3)
             raise error(caller, string)
         return str(string)
 
@@ -1060,6 +1060,9 @@ class SymbolicFS(angr.SimStatePlugin):
         """
         fd = self.check_valid_fd(fd)
 
+        if fd < 0:
+            return -1
+
         if fd not in self.fds:
             return -1
 
@@ -1085,6 +1088,9 @@ class SymbolicFS(angr.SimStatePlugin):
         fd = self.check_valid_fd(fd)
         count = self.check_valid_count(count)
         buffer = buffer[:count]
+
+        if fd < 0:
+            return -1
 
         entries = self.fds[fd].entries
 
@@ -1119,6 +1125,9 @@ class SymbolicFS(angr.SimStatePlugin):
         fd = self.check_valid_fd(fd)
         buffer = self.check_valid_pointer(buffer)
         count = self.check_valid_count(count)
+
+        if fd < 0:
+            return -1
 
         entries = self.fds[fd].entries
 
@@ -1180,6 +1189,10 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def file_offset(self, fd: int | BV) -> int | BV:
         fd = self.check_valid_fd(fd)
+
+        if fd < 0:
+            return -1
+
         entries = self.fds[fd].entries
         cases = []
 
@@ -1194,6 +1207,9 @@ class SymbolicFS(angr.SimStatePlugin):
         fd = self.check_valid_fd(fd)
         offset = self.check_valid_offset(offset)
 
+        if fd < 0:
+            return -1
+
         entries = self.fds[fd].entries
 
         if len(entries) == 0:
@@ -1206,6 +1222,10 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def file_size(self, fd: int | BV) -> int | BV:
         fd = self.check_valid_fd(fd)
+
+        if fd < 0:
+            return -1
+
         entries = self.fds[fd].entries
         cases = []
 
@@ -1221,6 +1241,9 @@ class SymbolicFS(angr.SimStatePlugin):
     def file_set_size(self, fd: int | BV, size: int | BV) -> int:
         fd = self.check_valid_fd(fd)
         size = self.check_valid_size(size)
+
+        if fd < 0:
+            return -1
 
         entries = self.fds[fd].entries
 
@@ -1245,6 +1268,9 @@ class SymbolicFS(angr.SimStatePlugin):
         """Return the `FILE *` pointer associated with `fd`, or `-1` if it is not found."""
         fd = self.check_valid_fd(fd)
 
+        if fd < 0:
+            return -1
+
         if fd not in self.fds:
             fp = -1
 
@@ -1257,6 +1283,9 @@ class SymbolicFS(angr.SimStatePlugin):
         """Return the file descriptor associated with `fp`, or `-1` if it is not found."""
         fp = self.check_valid_fp(fp)
 
+        if fp == 0:
+            return -1
+
         for fd, e in self.fds.items():
             if fp == e.fp:
                 fd_ = self.load_fd_from_fp(fp)
@@ -1267,6 +1296,10 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def file_dup(self, fd: int | BV) -> int:
         fd = self.check_valid_fd(fd)
+
+        if fd < 0:
+            return -1
+
         entries = self.fds[fd].entries
 
         if len(entries) == 0:
@@ -1280,6 +1313,9 @@ class SymbolicFS(angr.SimStatePlugin):
     def file_dup2(self, fd1: int | BV, fd2: int | BV) -> int:
         fd1 = self.check_valid_fd(fd1)
         fd2 = self.check_valid_fd(fd2)
+
+        if fd1 < 0 or fd2 < 0:
+            return -1
 
         if fd2 in self.fds:
             self.close_file(fd2)
@@ -1296,6 +1332,9 @@ class SymbolicFS(angr.SimStatePlugin):
     def file_mode(self, fd, mode_ptr) -> Literal[-1, 1]:
         fd = self.check_valid_fd(fd)
         mode_ptr = self.check_valid_pointer(mode_ptr)
+
+        if fd < 0:
+            return -1
 
         fde = self.fds[fd]
         entries = fde.entries
@@ -1318,6 +1357,9 @@ class SymbolicFS(angr.SimStatePlugin):
         fd = self.check_valid_fd(fd)
         mode = self.check_valid_pointer(mode)
 
+        if fd < 0:
+            return -1
+
         fde = self.fds[fd]
         entries = fde.entries
 
@@ -1329,6 +1371,9 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def file_flags(self, fd) -> int:
         fd = self.check_valid_fd(fd)
+
+        if fd < 0:
+            return -1
 
         fde = self.fds[fd]
         entries = fde.entries
