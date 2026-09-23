@@ -244,6 +244,84 @@ static void sbv_cleanup_fd_files(void) {
             unlink(g_fd_tracks[i].path);
 }
 
+/* File API (concrete) --------------------------------------------------- */
+
+/*
+ * Concrete implementations of the summary file API (__file_create etc.).
+ *
+ * The generated test uses these in setup code for descriptor/pointer file
+ * args: it creates a file, opens it, optionally writes initial data, and
+ * passes the resulting fd to the function under test.
+ *
+ * Because this file #undefs open/write/close, the calls here reach libc
+ * directly.  sbv_open/sbv_write/sbv_close are used when fd tracking is
+ * desired (the fd that will be handed to the function under test).
+ */
+
+int __file_create(const char *name) {
+    int fd;
+
+    sbv_init_sandbox();
+
+    if (!name || !name[0])
+        return -1;
+
+    fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0644);
+    if (fd < 0)
+        return -1;
+
+    close(fd);
+    return 1;
+}
+
+int __file_open(const char *name, const char *flags) {
+    int oflags = 0;
+
+    if (!flags)
+        return -1;
+
+    if (flags[0] == 'r' && flags[1] == '+')
+        oflags = O_RDWR;
+    else if (flags[0] == 'r')
+        oflags = O_RDONLY;
+    else if (flags[0] == 'w' && flags[1] == '+')
+        oflags = O_RDWR | O_CREAT | O_TRUNC;
+    else if (flags[0] == 'w')
+        oflags = O_WRONLY | O_CREAT | O_TRUNC;
+    else if (flags[0] == 'a' && flags[1] == '+')
+        oflags = O_RDWR | O_CREAT | O_APPEND;
+    else if (flags[0] == 'a')
+        oflags = O_WRONLY | O_CREAT | O_APPEND;
+    else
+        return -1;
+
+    return sbv_open(name, oflags, 0644);
+}
+
+ssize_t __file_write(int fd, const void *buf, size_t count) {
+    return sbv_write(fd, buf, count);
+}
+
+ssize_t __file_read(int fd, void *buf, size_t count) {
+    return read(fd, buf, count);
+}
+
+int __file_close(int fd) {
+    return sbv_close(fd);
+}
+
+ssize_t __file_set_offset(int fd, size_t offset) {
+    off_t r = lseek(fd, (off_t)offset, SEEK_SET);
+
+    if (r >= 0 && g_fd_tracking) {
+        fd_track_t *t = fd_track_find(fd);
+        if (t)
+            t->offset = (size_t)r;
+    }
+
+    return r < 0 ? -1 : (ssize_t)r;
+}
+
 /* Emitting records ------------------------------------------------------ */
 
 static void put_hex(const unsigned char *bytes, size_t n) {

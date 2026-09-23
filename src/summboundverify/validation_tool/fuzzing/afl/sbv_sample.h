@@ -167,6 +167,22 @@ int sbv_open(const char *path, int flags, ...);
 ssize_t sbv_write(int fd, const void *buf, size_t count);
 int sbv_close(int fd);
 
+/* File API (concrete) --------------------------------------------------- */
+
+/*
+ * Concrete implementations of the summary's file primitives.
+ *
+ * Used by the generated test setup when an argument has type 'descriptor'
+ * or 'pointer' in its argspec: the test creates a file, opens it, and
+ * passes the resulting fd (or FILE*) to the function under test.
+ */
+int __file_create(const char *name);
+int __file_open(const char *name, const char *flags);
+ssize_t __file_write(int fd, const void *buf, size_t count);
+ssize_t __file_read(int fd, void *buf, size_t count);
+int __file_close(int fd);
+ssize_t __file_set_offset(int fd, size_t offset);
+
 /* Driver interface ------------------------------------------------------ */
 
 #define SBV_OK 0       /* ran to completion                                */

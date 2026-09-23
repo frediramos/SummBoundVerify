@@ -1,0 +1,18 @@
+fd:
+  type: int
+  semantic: file
+  file:
+    type: descriptor
+    fname:
+      symbolic: true
+      size: 5
+    data:
+      symbolic: true
+      size: 4
+
+buf:
+  type: char*
+  semantic: memory
+  memory:
+    type: write
+    size: 4
