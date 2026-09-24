@@ -137,12 +137,20 @@ static void sbv_init_sandbox(void) {
         return;
     }
 
-    if (chdir(dir) != 0) {
-        fprintf(stderr, "sbv: cannot chdir to sandbox\n");
+    if (chroot(dir) != 0) {
+        fprintf(stderr, "sbv: cannot chroot to sandbox\n");
+        if (chdir(dir) != 0)
+            fprintf(stderr, "sbv: cannot chdir to sandbox\n");
+        g_sandbox_ready = 1;
         return;
     }
 
-    g_sandbox_ready = 1;
+    if (chdir("/") != 0) {
+        fprintf(stderr, "sbv: cannot chdir to /\n");
+        return;
+    }
+
+    g_sandbox_ready = 2;
 }
 
 static int sbv_path_safe(const char *path) {

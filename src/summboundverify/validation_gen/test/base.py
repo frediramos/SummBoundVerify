@@ -3,15 +3,22 @@ from abc import ABC, abstractmethod
 
 from pycparser.c_ast import (
     ID,
+    For,
     Decl,
     Node,
     FuncDef,
+    UnaryOp,
+    BinaryOp,
     Compound,
     ExprList,
     FuncCall,
     FuncDecl,
     PtrDecl,
     TypeDecl,
+    Constant,
+    ArrayRef,
+    Assignment,
+    DeclList,
     IdentifierType,
 )
 
@@ -27,6 +34,8 @@ from ..api import (
     file_set_offset,
     FILE_from_fd,
 )
+
+from summboundverify.api import api_map
 
 
 class TestGen(ABC):
@@ -160,6 +169,43 @@ class TestGen(ABC):
             # Symbolic file name array
             fname_gen = ArrayTypeGen(ID(fname_var), "char", [str(fname_size)])
             setup.extend(fname_gen.gen())
+
+            # Filename constraints: no '/', not ".", not ".."
+            if fname_size >= 2:
+                not_dot = BinaryOp(
+                    '|',
+                    BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '0')), Constant('char', "'.'")),
+                    BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '1')), Constant('int', '0')),
+                )
+                setup.append(FuncCall(ID(api_map().assume), ExprList([not_dot])))
+
+            if fname_size >= 3:
+                not_dotdot = BinaryOp(
+                    '|',
+                    BinaryOp(
+                        '|',
+                        BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '0')), Constant('char', "'.'")),
+                        BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '1')), Constant('char', "'.'")),
+                    ),
+                    BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '2')), Constant('int', '0')),
+                )
+                setup.append(FuncCall(ID(api_map().assume), ExprList([not_dotdot])))
+
+            loop_var = f"__i_{name}"
+            loop_init = DeclList([Decl(
+                loop_var, [], [], [], [],
+                TypeDecl(loop_var, [], None, IdentifierType(names=["int"])),
+                Constant('int', '0'), None,
+            )])
+            loop_cond = BinaryOp('<', ID(loop_var), Constant('int', str(fname_size)))
+            loop_next = UnaryOp('p++', ID(loop_var))
+            loop_body = FuncCall(ID(api_map().assume), ExprList([
+                BinaryOp('!=',
+                    ArrayRef(ID(fname_var), ID(loop_var)),
+                    Constant('char', "'/'"),
+                ),
+            ]))
+            setup.append(For(loop_init, loop_cond, loop_next, loop_body))
 
             # __file_create(fname)
             setup.append(file_create(fname_var))

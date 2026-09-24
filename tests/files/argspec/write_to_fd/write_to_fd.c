@@ -13,6 +13,5 @@ ssize_t write_to_fd(int fd, const char *data)
   {
     return -1;
   }
-  __assume(_GE_(written, 0));
   return written;
 }
