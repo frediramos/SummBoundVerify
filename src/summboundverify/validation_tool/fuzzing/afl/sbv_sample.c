@@ -29,6 +29,7 @@
 #undef read
 #undef write
 #undef close
+#undef lseek
 
 #include "sbv_sample.h"
 
@@ -246,6 +247,18 @@ ssize_t sbv_read(int fd, void *buf, size_t count) {
     }
 
     return n;
+}
+
+off_t sbv_lseek(int fd, off_t offset, int whence) {
+    off_t r = lseek(fd, offset, whence);
+
+    if (g_fd_tracking && r >= 0) {
+        fd_track_t *t = fd_track_find(fd);
+        if (t)
+            t->offset = (size_t)r;
+    }
+
+    return r;
 }
 
 int sbv_close(int fd) {

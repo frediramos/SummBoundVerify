@@ -28,6 +28,7 @@
 #undef read
 #undef write
 #undef close
+#undef lseek
 
 /* The driver owns the real exit(), not the target's stand-in. */
 #undef exit

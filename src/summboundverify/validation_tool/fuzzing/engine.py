@@ -256,6 +256,7 @@ class AflEngine():
             '-Dopen=sbv_open',
             '-Dread=sbv_read',
             '-Dwrite=sbv_write',
+            '-Dlseek=sbv_lseek',
             '-Dclose=sbv_close',
 
             '-Wno-int-conversion',
