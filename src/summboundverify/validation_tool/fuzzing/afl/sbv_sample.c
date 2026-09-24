@@ -26,6 +26,7 @@
 
 #undef main
 #undef open
+#undef read
 #undef write
 #undef close
 
@@ -235,6 +236,18 @@ ssize_t sbv_write(int fd, const void *buf, size_t count) {
     return n;
 }
 
+ssize_t sbv_read(int fd, void *buf, size_t count) {
+    ssize_t n = read(fd, buf, count);
+
+    if (g_fd_tracking && n > 0) {
+        fd_track_t *t = fd_track_find(fd);
+        if (t)
+            t->offset += (size_t)n;
+    }
+
+    return n;
+}
+
 int sbv_close(int fd) {
     if (g_fd_tracking) {
         fd_track_t *t = fd_track_find(fd);
@@ -311,7 +324,7 @@ ssize_t __file_write(int fd, const void *buf, size_t count) {
 }
 
 ssize_t __file_read(int fd, void *buf, size_t count) {
-    return read(fd, buf, count);
+    return sbv_read(fd, buf, count);
 }
 
 int __file_close(int fd) {

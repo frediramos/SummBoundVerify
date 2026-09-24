@@ -517,10 +517,10 @@ class SymbolicFS(angr.SimStatePlugin):
             flags = self.sym_var(f"{prefix}_flags", int_size)
             mode = self.sym_var(f"{prefix}_mode", int_size)
 
-            cases = [
+            metadata = claripy.And(
                 flags == self.bvv_int(fde.flags),
                 mode == self.bvv_int(fde.mode),
-            ]
+            )
 
             content_cases = []
 
@@ -544,13 +544,12 @@ class SymbolicFS(angr.SimStatePlugin):
                 if bytes:
                     content = claripy.And(content, *bytes)
 
-                content_cases.append((entry.cond, content))
+                content_cases.append((entry.cond, claripy.And(metadata, content)))
 
             if content_cases:
-                ite = claripy.ite_cases(content_cases, true())
-                cases.append(ite)
-
-            fd_cases.append(claripy.And(*cases))
+                fd_cases.append(claripy.ite_cases(content_cases, true()))
+            else:
+                fd_cases.append(metadata)
 
         constraint = claripy.And(*fd_cases)
 
@@ -812,7 +811,7 @@ class SymbolicFS(angr.SimStatePlugin):
                 cond = true()
             else:
                 cond = self.not_empty(filename)
-            entry = SymbolicNameEntry(filename, cond, True)
+            entry = SymbolicNameEntry(filename, cond, False)
             self.fnames.append(entry)
 
             if can_be_empty:

@@ -25,6 +25,7 @@
 
 #undef main
 #undef open
+#undef read
 #undef write
 #undef close
 

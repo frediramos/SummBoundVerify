@@ -17,7 +17,6 @@ from pycparser.c_ast import (
     TypeDecl,
     Constant,
     ArrayRef,
-    Assignment,
     DeclList,
     IdentifierType,
 )
@@ -141,7 +140,92 @@ class TestGen(ABC):
         """Generate __file_addr calls for name-type file args."""
         return [file_addr(name) for name in self._file_name_args()]
 
-    def _gen_file_setup(self) -> tuple[list[Node], set[str]]:
+    @staticmethod
+    def _filename_constraints(
+        fname_var: str, fname_size: int, use_api: bool = False,
+    ) -> list[Node]:
+        """Generate __assume constraints excluding invalid filenames.
+
+        Excludes: empty string, '/', '.', '..' from the symbolic filename.
+
+        When use_api is True, comparisons go through _NEQ_/_OR_ so the SE
+        engine registers them in the CNSTR_MAP.  When False, raw C operators
+        are emitted (suitable for the concrete/AFL harness).
+        """
+
+        def neq(a, b):
+            if use_api:
+                return FuncCall(ID('_NEQ_'), ExprList([a, b]))
+            return BinaryOp('!=', a, b)
+
+        def or_expr(a, b):
+            if use_api:
+                return FuncCall(ID('_OR_'), ExprList([a, b]))
+            return BinaryOp('|', a, b)
+
+        assume = api_map().assume
+        nodes: list[Node] = []
+
+        # Non-empty: first byte must not be null
+        nodes.append(FuncCall(ID(assume), ExprList([
+            neq(
+                ArrayRef(ID(fname_var), Constant('int', '0')),
+                Constant('int', '0'),
+            ),
+        ])))
+
+        # Not "."
+        if fname_size >= 2:
+            not_dot = or_expr(
+                neq(ArrayRef(ID(fname_var), Constant('int', '0')), Constant('char', "'.'")),
+                neq(ArrayRef(ID(fname_var), Constant('int', '1')), Constant('int', '0')),
+            )
+            nodes.append(FuncCall(ID(assume), ExprList([not_dot])))
+
+        # Not ".."
+        if fname_size >= 3:
+            not_dotdot = or_expr(
+                or_expr(
+                    neq(ArrayRef(ID(fname_var), Constant('int', '0')), Constant('char', "'.'")),
+                    neq(ArrayRef(ID(fname_var), Constant('int', '1')), Constant('char', "'.'")),
+                ),
+                neq(ArrayRef(ID(fname_var), Constant('int', '2')), Constant('int', '0')),
+            )
+            nodes.append(FuncCall(ID(assume), ExprList([not_dotdot])))
+
+        # No '/' in any byte
+        loop_var = f"__i_{fname_var}"
+        loop_init = DeclList([Decl(
+            loop_var, [], [], [], [],
+            TypeDecl(loop_var, [], None, IdentifierType(names=["int"])),
+            Constant('int', '0'), None,
+        )])
+        loop_cond = BinaryOp('<', ID(loop_var), Constant('int', str(fname_size)))
+        loop_next = UnaryOp('p++', ID(loop_var))
+        loop_body = FuncCall(ID(assume), ExprList([
+            neq(
+                ArrayRef(ID(fname_var), ID(loop_var)),
+                Constant('char', "'/'"),
+            ),
+        ]))
+        nodes.append(For(loop_init, loop_cond, loop_next, loop_body))
+
+        return nodes
+
+    def _gen_name_file_constraints(self, use_api: bool = False) -> list[Node]:
+        """Generate filename constraints for name-type file args."""
+        nodes: list[Node] = []
+        for name, spec in self.argspec.items():
+            if spec.get('semantic') != 'file':
+                continue
+            fblock = spec.get('file', {})
+            if fblock.get('type') != 'name':
+                continue
+            fname_size = fblock.get('fname', {}).get('size', 5)
+            nodes.extend(self._filename_constraints(name, fname_size, use_api=use_api))
+        return nodes
+
+    def _gen_file_setup(self, use_api: bool = False) -> tuple[list[Node], set[str]]:
         """Generate file setup code for descriptor/pointer file args.
 
         Returns:
@@ -170,42 +254,7 @@ class TestGen(ABC):
             fname_gen = ArrayTypeGen(ID(fname_var), "char", [str(fname_size)])
             setup.extend(fname_gen.gen())
 
-            # Filename constraints: no '/', not ".", not ".."
-            if fname_size >= 2:
-                not_dot = BinaryOp(
-                    '|',
-                    BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '0')), Constant('char', "'.'")),
-                    BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '1')), Constant('int', '0')),
-                )
-                setup.append(FuncCall(ID(api_map().assume), ExprList([not_dot])))
-
-            if fname_size >= 3:
-                not_dotdot = BinaryOp(
-                    '|',
-                    BinaryOp(
-                        '|',
-                        BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '0')), Constant('char', "'.'")),
-                        BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '1')), Constant('char', "'.'")),
-                    ),
-                    BinaryOp('!=', ArrayRef(ID(fname_var), Constant('int', '2')), Constant('int', '0')),
-                )
-                setup.append(FuncCall(ID(api_map().assume), ExprList([not_dotdot])))
-
-            loop_var = f"__i_{name}"
-            loop_init = DeclList([Decl(
-                loop_var, [], [], [], [],
-                TypeDecl(loop_var, [], None, IdentifierType(names=["int"])),
-                Constant('int', '0'), None,
-            )])
-            loop_cond = BinaryOp('<', ID(loop_var), Constant('int', str(fname_size)))
-            loop_next = UnaryOp('p++', ID(loop_var))
-            loop_body = FuncCall(ID(api_map().assume), ExprList([
-                BinaryOp('!=',
-                    ArrayRef(ID(fname_var), ID(loop_var)),
-                    Constant('char', "'/'"),
-                ),
-            ]))
-            setup.append(For(loop_init, loop_cond, loop_next, loop_body))
+            setup.extend(self._filename_constraints(fname_var, fname_size, use_api=use_api))
 
             # __file_create(fname)
             setup.append(file_create(fname_var))

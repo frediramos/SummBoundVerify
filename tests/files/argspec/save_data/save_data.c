@@ -1,39 +1,13 @@
 typedef unsigned int size_t;
 typedef unsigned int cnstr_t;
-typedef unsigned int list_t;
 #define FALSE 0
 #define TRUE 1
 
-void unfold_memw_save_data(char *s, list_t lst)
+void fork_save_data(unsigned int n)
 {
-  if (__lst_empty(lst))
-  {
-  }
-  else
-  {
-    list_t var1 = __lst_hd(lst);
-    list_t var2 = __lst_tl(lst);
-    *s = var1;
-    unfold_memw_save_data(s + 1, var2);
-  }
-}
-
-list_t fold_memseg_save_data(char *s, unsigned int n)
-{
-  if (__is_certain(_ULE_(n, 0)))
-  {
-    list_t lst = __lst_mk();
-    return lst;
-  }
-  else
-  {
-    __assume(_NOT_(_ULE_(n, 0)));
-    char var1 = *s;
-    list_t var2 = fold_memseg_save_data(s + 1, n - 1);
-    list_t lst = __lst_cons(var1, var2);
-    __assert(_NOT_(__lst_empty(lst)));
-    return lst;
-  }
+  if (n == 0)
+    return;
+  fork_save_data(n - 1);
 }
 
 int save_data(const char *path, const char *data, size_t len)
@@ -50,7 +24,7 @@ int save_data(const char *path, const char *data, size_t len)
     return -1;
   }
   __assume(_GE_(fd, 0));
-  list_t contents = fold_memseg_save_data((char *)data, len);
+  fork_save_data(len);
   int written = __file_write(fd, data, len);
   __file_close(fd);
   if (__is_certain(_NEQ_(written, len)))

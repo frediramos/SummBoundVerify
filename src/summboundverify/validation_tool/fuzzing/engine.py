@@ -252,8 +252,9 @@ class AflEngine():
             '-Dexit=sbv_exit',
 
             # Intercept file operations so the harness can track which fds
-            # were opened, written to and closed during the test.
+            # were opened, read from, written to and closed during the test.
             '-Dopen=sbv_open',
+            '-Dread=sbv_read',
             '-Dwrite=sbv_write',
             '-Dclose=sbv_close',
 

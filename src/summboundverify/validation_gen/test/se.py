@@ -52,7 +52,7 @@ class SymbolicTestGen(TestGen):
         test_id: int,
     ) -> FuncDef:
 
-        file_setup, skip_names = self._gen_file_setup()
+        file_setup, skip_names = self._gen_file_setup(use_api=True)
 
         args_code, call_args, sym_args = self._create_args(
             size_macro,
@@ -74,6 +74,9 @@ class SymbolicTestGen(TestGen):
         mem_args = self._memory_args(sym_args)
         if mem_args:
             body.extend(self._tag_memory(mem_args, size_macro))
+
+        body.extend(self._gen_name_file_constraints(use_api=True))
+        body.extend(self._tag_files())
 
         body.extend(self._body(call_args, test_id))
         body.append(return_value(None))

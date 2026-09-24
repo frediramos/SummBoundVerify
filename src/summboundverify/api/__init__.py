@@ -13,6 +13,8 @@ from .helpers import get_stubs, get_code
 PREFIX = "__"
 
 REQUIRED_FUNCTIONS = [
+    "_NEQ_",
+    "_OR_",
     "_ULE_",
     "assume",
     "save_current_state",

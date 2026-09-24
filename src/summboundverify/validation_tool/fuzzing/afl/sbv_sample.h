@@ -158,12 +158,13 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer);
 /* File descriptor interception ------------------------------------------ */
 
 /*
- * Wrappers around open/write/close that track fd activity during a test.
+ * Wrappers around open/read/write/close that track fd activity during a test.
  *
  * The build redirects the target's calls here with -Dopen=sbv_open etc.
  * sbv_sample.c and driver.c #undef these to reach the real libc versions.
  */
 int sbv_open(const char *path, int flags, ...);
+ssize_t sbv_read(int fd, void *buf, size_t count);
 ssize_t sbv_write(int fd, const void *buf, size_t count);
 int sbv_close(int fd);
 
