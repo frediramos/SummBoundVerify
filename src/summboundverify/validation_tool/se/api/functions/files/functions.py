@@ -42,6 +42,9 @@ class FileSummary(CSummary, ABC):
 
     def load_int(self, v: BitVector):
         v = self.load_numeric(v)  # type: ignore
+        if isinstance(v, int):
+            return v
+        assert isinstance(v, BitVector)
         size = self.int_size
         if v.size() > size:
             v = claripy.Extract(size - 1, 0, v)
@@ -57,6 +60,8 @@ class FileSummary(CSummary, ABC):
         return claripy.reverse_ite_cases(ite)
 
     def call_ite(self, func, ite, *args, signed=True, default=-1):
+        if isinstance(ite, int):
+            return func(ite, *args)
         default = claripy.BVV(default, self.int_size)
         cases = self.unfold_ite(ite)
         ret = [
@@ -66,6 +71,9 @@ class FileSummary(CSummary, ABC):
         return claripy.ite_cases(ret, default)
 
     def call_ite_nested(self, func, ite1, ite2, *args, signed=True, default=-1):
+        if isinstance(ite1, int) and isinstance(ite2, int):
+            return func(ite1, ite2, *args)
+
         default = claripy.BVV(default, self.int_size)
         cases1 = self.unfold_ite(ite1)
         cases2 = self.unfold_ite(ite2)
@@ -90,6 +98,8 @@ class file_create(FileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr, include_null=True)
         status = self.fs.create_file(filename)
+        print(self.fs)
+        print(status)
         return status
 
 
