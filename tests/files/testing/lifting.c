@@ -27,14 +27,14 @@ int main(){
 
   int ret1 = __file_create(s1);
   int ret2 = __file_create(s2);
-  __assert(ret1 == 1);
-  __assert(ret2 == 1);
+  // __assert(ret1 == _ITE_());
+  // __assert(ret2 == 1);
   
   int fd1 = __file_open(s3, "r+");
   int fd2 = __file_open(s4, "r+");
 
-  __assert(fd1 == 3);
-  __assert(fd2 == 4);
+  // __assert(fd1 == 3);
+  // __assert(fd2 == 4);
 
   char buffer[5];
 

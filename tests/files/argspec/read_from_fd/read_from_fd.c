@@ -13,6 +13,5 @@ ssize_t read_from_fd(int fd, char *buf)
   {
     return -1;
   }
-  __assume(_GE_(nread, 0));
   return nread;
 }
