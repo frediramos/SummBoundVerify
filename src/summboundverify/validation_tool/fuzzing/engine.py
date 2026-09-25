@@ -140,6 +140,7 @@ class FdValue:
     flags: int
     mode: int
     offset: int
+    size: int
     raw: bytes
 
     def as_dict(self) -> dict:
@@ -147,6 +148,7 @@ class FdValue:
             'flags': self.flags,
             'mode': self.mode,
             'offset': self.offset,
+            'size': self.size,
             'bytes': self.raw.hex(),
         }
 
@@ -251,13 +253,17 @@ class AflEngine():
             # the run instead. sbv_sample.c and driver.c #undef this.
             '-Dexit=sbv_exit',
 
-            # Intercept file operations so the harness can track which fds
-            # were opened, read from, written to and closed during the test.
+            # Intercept the calls that create or release a descriptor, so the
+            # harness knows which files the test's descriptors refer to. The
+            # offset is asked of the kernel, so read/write/lseek need no
+            # wrapper. sbv_unwrap.h undoes these and must list the same names.
             '-Dopen=sbv_open',
-            '-Dread=sbv_read',
-            '-Dwrite=sbv_write',
-            '-Dlseek=sbv_lseek',
+            '-Dcreat=sbv_creat',
+            '-Dopenat=sbv_openat',
+            '-Ddup=sbv_dup',
+            '-Ddup2=sbv_dup2',
             '-Dclose=sbv_close',
+            '-Dfclose=sbv_fclose',
 
             '-Wno-int-conversion',
             '-Wno-unused-variable',
@@ -524,12 +530,13 @@ class AflEngine():
 
             elif kind == 'D' and len(parts) >= 5:
                 name = parts[0]
-                flags_str, mode_str, offset_str, nbytes_str = parts[1:5]
+                flags_str, mode_str, offset_str, size_str = parts[1:5]
                 raw = parts[5] if len(parts) > 5 else ''
                 current.fds[name] = FdValue(
                     flags=int(flags_str),
                     mode=int(mode_str),
                     offset=int(offset_str),
+                    size=int(size_str),
                     raw=bytes.fromhex(raw) if raw else b'',
                 )
 

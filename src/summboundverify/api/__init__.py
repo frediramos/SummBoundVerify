@@ -31,6 +31,7 @@ REQUIRED_FUNCTIONS = [
     "file_open",
     "file_write",
     "file_set_offset",
+    "FILE_from_fd",
 ]
 
 CURRENT = current_dir(__file__)

@@ -509,7 +509,9 @@ class SymbolicFS(angr.SimStatePlugin):
         char_size = 8
         fd_cases = []
 
-        all_fds = {**self.fds, **self.closed_fds}
+        # A number closed and then reused by a later open describes the open
+        # descriptor, which is what the program holds now.
+        all_fds = {**self.closed_fds, **self.fds}
 
         for fd, fde in all_fds.items():
             prefix = f"file_fd{fd}"

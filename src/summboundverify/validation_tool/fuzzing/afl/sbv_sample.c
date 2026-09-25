@@ -6,7 +6,8 @@
  *   V <name> <index|-> <bits> <off> <len> <hex>   one per drawn input,
  *                                       where off/len locate it on the tape
  *   M <name> <nbytes> <hex>            one per tagged region, contents after
- *   D <fdN> <flags> <mode> <offset> <nbytes> <hex>  one per tracked fd
+ *   F <name> <exists> <nbytes> <hex>   one per tagged file path
+ *   D fd<N> <flags> <mode> <offset> <size> <hex>   one per descriptor number
  *   R <bits> <is_pointer> <hex>        absent for a void function
  *   E ok <test>                        closes the block and names it
  *
@@ -24,16 +25,9 @@
  * bit pattern that is the value under test.
  */
 
-#undef main
-#undef open
-#undef read
-#undef write
-#undef close
-#undef lseek
-
+#include "sbv_unwrap.h"
 #include "sbv_sample.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <setjmp.h>
 #include <stdarg.h>
@@ -43,15 +37,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* The build redirects the target's exit() here with -Dexit=sbv_exit. This
- * file defines the stand-in, so it must see the name unredirected. */
-#undef exit
-
 #define SBV_MAX_REGIONS 16
 #define SBV_MAX_REGION_LEN 4096
 #define SBV_MAX_FILE_PATHS 16
+#define SBV_MAX_FD_TRACKS 16
 #define SBV_MAX_FILE_CONTENT 4096
-#define SBV_MAX_CHUNKS 64
 #define SBV_ARENA_SIZE (1u << 20)
 #define SBV_NAME_LEN 64
 
@@ -101,37 +91,27 @@ static void sbv_strcpy(char *dst, size_t cap, const char *src) {
     dst[i] = '\0';
 }
 
-/* Tagged memory --------------------------------------------------------- */
-
-typedef struct {
-    char name[SBV_NAME_LEN];
-    unsigned char *addr;
-    size_t len;
-} region_t;
-
-static region_t g_regions[SBV_MAX_REGIONS];
-static int g_nregions;
-
-/* Tagged file paths ----------------------------------------------------- */
-
-typedef struct {
-    char name[SBV_NAME_LEN];
-    char path[SBV_NAME_LEN];
-} file_path_t;
-
-static file_path_t g_file_paths[SBV_MAX_FILE_PATHS];
-static int g_nfile_paths;
-
 /* File sandbox ---------------------------------------------------------- */
 
-static int g_sandbox_ready;
-
+/*
+ * Confine the files a run creates to a fresh directory.
+ *
+ * chroot needs root; without it the harness still works inside the
+ * directory, and relative paths stay there because the generated test rejects
+ * file names containing '/' (and sbv_path_safe rejects "..").
+ */
 static void sbv_init_sandbox(void) {
+    static int ready;
     char tmpl[] = "/tmp/sbv_sandbox_XXXXXX";
     char *dir;
 
-    if (g_sandbox_ready)
+    if (ready)
         return;
+
+    ready = 1;
+
+    /* The symbolic side gives every file mode 0666 & ~022. */
+    umask(022);
 
     dir = mkdtemp(tmpl);
     if (!dir) {
@@ -139,20 +119,12 @@ static void sbv_init_sandbox(void) {
         return;
     }
 
-    if (chroot(dir) != 0) {
-        fprintf(stderr, "sbv: cannot chroot to sandbox\n");
-        if (chdir(dir) != 0)
-            fprintf(stderr, "sbv: cannot chdir to sandbox\n");
-        g_sandbox_ready = 1;
-        return;
+    if (chroot(dir) == 0) {
+        if (chdir("/") != 0)
+            fprintf(stderr, "sbv: cannot chdir to /\n");
+    } else if (chdir(dir) != 0) {
+        fprintf(stderr, "sbv: cannot chdir to sandbox\n");
     }
-
-    if (chdir("/") != 0) {
-        fprintf(stderr, "sbv: cannot chdir to /\n");
-        return;
-    }
-
-    g_sandbox_ready = 2;
 }
 
 static int sbv_path_safe(const char *path) {
@@ -165,137 +137,248 @@ static int sbv_path_safe(const char *path) {
     return 1;
 }
 
-static void sbv_cleanup_files(void) {
-    int i;
-    for (i = 0; i < g_nfile_paths; i++)
-        unlink(g_file_paths[i].path);
+/* Up to `cap` bytes of the file at `path`. Zero if it cannot be read. */
+static size_t read_path(const char *path, unsigned char *buf, size_t cap) {
+    size_t total = 0;
+    ssize_t n;
+    int fd;
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return 0;
+
+    while (total < cap && (n = read(fd, buf + total, cap - total)) > 0)
+        total += (size_t)n;
+
+    close(fd);
+    return total;
 }
 
-/* File descriptor tracking ---------------------------------------------- */
-
-#define SBV_MAX_FD_TRACKS 16
+/* Tagged memory and file paths ------------------------------------------ */
 
 typedef struct {
-    int    fd;
-    char   path[SBV_NAME_LEN];
-    int    flags;
-    int    mode;
+    char name[SBV_NAME_LEN];
+    unsigned char *addr;
+    size_t len;
+} region_t;
+
+static region_t g_regions[SBV_MAX_REGIONS];
+static int g_nregions;
+
+typedef struct {
+    char name[SBV_NAME_LEN];
+    char path[SBV_NAME_LEN];
+} file_path_t;
+
+static file_path_t g_file_paths[SBV_MAX_FILE_PATHS];
+static int g_nfile_paths;
+
+/* Descriptor tracking --------------------------------------------------- */
+
+/*
+ * One descriptor the test or the function under test opened.
+ *
+ * `offset` and `mode` are the kernel's view, snapshotted when the descriptor
+ * is closed or, for one still open, when the test is recorded. `fp` is set
+ * when the descriptor was handed out as a FILE*, whose buffer must be flushed
+ * before the kernel's view is current.
+ */
+typedef struct {
+    int fd;
+    char path[SBV_NAME_LEN];
+    int flags;
+    int mode;
     size_t offset;
-    int    closed;
+    int closed;
+    FILE *fp;
 } fd_track_t;
 
 static fd_track_t g_fd_tracks[SBV_MAX_FD_TRACKS];
 static int g_nfd_tracks;
-static int g_fd_tracking;
 
+/* The open track for `fd`. A number released by close() is reused by the
+ * next open(), so a closed track never answers for it. */
 static fd_track_t *fd_track_find(int fd) {
     int i;
-    for (i = 0; i < g_nfd_tracks; i++)
-        if (g_fd_tracks[i].fd == fd)
+
+    for (i = g_nfd_tracks - 1; i >= 0; i--)
+        if (g_fd_tracks[i].fd == fd && !g_fd_tracks[i].closed)
             return &g_fd_tracks[i];
+
     return NULL;
 }
 
+static void fd_track_add(int fd, const char *path, int flags) {
+    fd_track_t *t;
+
+    if (fd < 0 || g_nfd_tracks >= SBV_MAX_FD_TRACKS)
+        return;
+
+    t = &g_fd_tracks[g_nfd_tracks++];
+    t->fd = fd;
+    sbv_strcpy(t->path, sizeof(t->path), path);
+    t->flags = flags;
+    t->mode = 0;
+    t->offset = 0;
+    t->closed = 0;
+    t->fp = NULL;
+}
+
+static void fd_track_snapshot(fd_track_t *t) {
+    struct stat st;
+    off_t offset;
+
+    if (t->fp)
+        fflush(t->fp);
+
+    offset = lseek(t->fd, 0, SEEK_CUR);
+    t->offset = offset < 0 ? 0 : (size_t)offset;
+
+    if (fstat(t->fd, &st) == 0)
+        t->mode = (int)(st.st_mode & 07777);
+}
+
+/* A FILE* still attached to a retired track is leaked rather than closed:
+ * its descriptor is gone, and its number may already belong to another. */
+static void fd_track_retire(fd_track_t *t) {
+    t->closed = 1;
+    t->fp = NULL;
+}
+
+/* Snapshot and retire `t`, just before its descriptor is released. */
+static void fd_track_close(fd_track_t *t) {
+    fd_track_snapshot(t);
+    fd_track_retire(t);
+}
+
+/*
+ * Whether a later track reuses the number of track `i`.
+ *
+ * The symbolic side keys descriptors by number too, and after a close and a
+ * reopen it describes the newer one, so only the latest track per number is
+ * recorded.
+ */
+static int fd_track_superseded(int i) {
+    int j;
+
+    for (j = i + 1; j < g_nfd_tracks; j++)
+        if (g_fd_tracks[j].fd == g_fd_tracks[i].fd)
+            return 1;
+
+    return 0;
+}
+
+static int optional_mode(int flags, va_list ap) {
+    return (flags & O_CREAT) ? va_arg(ap, int) : 0;
+}
+
 int sbv_open(const char *path, int flags, ...) {
-    int fd, mode = 0;
+    va_list ap;
+    int fd, mode;
 
-    if (flags & O_CREAT) {
-        va_list ap;
-        va_start(ap, flags);
-        mode = va_arg(ap, int);
-        va_end(ap);
-        fd = open(path, flags, mode);
-    } else {
-        fd = open(path, flags);
-    }
+    va_start(ap, flags);
+    mode = optional_mode(flags, ap);
+    va_end(ap);
 
-    if (g_fd_tracking && fd >= 0 && g_nfd_tracks < SBV_MAX_FD_TRACKS) {
-        fd_track_t *t = &g_fd_tracks[g_nfd_tracks++];
-        t->fd = fd;
-        if (path)
-            sbv_strcpy(t->path, sizeof(t->path), path);
-        else
-            t->path[0] = '\0';
-        t->flags = flags;
-        t->mode = mode;
-        t->offset = 0;
-        t->closed = 0;
-    }
-
+    fd = open(path, flags, mode);
+    fd_track_add(fd, path, flags);
     return fd;
 }
 
-ssize_t sbv_write(int fd, const void *buf, size_t count) {
-    ssize_t n = write(fd, buf, count);
+int sbv_creat(const char *path, mode_t mode) {
+    int fd = creat(path, mode);
 
-    if (g_fd_tracking && n > 0) {
-        fd_track_t *t = fd_track_find(fd);
-        if (t)
-            t->offset += (size_t)n;
-    }
-
-    return n;
+    fd_track_add(fd, path, O_WRONLY | O_CREAT | O_TRUNC);
+    return fd;
 }
 
-ssize_t sbv_read(int fd, void *buf, size_t count) {
-    ssize_t n = read(fd, buf, count);
+/* The path is recorded as given: relative to `dirfd`, which is only the
+ * sandbox when `dirfd` is AT_FDCWD. */
+int sbv_openat(int dirfd, const char *path, int flags, ...) {
+    va_list ap;
+    int fd, mode;
 
-    if (g_fd_tracking && n > 0) {
-        fd_track_t *t = fd_track_find(fd);
-        if (t)
-            t->offset += (size_t)n;
-    }
+    va_start(ap, flags);
+    mode = optional_mode(flags, ap);
+    va_end(ap);
 
-    return n;
+    fd = openat(dirfd, path, flags, mode);
+    fd_track_add(fd, path, flags);
+    return fd;
 }
 
-off_t sbv_lseek(int fd, off_t offset, int whence) {
-    off_t r = lseek(fd, offset, whence);
+/* The copy shares the original's file and offset, as __file_dup's does. */
+int sbv_dup(int fd) {
+    fd_track_t *t = fd_track_find(fd);
+    int fd2 = dup(fd);
 
-    if (g_fd_tracking && r >= 0) {
-        fd_track_t *t = fd_track_find(fd);
-        if (t)
-            t->offset = (size_t)r;
-    }
+    if (t && fd2 >= 0)
+        fd_track_add(fd2, t->path, t->flags);
+
+    return fd2;
+}
+
+int sbv_dup2(int fd, int fd2) {
+    fd_track_t *t, *replaced;
+    int r;
+
+    if (fd == fd2)
+        return dup2(fd, fd2);
+
+    /* dup2 silently closes whatever `fd2` referred to, so its state has to
+     * be taken before the call reuses the number. */
+    replaced = fd_track_find(fd2);
+    if (replaced)
+        fd_track_snapshot(replaced);
+
+    r = dup2(fd, fd2);
+    if (r < 0)
+        return r;
+
+    if (replaced)
+        fd_track_retire(replaced);
+
+    t = fd_track_find(fd);
+    if (t)
+        fd_track_add(r, t->path, t->flags);
 
     return r;
 }
 
 int sbv_close(int fd) {
-    if (g_fd_tracking) {
-        fd_track_t *t = fd_track_find(fd);
-        if (t)
-            t->closed = 1;
-    }
+    fd_track_t *t = fd_track_find(fd);
+
+    if (t)
+        fd_track_close(t);
 
     return close(fd);
 }
 
-static void sbv_cleanup_fd_files(void) {
-    int i;
-    for (i = 0; i < g_nfd_tracks; i++)
-        if (g_fd_tracks[i].path[0])
-            unlink(g_fd_tracks[i].path);
+int sbv_fclose(FILE *fp) {
+    fd_track_t *t;
+
+    /* The FILE may not be the track's own (the function fdopen'd the
+     * descriptor itself), so flush it here rather than rely on t->fp. */
+    fflush(fp);
+
+    t = fd_track_find(fileno(fp));
+    if (t)
+        fd_track_close(t);
+
+    return fclose(fp);
 }
 
 /* File API (concrete) --------------------------------------------------- */
 
 /*
- * Concrete implementations of the summary file API (__file_create etc.).
- *
- * The generated test uses these in setup code for descriptor/pointer file
- * args: it creates a file, opens it, optionally writes initial data, and
- * passes the resulting fd to the function under test.
- *
- * Because this file #undefs open/write/close, the calls here reach libc
- * directly.  sbv_open/sbv_write/sbv_close are used when fd tracking is
- * desired (the fd that will be handed to the function under test).
+ * Concrete counterparts of the summary's file primitives, for the generated
+ * test's setup. Descriptors handed to the function under test go through
+ * sbv_open so they are tracked; the probe in __file_create does not, since
+ * the symbolic side's __file_create opens no descriptor.
  */
 
 int __file_create(const char *name) {
     int fd;
-
-    sbv_init_sandbox();
 
     if (!name || !name[0])
         return -1;
@@ -308,55 +391,95 @@ int __file_create(const char *name) {
     return 1;
 }
 
+/* fopen-style mode strings, read the way the symbolic side's str_to_flag
+ * reads them: 'b', 't', 'c' and 'e' are ignored. */
 int __file_open(const char *name, const char *flags) {
-    int oflags = 0;
+    int plus = 0, oflags;
+    const char *c;
 
-    if (!flags)
+    if (!flags || !flags[0])
         return -1;
 
-    if (flags[0] == 'r' && flags[1] == '+')
-        oflags = O_RDWR;
-    else if (flags[0] == 'r')
-        oflags = O_RDONLY;
-    else if (flags[0] == 'w' && flags[1] == '+')
-        oflags = O_RDWR | O_CREAT | O_TRUNC;
-    else if (flags[0] == 'w')
-        oflags = O_WRONLY | O_CREAT | O_TRUNC;
-    else if (flags[0] == 'a' && flags[1] == '+')
-        oflags = O_RDWR | O_CREAT | O_APPEND;
-    else if (flags[0] == 'a')
-        oflags = O_WRONLY | O_CREAT | O_APPEND;
-    else
+    for (c = flags + 1; *c; c++) {
+        if (*c == '+')
+            plus = 1;
+        else if (*c != 'b' && *c != 't' && *c != 'c' && *c != 'e')
+            return -1;
+    }
+
+    switch (flags[0]) {
+    case 'r':
+        oflags = plus ? O_RDWR : O_RDONLY;
+        break;
+    case 'w':
+        oflags = (plus ? O_RDWR : O_WRONLY) | O_CREAT | O_TRUNC;
+        break;
+    case 'a':
+        oflags = (plus ? O_RDWR : O_WRONLY) | O_CREAT | O_APPEND;
+        break;
+    default:
         return -1;
+    }
 
     return sbv_open(name, oflags, 0644);
 }
 
 ssize_t __file_write(int fd, const void *buf, size_t count) {
-    return sbv_write(fd, buf, count);
-}
-
-ssize_t __file_read(int fd, void *buf, size_t count) {
-    return sbv_read(fd, buf, count);
-}
-
-int __file_close(int fd) {
-    return sbv_close(fd);
+    return write(fd, buf, count);
 }
 
 ssize_t __file_set_offset(int fd, size_t offset) {
     off_t r = lseek(fd, (off_t)offset, SEEK_SET);
 
-    if (r >= 0 && g_fd_tracking) {
-        fd_track_t *t = fd_track_find(fd);
-        if (t)
-            t->offset = (size_t)r;
-    }
-
     return r < 0 ? -1 : (ssize_t)r;
 }
 
-/* Emitting records ------------------------------------------------------ */
+static const char *fdopen_mode(int fd) {
+    int flags = fcntl(fd, F_GETFL);
+
+    if (flags < 0)
+        return NULL;
+
+    switch (flags & O_ACCMODE) {
+    case O_RDONLY:
+        return "r";
+    case O_WRONLY:
+        return (flags & O_APPEND) ? "a" : "w";
+    default:
+        return (flags & O_APPEND) ? "a+" : "r+";
+    }
+}
+
+/*
+ * The FILE* for `fd`, created on first use and handed out again after that,
+ * as the symbolic side keeps one per descriptor.
+ *
+ * fdopen allocates the FILE through libc's malloc. A test whose helper
+ * library redirects malloc to __mem_alloc (see the heap section) would get it
+ * from the arena instead, and fclose would then hand an arena pointer to
+ * glibc's free() -- the same hazard driver.c avoids stdio for. No such test
+ * takes a FILE* today.
+ */
+FILE *__FILE_from_fd(int fd) {
+    fd_track_t *t = fd_track_find(fd);
+    const char *mode;
+    FILE *fp;
+
+    if (t && t->fp)
+        return t->fp;
+
+    mode = fdopen_mode(fd);
+    if (!mode)
+        return NULL;
+
+    fp = fdopen(fd, mode);
+    if (t)
+        t->fp = fp;
+
+    return fp;
+}
+
+/* Drawing inputs -------------------------------------------------------- */
 
 static void put_hex(const unsigned char *bytes, size_t n) {
     static const char digits[] = "0123456789abcdef";
@@ -392,8 +515,6 @@ static void record_draw(const char *name, long index, int indexed,
     put_hex(bytes, (bits + 7) / 8);
     putchar('\n');
 }
-
-/* Drawing inputs -------------------------------------------------------- */
 
 static sbv_value draw_value(char *name, size_t bits, long index, int indexed) {
     unsigned char bytes[sizeof(sbv_value)];
@@ -439,42 +560,15 @@ void __assume(int cnstr) {
     longjmp(g_reject_jmp, 1);
 }
 
-void _assert(int cnstr) {
-    __assume(cnstr);
-}
-
 void sbv_exit(int code) {
     (void)code;
     g_total_exited++;
     longjmp(g_reject_jmp, 1);
 }
 
-int _EQ_(sbv_value a, sbv_value b) { return a == b; }
-int _NEQ_(sbv_value a, sbv_value b) { return a != b; }
-int _LT_(sbv_value a, sbv_value b) { return a < b; }
-int _LE_(sbv_value a, sbv_value b) { return a <= b; }
-int _GT_(sbv_value a, sbv_value b) { return a > b; }
-int _GE_(sbv_value a, sbv_value b) { return a >= b; }
-
-int _ULT_(sbv_value a, sbv_value b) {
-    return (unsigned long)a < (unsigned long)b;
-}
-
 int _ULE_(sbv_value a, sbv_value b) {
     return (unsigned long)a <= (unsigned long)b;
 }
-
-int _UGT_(sbv_value a, sbv_value b) {
-    return (unsigned long)a > (unsigned long)b;
-}
-
-int _UGE_(sbv_value a, sbv_value b) {
-    return (unsigned long)a >= (unsigned long)b;
-}
-
-int _NOT_(int c) { return !c; }
-int _AND_(int a, int b) { return a && b; }
-int _OR_(int a, int b) { return a || b; }
 
 /* Heap ------------------------------------------------------------------ */
 
@@ -495,33 +589,25 @@ static void fail(const char *why) {
  * A private arena, rather than libc's allocator.
  *
  * This is not an optimisation, it is the only way this can work. A concrete
- * function's helper library routes malloc through mem_alloc so angr can track
- * the region, and that override applies to the whole program:
+ * function's helper library routes malloc through __mem_alloc so angr can
+ * track the region, and that override applies to the whole program:
  *
- *     lib.c:   void *malloc(size_t n) { return mem_alloc(n); }
+ *     lib.c:   void *malloc(size_t n) { return __mem_alloc(n); }
  *
- * so a mem_alloc that called malloc would call straight back into itself.
+ * so a __mem_alloc that called malloc would call straight back into itself.
  * Confirmed as the cause of the strdup harness dying with SIGSEGV. The damage
  * is wider than it looks, too: every libc routine that allocates internally
  * -- printf among them -- enters the same cycle.
  *
- * Bump allocation, reset per execution. Nothing here needs to reuse freed
- * space: a run draws a bounded input and ends.
+ * Bump allocation, rewound wholesale per execution. Nothing here needs to
+ * reuse freed space: a run draws a bounded input and ends.
  */
-typedef struct {
-    void *ptr;
-    size_t size;
-} chunk_t;
-
-static chunk_t g_chunks[SBV_MAX_CHUNKS];
-
 static unsigned char g_arena[SBV_ARENA_SIZE];
 static size_t g_arena_pos;
 
-void *mem_alloc(size_t bytes) {
+void *__mem_alloc(size_t nbytes) {
     unsigned char *ptr;
-    size_t aligned = (bytes + 7u) & ~(size_t)7u;
-    int i;
+    size_t aligned = (nbytes + 7u) & ~(size_t)7u;
 
     if (aligned == 0)
         aligned = 8;
@@ -533,45 +619,7 @@ void *mem_alloc(size_t bytes) {
 
     ptr = &g_arena[g_arena_pos];
     g_arena_pos += aligned;
-
-    for (i = 0; i < SBV_MAX_CHUNKS; i++) {
-        if (g_chunks[i].ptr == NULL) {
-            g_chunks[i].ptr = ptr;
-            g_chunks[i].size = bytes;
-            break;
-        }
-    }
-
     return ptr;
-}
-
-void mem_free(void *ptr) {
-    int i;
-
-    /* Forgotten, not reclaimed: the arena is rewound wholesale when the next
-     * execution starts, and a run is far too short for reuse to matter. */
-    for (i = 0; i < SBV_MAX_CHUNKS; i++) {
-        if (g_chunks[i].ptr == ptr) {
-            g_chunks[i].ptr = NULL;
-            g_chunks[i].size = 0;
-            break;
-        }
-    }
-}
-
-size_t n_allocd(void *ptr) {
-    int i;
-
-    for (i = 0; i < SBV_MAX_CHUNKS; i++)
-        if (g_chunks[i].ptr == ptr)
-            return g_chunks[i].size;
-
-    return 0;
-}
-
-void allocd(void *ptr, size_t size) {
-    (void)size;
-    __assume(ptr != NULL);
 }
 
 /* Recording the outcome ------------------------------------------------- */
@@ -600,11 +648,119 @@ void __file_addr(char *name, const char *path) {
     if (!sbv_path_safe(path))
         return;
 
-    sbv_init_sandbox();
-
     fp = &g_file_paths[g_nfile_paths++];
     sbv_strcpy(fp->name, sizeof(fp->name), name);
     sbv_strcpy(fp->path, sizeof(fp->path), path);
+}
+
+static void emit_regions(void) {
+    int i;
+
+    for (i = 0; i < g_nregions; i++) {
+        printf("M %s %lu ", g_regions[i].name,
+               (unsigned long)g_regions[i].len);
+        put_hex(g_regions[i].addr, g_regions[i].len);
+        putchar('\n');
+    }
+}
+
+static void emit_files(void) {
+    unsigned char buf[SBV_MAX_FILE_CONTENT];
+    size_t nbytes;
+    int i, exists;
+
+    for (i = 0; i < g_nfile_paths; i++) {
+        exists = access(g_file_paths[i].path, F_OK) == 0;
+        nbytes = exists ? read_path(g_file_paths[i].path, buf, sizeof(buf)) : 0;
+
+        printf("F %s %d %lu ", g_file_paths[i].name, exists,
+               (unsigned long)nbytes);
+        put_hex(buf, nbytes);
+        putchar('\n');
+    }
+}
+
+/* Content is read back through the path, not the descriptor: a descriptor
+ * opened O_WRONLY cannot be read, and a closed one no longer exists. */
+static void emit_fds(void) {
+    unsigned char buf[SBV_MAX_FILE_CONTENT];
+    struct stat st;
+    size_t nbytes, size;
+    fd_track_t *t;
+    int i;
+
+    for (i = 0; i < g_nfd_tracks; i++) {
+        t = &g_fd_tracks[i];
+
+        if (fd_track_superseded(i))
+            continue;
+
+        if (!t->closed)
+            fd_track_snapshot(t);
+
+        nbytes = read_path(t->path, buf, sizeof(buf));
+        size = stat(t->path, &st) == 0 ? (size_t)st.st_size : nbytes;
+
+        printf("D fd%d %d %d %lu %lu ", t->fd, t->flags, t->mode,
+               (unsigned long)t->offset, (unsigned long)size);
+        put_hex(buf, nbytes);
+        putchar('\n');
+    }
+}
+
+static void emit_return(void *ret, size_t bits, int is_pointer) {
+    unsigned char bytes[sizeof(long double)];
+    size_t nbytes = (bits + 7) / 8;
+
+    if (ret == 0 || bits == 0)
+        return;
+
+    if (nbytes > sizeof(bytes))
+        nbytes = sizeof(bytes);
+
+    sbv_memcpy(bytes, (const unsigned char *)ret, nbytes);
+
+    printf("R %lu %d ", (unsigned long)bits, is_pointer ? 1 : 0);
+    put_hex(bytes, nbytes);
+    putchar('\n');
+}
+
+/*
+ * Put the sandbox back the way the test found it: release every descriptor
+ * still open, delete every file the test touched, forget every tag.
+ *
+ * Runs after every test, recorded or not, and after a rejected run, so that
+ * the next test starts from an empty directory with descriptor 3 free, as the
+ * symbolic side's does.
+ */
+static void end_test(void) {
+    fd_track_t *t;
+    int i;
+
+    for (i = 0; i < g_nfd_tracks; i++) {
+        t = &g_fd_tracks[i];
+
+        if (t->closed)
+            continue;
+
+        if (t->fp)
+            fclose(t->fp);
+        else
+            close(t->fd);
+
+        t->closed = 1;
+    }
+
+    for (i = 0; i < g_nfd_tracks; i++)
+        if (g_fd_tracks[i].path[0])
+            unlink(g_fd_tracks[i].path);
+
+    for (i = 0; i < g_nfile_paths; i++)
+        unlink(g_file_paths[i].path);
+
+    g_nregions = 0;
+    g_nfile_paths = 0;
+    g_nfd_tracks = 0;
 }
 
 /*
@@ -621,91 +777,15 @@ void __file_addr(char *name, const char *path) {
  * the symbolic side only knows them when regions are tagged with mem_addr.
  */
 void sbv_record(char *test, void *ret, size_t bits, int is_pointer) {
-    int i;
-
-    if (!g_record) {
-        g_nregions = 0;
-        sbv_cleanup_files();
-        g_nfile_paths = 0;
-        sbv_cleanup_fd_files();
-        g_nfd_tracks = 0;
-        return;
+    if (g_record) {
+        emit_regions();
+        emit_files();
+        emit_fds();
+        emit_return(ret, bits, is_pointer);
+        printf("E ok %s\n", test);
     }
 
-    for (i = 0; i < g_nregions; i++) {
-        printf("M %s %lu ", g_regions[i].name,
-               (unsigned long)g_regions[i].len);
-        put_hex(g_regions[i].addr, g_regions[i].len);
-        putchar('\n');
-    }
-
-    for (i = 0; i < g_nfile_paths; i++) {
-        int exists = access(g_file_paths[i].path, F_OK) == 0 ? 1 : 0;
-        int nbytes = 0;
-        unsigned char buf[SBV_MAX_FILE_CONTENT];
-
-        if (exists) {
-            int fd = open(g_file_paths[i].path, O_RDONLY);
-            if (fd >= 0) {
-                int n = read(fd, buf, sizeof(buf));
-                if (n > 0) nbytes = n;
-                close(fd);
-            }
-        }
-
-        printf("F %s %d %d ", g_file_paths[i].name, exists, nbytes);
-        if (nbytes > 0)
-            put_hex(buf, (size_t)nbytes);
-        putchar('\n');
-    }
-
-    sbv_cleanup_files();
-
-    for (i = 0; i < g_nfd_tracks; i++) {
-        int symfd = 3 + i;
-        int nbytes = 0;
-        unsigned char buf[SBV_MAX_FILE_CONTENT];
-
-        if (g_fd_tracks[i].path[0]) {
-            int rfd = open(g_fd_tracks[i].path, O_RDONLY);
-            if (rfd >= 0) {
-                int n = read(rfd, buf, sizeof(buf));
-                if (n > 0) nbytes = n;
-                close(rfd);
-            }
-        }
-
-        printf("D fd%d %d %d %lu %d ",
-               symfd,
-               g_fd_tracks[i].flags,
-               g_fd_tracks[i].mode,
-               (unsigned long)g_fd_tracks[i].offset,
-               nbytes);
-        if (nbytes > 0)
-            put_hex(buf, (size_t)nbytes);
-        putchar('\n');
-    }
-
-    sbv_cleanup_fd_files();
-
-    if (ret != 0 && bits != 0) {
-        unsigned char bytes[sizeof(long double)];
-        size_t nbytes = (bits + 7) / 8;
-
-        if (nbytes > sizeof(bytes))
-            nbytes = sizeof(bytes);
-
-        sbv_memcpy(bytes, (const unsigned char *)ret, nbytes);
-
-        printf("R %lu %d ", (unsigned long)bits, is_pointer ? 1 : 0);
-        put_hex(bytes, nbytes);
-        putchar('\n');
-    }
-
-    printf("E ok %s\n", test);
-    g_nregions = 0;
-    g_nfile_paths = 0;
-    g_nfd_tracks = 0;
+    end_test();
 }
 
 /* Driver interface ------------------------------------------------------ */
@@ -714,37 +794,29 @@ static void reset(const unsigned char *data, size_t len, int record) {
     g_input = data;
     g_input_len = len;
     g_input_pos = 0;
-
-    g_nregions = 0;
-    g_nfile_paths = 0;
-    g_nfd_tracks = 0;
-    g_fd_tracking = 1;
     g_record = record;
 
     /* Rewind the arena wholesale: each execution allocates from scratch, and
      * the persistent loop would otherwise exhaust it after enough runs. */
     g_arena_pos = 0;
-    for (int i = 0; i < SBV_MAX_CHUNKS; i++) {
-        g_chunks[i].ptr = NULL;
-        g_chunks[i].size = 0;
-    }
 }
 
-int sbv_sample_exec(const unsigned char *data, size_t len,
-                    int (*tests)(void), int record) {
+void sbv_sample_exec(const unsigned char *data, size_t len,
+                     int (*tests)(void), int record) {
     reset(data, len, record);
     g_total_execs++;
 
     sbv_init_sandbox();
 
     if (setjmp(g_reject_jmp) != 0) {
+        end_test();
         if (record)
             printf("E rejected\n");
-        return SBV_REJECTED;
+        return;
     }
 
     tests();
-    return SBV_OK;
+    end_test();
 }
 
 unsigned long sbv_sample_total_execs(void) {
