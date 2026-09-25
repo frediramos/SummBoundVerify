@@ -38,8 +38,8 @@ def generate_test(args: Namespace, outputfile: Path | None = None) -> Path:
     if not concrete_function and not args.funcname:
         raise ValueError(
             "No concrete function code or name provided\n"
-            "INFO: In the absence of the code, a name must be "
-            "specified in order to call the function"
+            "INFO: pass -func <file>, or --libc to compare against "
+            "a libc function"
         )
 
     if not target_summary and not args.summname:

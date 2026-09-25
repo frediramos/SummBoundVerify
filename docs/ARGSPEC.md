@@ -118,15 +118,18 @@ fildes:
 **File types and their generated test setup:**
 
 - **`descriptor`** — The function receives an `int fd`. The test creates a
-  symbolic file name, calls `__file_create()` + `__file_open()`, optionally
-  writes initial data with `__file_write()`, and passes the fd.
+  symbolic file name (constrained to exclude empty, `"."`, `".."`, and `'/'`),
+  calls `__file_create()` + `__file_open()`, optionally writes initial data
+  with `__file_write()`, and passes the fd.
 
 - **`pointer`** — The function receives a `FILE*`. Same setup as `descriptor`,
   but the fd is converted via `__FILE_from_fd(fd)` before the call.
 
 - **`name`** — The function receives a `const char*` file path. The test
   creates a symbolic file name array and passes it directly. No open/write
-  setup is generated.
+  setup is generated. The generated test automatically constrains the
+  symbolic path to exclude invalid filenames (empty string, `"."`, `".."`,
+  and any byte containing `'/'`).
 
 **`fname` and `data` sub-blocks:**
 
@@ -444,3 +447,21 @@ This means:
 
 If a summary passes a symbolic value where a concrete one is required, the
 symbolic engine raises `InvalidCountError` (or similar).
+
+### Concrete Harness — Intercepted Operations
+
+The AFL++ sampling harness intercepts the following POSIX calls via
+preprocessor redirection (`-Dopen=sbv_open`, etc.). Each wrapper calls the
+real libc function and updates the fd tracker so that file metadata (offset,
+flags, content) is recorded accurately after the function under test returns.
+
+| POSIX call | Wrapper       | Tracked state          |
+|------------|---------------|------------------------|
+| `open`     | `sbv_open`    | path, flags, mode      |
+| `read`     | `sbv_read`    | offset += bytes read   |
+| `write`    | `sbv_write`   | offset += bytes written |
+| `lseek`    | `sbv_lseek`   | offset = new position  |
+| `close`    | `sbv_close`   | closed flag            |
+
+`sbv_sample.c` and `driver.c` `#undef` these names so their own internal
+calls (tape reading, stats writing) reach libc directly.

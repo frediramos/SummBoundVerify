@@ -407,7 +407,7 @@ n:
 Pass it with `--argspec argspec.yaml` or add `argspec: argspec.yaml` to a config file.
 
 For the full schema reference, including all supported properties and examples,
-see **[ARGSPEC.md](ARGSPEC.md)**.
+see **[ARGSPEC.md](docs/ARGSPEC.md)**.
 
 <br>
 <br>
@@ -423,10 +423,20 @@ summbv -h
 Given a concrete function for ``strlen`` and a corresponding summary (files ``strlen.c`` and ``concrete.c``) one can generate a simple validation test using:
 
 ```sh
-summbv -summ strlen.c -func concreten.c
+summbv -summ strlen.c -func concrete.c
 ```
 
-By default, this will generate a file called `test.c` containing the symbolic test where `strlen` is called with a symbolic string of **size 5**. The array size for each argument can be configured in the argspec YAML via the ``memory.size`` property (see [ARGSPEC.md](ARGSPEC.md)).
+When the concrete implementation is a standard libc function, replace
+``-func`` with ``--libc``:
+
+```sh
+summbv -summ strlen.c --summname strlen --libc
+```
+
+The tool will compare the summary against the libc ``strlen`` at link time
+(see [Validating against libc](#validating-against-libc)).
+
+By default, this will generate a file called `test.c` containing the symbolic test where `strlen` is called with a symbolic string of **size 5**. The array size for each argument can be configured in the argspec YAML via the ``memory.size`` property (see [ARGSPEC.md](docs/ARGSPEC.md)).
 
 ## Compile to a binary
 In order to execute the generated tests in a symbolic execution tool, a binary file is usually required. To this end, one can pass the `--compile` flag:
@@ -526,6 +536,33 @@ is equivalent to:
 summbv -summ summ_strlen.c -func concrete_strlen.c --compile x86 --argspec argspec.yaml
 ```
 
+### Validating against libc
+
+To compare a summary against a **libc function** instead of a concrete
+``.c`` file, use ``--libc`` (``libc`` in the config file). The function is
+resolved at link time, so no separate ``.c`` file is needed.
+
+- ``--libc`` alone uses the summary name (``summname``) as the libc name.
+- ``--libc <name>`` names the libc function explicitly, for summaries whose
+  name differs from the function they model.
+
+```sh
+summbv -summ strlen.c --summname strlen --libc
+summbv -summ summ_strlen.c --summname summ_strlen --libc strlen
+```
+
+```yaml
+# config.yaml
+summ: summ_strlen.c
+summname: summ_strlen
+libc: strlen                # or `libc: true` to reuse summname
+compile: x86
+argspec: argspec.yaml
+```
+
+``--libc`` cannot be combined with ``-func``. Without either of them the
+tool refuses to run instead of guessing the concrete function.
+
 ### All Config file options
 
 The options allowed in the configuration file mirror the flag options offered in the command line interface:
@@ -535,6 +572,7 @@ func: concrete.c           # -func            (Path to file containing the concr
 summ: summ.c               # -summ            (Path to file containing the target summary)
 summname: strlen            # --summname       (Name of the summary in the given path)
 funcname: summ_strlen       # --funcname       (Name of the concrete function in the given path)
+libc: strlen                # --libc           (Compare against a libc function; `true` reuses summname)
 argspec: argspec.yaml       # --argspec        (YAML file with argument semantics and constraints)
 lib: lib.c                  # --lib            (Path to external files required for compilation)
 compile: x86                # --compile        (Compile the generated test)
@@ -544,7 +582,7 @@ timeout: 1800               # -timeout         (Execution timeout, in seconds)
 ```
 
 > **Note:** Per-argument constraints (array size, max value, null bytes, default values, concrete arrays, etc.)
-> are specified in the argspec YAML file. See [ARGSPEC.md](ARGSPEC.md) for the full schema reference.
+> are specified in the argspec YAML file. See **[ARGSPEC.md](docs/ARGSPEC.md)** for the full schema reference.
 
 
 # License
