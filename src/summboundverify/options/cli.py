@@ -30,6 +30,10 @@ def parse_cmdline_args(input=None):
     generation.add_argument(flag(Options.funcname), metavar='name', type=str,
                             help='Name of the concrete function in the given path')
 
+    generation.add_argument(flag(Options.libc), metavar='name', nargs='?', const=True, default=None,
+                            help='Compare against a libc function instead of a concrete file '
+                                 '(default name: --summname)')
+
     generation.add_argument(flag(Options.lib), metavar='path', nargs='+', type=str, required=False,
                             help='Path to external files needed to compile the test binary')
 

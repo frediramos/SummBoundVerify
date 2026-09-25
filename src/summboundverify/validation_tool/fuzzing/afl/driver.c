@@ -19,20 +19,12 @@
  *                     pass that matters, run over the queue AFL++ built.
  *
  * The generated test's main() is renamed to sbv_run_tests by the compiler
- * (-Dmain=sbv_run_tests), so this file can own the real main(). Undo that
- * define here, before anything else.
+ * (-Dmain=sbv_run_tests), so this file can own the real main(). It also owns
+ * the real exit() and file calls, not the target's stand-ins, so every
+ * redirection is undone before anything else.
  */
 
-#undef main
-#undef open
-#undef read
-#undef write
-#undef close
-#undef lseek
-
-/* The driver owns the real exit(), not the target's stand-in. */
-#undef exit
-
+#include "sbv_unwrap.h"
 #include "sbv_sample.h"
 
 #include <stdio.h>
@@ -100,7 +92,7 @@ static int record(const char *path) {
  *
  * open/write rather than fopen/fprintf, for the same reason record() reads
  * that way: stdio allocates its buffer through malloc, a target's helper
- * library may have routed malloc to mem_alloc, and fclose would then hand an
+ * library may have routed malloc to __mem_alloc, and fclose would then hand an
  * arena pointer to glibc's free(). That aborts with "free(): invalid
  * pointer" -- at exit, where AFL++ reads it as a crash. */
 static void write_stats(void) {

@@ -118,15 +118,18 @@ fildes:
 **File types and their generated test setup:**
 
 - **`descriptor`** — The function receives an `int fd`. The test creates a
-  symbolic file name, calls `__file_create()` + `__file_open()`, optionally
-  writes initial data with `__file_write()`, and passes the fd.
+  symbolic file name (constrained to exclude empty, `"."`, `".."`, and `'/'`),
+  calls `__file_create()` + `__file_open()`, optionally writes initial data
+  with `__file_write()`, and passes the fd.
 
 - **`pointer`** — The function receives a `FILE*`. Same setup as `descriptor`,
   but the fd is converted via `__FILE_from_fd(fd)` before the call.
 
 - **`name`** — The function receives a `const char*` file path. The test
   creates a symbolic file name array and passes it directly. No open/write
-  setup is generated.
+  setup is generated. The generated test automatically constrains the
+  symbolic path to exclude invalid filenames (empty string, `"."`, `".."`,
+  and any byte containing `'/'`).
 
 **`fname` and `data` sub-blocks:**
 
@@ -397,7 +400,8 @@ __file_set_offset(fd, 0);
 - **Concrete:** `__file_create`/`__file_open`/`__file_write`/`__file_set_offset`
   in `sbv_sample.c` perform real OS operations. `sbv_open` tracks the fd via
   `fd_track_t`. At recording time, `sbv_record` reads the file and emits
-  `D fd3 <flags> <mode> <offset> <nbytes> <hex>`.
+  `D fd3 <flags> <mode> <offset> <size> <hex>`, where `fd3` is the real
+  descriptor number (see [Intercepted Operations](#concrete-harness--intercepted-operations)).
 
 When `data` is present, the file is opened with `"w+"` (read+write) instead of
 `"w"` (write-only), so the function can read the pre-populated data.
@@ -412,8 +416,9 @@ FILE *fp = __FILE_from_fd(__fd_fp);
 ```
 
 A temporary fd variable (`__fd_fp`) is created for the open. `__FILE_from_fd`
-converts it to a `FILE*`. Tracking works the same way as `descriptor` —
-through the underlying fd.
+converts it to a `FILE*` (concretely, with `fdopen`). Tracking works the same
+way as `descriptor` — through the underlying fd — and the stream is flushed
+before its offset and content are recorded, so buffered `fwrite`s count.
 
 ### Comparison Table
 
@@ -444,3 +449,42 @@ This means:
 
 If a summary passes a symbolic value where a concrete one is required, the
 symbolic engine raises `InvalidCountError` (or similar).
+
+### Concrete Harness — Intercepted Operations
+
+The AFL++ sampling harness intercepts the calls that **create or release** a
+file descriptor, via preprocessor redirection (`-Dopen=sbv_open`, etc.). Each
+wrapper calls the real libc function and records which path and open flags
+the descriptor refers to.
+
+| Call     | Wrapper      | Effect on the tracker                                  |
+|----------|--------------|--------------------------------------------------------|
+| `open`   | `sbv_open`   | new descriptor: path, flags                            |
+| `creat`  | `sbv_creat`  | new descriptor: path, `O_WRONLY\|O_CREAT\|O_TRUNC`     |
+| `openat` | `sbv_openat` | new descriptor: path (relative to `dirfd`), flags      |
+| `dup`    | `sbv_dup`    | new descriptor sharing the original's path and flags   |
+| `dup2`   | `sbv_dup2`   | same, after snapshotting the descriptor it replaces    |
+| `close`  | `sbv_close`  | snapshot, then mark closed                             |
+| `fclose` | `sbv_fclose` | flush, snapshot, then mark closed                      |
+
+`read`, `write` and `lseek` are **not** wrapped. The state that depends on
+them is asked of the kernel instead, in a *snapshot* taken when a descriptor
+is closed or, for one still open, when the test is recorded:
+
+- **offset** — `lseek(fd, 0, SEEK_CUR)`. This is correct for `O_APPEND`,
+  for descriptors sharing an offset through `dup`, and for I/O through stdio
+  or `readv`/`writev`, none of which per-call bookkeeping gets right.
+- **mode** — `fstat(fd).st_mode & 07777`. The harness sets `umask(022)`, so a
+  file created `0666` reads back `0644`, as the symbolic side models it.
+- **size** and **content** — read back through the path at recording time.
+
+Descriptors are recorded by their **real number** (`fd3`, `fd4`, ...), which
+matches the symbolic side: both hand out the lowest free number from 3. When a
+number is closed and reused, only the newest descriptor is recorded, as
+`to_constraint()` describes the open one. After every test the harness closes
+every descriptor still open and deletes the files it touched, so each test
+starts with an empty sandbox and descriptor 3 free.
+
+`sbv_unwrap.h` undoes these redirections for `sbv_sample.c` and `driver.c`,
+so their own calls (the wrappers themselves, tape reading, stats writing)
+reach libc directly. Its list must match `_cflags()` in `engine.py`.

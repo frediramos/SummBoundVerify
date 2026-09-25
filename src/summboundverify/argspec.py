@@ -4,7 +4,7 @@ An argspec file describes each function argument's semantic role and
 constraints so the test generator knows which tagging calls to emit,
 how to size symbolic arrays, and how to bound numeric values.
 
-See ``ARGSPEC.md`` at the repository root for the full schema reference.
+See ``docs/ARGSPEC.md`` for the full schema reference.
 """
 
 import yaml

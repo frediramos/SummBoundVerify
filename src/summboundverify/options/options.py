@@ -46,6 +46,7 @@ class Options(metaclass=MetaOptions):
     summ = ('-', 'summ', OptionTypes.SIMPLE)
     summname = ('--', 'summname', OptionTypes.SIMPLE)
     funcname = ('--', 'funcname', OptionTypes.SIMPLE)
+    libc = ('--', 'libc', OptionTypes.SIMPLE)
     lib = ('--', 'lib', OptionTypes.LIST)
     noapi = ('-', 'noapi', OptionTypes.BOOL)
     compile = ('--', 'compile', OptionTypes.SIMPLE)

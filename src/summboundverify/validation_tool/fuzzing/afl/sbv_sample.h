@@ -15,7 +15,7 @@
  *
  *   sym_var_*   draw this input's value from the fuzzer's byte tape
  *   assume      this input is outside the test's domain; discard the run
- *   _ULE_ etc.  compare two concrete values
+ *   _ULE_       compare two concrete values
  *   mem_addr    remember this region, so its final contents get recorded
  *
  * The names are the API's on purpose. The generated test is built by the same
@@ -65,9 +65,6 @@ sbv_value __sym_var_array(char *name, size_t index, size_t bits);
  */
 void __assume(int cnstr);
 
-/* Same, in the form a summary would write it. */
-void _assert(int cnstr);
-
 /*
  * Stand-in for exit(), which the build redirects here with -Dexit=sbv_exit.
  *
@@ -79,51 +76,24 @@ void _assert(int cnstr);
 void sbv_exit(int code);
 
 /*
- * Concrete readings of the constraint operators.
- *
- * These are only ever applied to values already drawn, so each one is the
- * plain comparison it looks like. The operators that have no concrete meaning
- * -- push_pc, pop_pc, is_sat, is_certain, maximize, minimize -- are absent by
- * design: a summary that uses them is never compiled into this harness.
+ * The one constraint operator the concrete test uses: the unsigned bound on
+ * a scalar with a `maxvalue` (`__assume(_ULE_(n, MAX_NUM_1))`). Everything
+ * else the test compares is written as plain C, and the summary -- the only
+ * code that would use the rest -- is never compiled into this harness.
  */
-int _EQ_(sbv_value a, sbv_value b);
-int _NEQ_(sbv_value a, sbv_value b);
-int _LT_(sbv_value a, sbv_value b);
-int _LE_(sbv_value a, sbv_value b);
-int _GT_(sbv_value a, sbv_value b);
-int _GE_(sbv_value a, sbv_value b);
-int _ULT_(sbv_value a, sbv_value b);
 int _ULE_(sbv_value a, sbv_value b);
-int _UGT_(sbv_value a, sbv_value b);
-int _UGE_(sbv_value a, sbv_value b);
-int _NOT_(int c);
-int _AND_(int a, int b);
-int _OR_(int a, int b);
 
 /* Heap ------------------------------------------------------------------ */
 
 /*
- * The allocation primitives, concretely.
+ * The allocation primitive, concretely.
  *
- * These are here for the same reason assume() and _ULE_() are, and not for
- * the reason push_pc() is absent: allocating memory means the same thing
- * whether the pointer is symbolic or not. A concrete function's helper
- * library routes malloc through mem_alloc so angr can track the region (the
- * strdup tests do), and that library is linked here too, so the names have to
- * resolve.
+ * Allocating memory means the same thing whether the pointer is symbolic or
+ * not. A concrete function's helper library routes malloc through
+ * __mem_alloc so angr can track the region (the strdup tests do), and that
+ * library is linked here too, so the name has to resolve.
  */
-void *mem_alloc(size_t bytes);
-void mem_free(void *ptr);
-
-/* How many bytes `ptr` was allocated with. Zero if it did not come from
- * mem_alloc, which is also what the symbolic side reports for an unknown
- * pointer. */
-size_t n_allocd(void *ptr);
-
-/* Assert that `size` bytes at `ptr` are readable and writable. Symbolically
- * this consults the memory permissions; concretely the only thing that can be
- * checked without inviting a segfault is that the pointer is not null. */
-void allocd(void *ptr, size_t size);
+void *__mem_alloc(size_t nbytes);
 
 /* Recording the outcome ------------------------------------------------- */
 
@@ -157,38 +127,48 @@ void sbv_record(char *test, void *ret, size_t bits, int is_pointer);
 
 /* File descriptor interception ------------------------------------------ */
 
+/* glibc's FILE, named without pulling <stdio.h> into every translation unit:
+ * a concrete function may define its own printf or puts. */
+struct _IO_FILE;
+
 /*
- * Wrappers around open/read/write/lseek/close that track fd activity.
+ * Wrappers around the calls that create or release a descriptor.
  *
- * The build redirects the target's calls here with -Dopen=sbv_open etc.
- * sbv_sample.c and driver.c #undef these to reach the real libc versions.
+ * The build redirects the target's calls here with -Dopen=sbv_open etc.;
+ * sbv_unwrap.h undoes that for sbv_sample.c and driver.c. Each wrapper calls
+ * the real function and remembers which path, flags and file the descriptor
+ * refers to.
+ *
+ * read, write and lseek are deliberately not wrapped. The offset is asked of
+ * the kernel -- lseek(fd, 0, SEEK_CUR) -- when a descriptor is closed and
+ * when the test is recorded, which also covers O_APPEND, descriptors sharing
+ * an offset through dup, and I/O through stdio or readv/writev.
  */
 int sbv_open(const char *path, int flags, ...);
-ssize_t sbv_read(int fd, void *buf, size_t count);
-ssize_t sbv_write(int fd, const void *buf, size_t count);
-off_t sbv_lseek(int fd, off_t offset, int whence);
+int sbv_creat(const char *path, mode_t mode);
+int sbv_openat(int dirfd, const char *path, int flags, ...);
+int sbv_dup(int fd);
+int sbv_dup2(int fd, int fd2);
 int sbv_close(int fd);
+int sbv_fclose(struct _IO_FILE *fp);
 
 /* File API (concrete) --------------------------------------------------- */
 
 /*
- * Concrete implementations of the summary's file primitives.
+ * Concrete implementations of the file primitives the generated test uses.
  *
- * Used by the generated test setup when an argument has type 'descriptor'
- * or 'pointer' in its argspec: the test creates a file, opens it, and
- * passes the resulting fd (or FILE*) to the function under test.
+ * Used by the test setup when an argument has type 'descriptor' or 'pointer'
+ * in its argspec: the test creates a file, opens it, optionally writes its
+ * initial contents, and passes the resulting fd (or FILE*) to the function
+ * under test.
  */
 int __file_create(const char *name);
 int __file_open(const char *name, const char *flags);
 ssize_t __file_write(int fd, const void *buf, size_t count);
-ssize_t __file_read(int fd, void *buf, size_t count);
-int __file_close(int fd);
 ssize_t __file_set_offset(int fd, size_t offset);
+struct _IO_FILE *__FILE_from_fd(int fd);
 
 /* Driver interface ------------------------------------------------------ */
-
-#define SBV_OK 0       /* ran to completion                                */
-#define SBV_REJECTED 1 /* an assume()/_assert() put this input out of range */
 
 /*
  * Run `tests` over the tape in `data`, from a clean slate.
@@ -198,8 +178,8 @@ ssize_t __file_set_offset(int fd, size_t offset);
  * fuzzing loop wants -- there it is only building a corpus, and the recording
  * pass comes afterwards.
  */
-int sbv_sample_exec(const unsigned char *data, size_t len,
-                    int (*tests)(void), int record);
+void sbv_sample_exec(const unsigned char *data, size_t len,
+                     int (*tests)(void), int record);
 
 /* Executions, rejections and exit() calls since the process started. */
 unsigned long sbv_sample_total_execs(void);

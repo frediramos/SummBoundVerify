@@ -1,0 +1,8 @@
+path:
+  type: char*
+  semantic: file
+  file:
+    type: name
+    fname:
+      symbolic: true
+      size: 5

@@ -26,6 +26,11 @@ int main(){
   s2[SIZE-1] = '\0';
   s3[SIZE-1] = '\0';
 
+  // File names cannot be empty
+  __assume(_NEQ_(s1[0], 0));
+  __assume(_NEQ_(s2[0], 0));
+  __assume(_NEQ_(s3[0], 0));
+
   int ret1 = __file_create(s1);
   __assert(ret1 == 1);
   
