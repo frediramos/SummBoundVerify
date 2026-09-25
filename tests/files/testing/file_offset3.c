@@ -14,6 +14,9 @@ int main(){
   // Concrete null byte
   s1[SIZE-1] = '\0';
 
+  // File names cannot be empty
+  __assume(_NEQ_(s1[0], 0));
+
   int ret1 = __file_create(s1);
   int fd = __file_open(s1, "r+");
   ssize_t offset1 = __file_offset(fd);

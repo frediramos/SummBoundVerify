@@ -1,0 +1,5 @@
+func: concrete.c
+summ: fwrite_to_fp.c
+summname: fwrite_to_fp
+compile: x86
+argspec: argspec.yaml

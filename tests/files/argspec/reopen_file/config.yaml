@@ -1,0 +1,5 @@
+func: concrete.c
+summ: reopen_file.c
+summname: reopen_file
+compile: x86
+argspec: argspec.yaml
