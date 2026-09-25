@@ -58,7 +58,7 @@ long __concretize(symbolic var) { return 0; }
 long __maximize(symbolic var) { return 0; }
 long __minimize(symbolic var) { return 0; }
 result_t __check_implications(char *summ, char *cncrt) { return 0; }
-size_t __allocd(void *ptr) { return 0; }
+size_t __allocd(void *ptr, size_t n) { return 0; }
 size_t __lst_len(list_t lst) { return 0; }
 size_t __n_allocd(void *ptr) { return 0; }
 ssize_t __file_offset(int fd) { return 0; }
@@ -86,8 +86,6 @@ void __push_pc(void) { }
 void __report_error(const char *filename, unsigned int line, const char *message) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
-#define POINTER_SIZE 5
-#define FUEL 5
 #define ARRAY_SIZE_1_VAR1 3
 #define ARRAY_SIZE_1_VAR2 3
 

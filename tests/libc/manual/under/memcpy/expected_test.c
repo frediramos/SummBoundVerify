@@ -17,12 +17,19 @@ typedef int ssize_t;
 typedef int mode_t;
 typedef void *FILE;
 
+FILE *__FILE_from_fd(int fd) { return 0; }
 cnstr_t _EQ_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _NEQ_(symbolic var1, symbolic var2) { return 0; }
+cnstr_t _OR_(cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
 cnstr_t _ULE_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t __get_cnstr(symbolic var, size_t size) { return 0; }
+int __file_create(const char *name) { return 0; }
+int __file_open(const char *name, const char *flags) { return 0; }
 int __is_symbolic(symbolic var) { return 0; }
 long __maximize(symbolic var) { return 0; }
 result_t __check_implications(char *summ, char *cncrt) { return 0; }
+ssize_t __file_set_offset(int fd, size_t offset) { return 0; }
+ssize_t __file_write(int fd, const void *buffer, size_t count) { return 0; }
 state_t __save_current_state(void) { return 0; }
 symbolic __sym_var_array(char *name, size_t index, size_t size) { return 0; }
 symbolic __sym_var_named(char *name, size_t size) { return 0; }
@@ -33,8 +40,6 @@ void __mem_addr(char *name, void *addr, size_t n) { }
 void __print_counterexamples(result_t result) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
-#define POINTER_SIZE 5
-#define FUEL 5
 #define ARRAY_SIZE_1_VAR1 5
 #define ARRAY_SIZE_1_VAR2 5
 #define MAX_NUM_1 5
