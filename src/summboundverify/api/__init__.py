@@ -47,6 +47,13 @@ class APIFiles:
     macros = CURRENT / "macros.h"
 
 
+def api(fname: str):
+    """Returns the actual function name in the Symbolic Reflaction API"""
+    if not (fname.startswith(PREFIX)) and not (fname.startswith('_')):
+        fname = PREFIX + fname
+    return fname
+
+
 @cache
 def symbolic_reflection_api() -> str:
     """Returns the symbolic reflection API file."""
@@ -117,9 +124,7 @@ def required_stubs() -> dict[str, str]:
     stubs = all_stubs()
     required = {}
     for req in REQUIRED_FUNCTIONS:
-        name = req
-        if not (name.startswith(PREFIX)) and not (name.startswith('_')):
-            name = PREFIX + name
+        name = api(req)
         required[name] = stubs[name]
     return required
 
@@ -137,10 +142,7 @@ def api_map() -> SimpleNamespace:
     values = {}
 
     for func in REQUIRED_FUNCTIONS:
-        name = func
-        if not (name.startswith(PREFIX)) and not (name.startswith('_')):
-            name = PREFIX + name
-
+        name = api(func)
         if name not in stubs:
             raise ValueError(
                 f"Required function {func!r} not found in "

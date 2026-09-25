@@ -64,6 +64,15 @@ class UnsatConstraintError(RunError):
         super().__init__(message)
 
 
+class AssertConstraintError(RunError):
+    def __init__(self, constraint):
+        message = (
+            f"The constraint: '{constraint}' does not hold.\n"
+            f"I.e., the current path condition does not imply such constraint."
+        )
+        super().__init__(message)
+
+
 class ClaripyConstraintError(RunError):
     def __init__(
         self,
