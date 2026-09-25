@@ -1,6 +1,7 @@
 from pycparser.c_ast import ArrayRef, Assignment, BinaryOp, Compound, Constant, ID
 
-from .....utils import terminate_string
+from summboundverify.validation_gen.utils import terminate_string
+
 from ..base_array import ArrayGen
 
 

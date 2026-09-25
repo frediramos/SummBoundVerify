@@ -25,7 +25,7 @@ from .api import halt_all, save_current_state
 from .parser import FunctionParser, ParsedFunctions
 from .test.args.visitors.structs import StructVisitor
 
-from .utils import *
+from .utils import Macros, define_macro, create_function
 
 
 class ValidationGenerator(ABC):
@@ -113,12 +113,12 @@ class ValidationGenerator(ABC):
             array_size = []
 
             for x, _ in enumerate(self.arraysize[id - 1]):
-                name = f"{ARRAY_SIZE_MACRO}_{id}_VAR{x + 1}"
+                name = f"{Macros.ARRAY_SIZE}_{id}_VAR{x + 1}"
                 array_size.append(name)
 
         else:
             arr_id = min(id, len(self.arraysize))
-            array_size = f"{ARRAY_SIZE_MACRO}_{arr_id}"
+            array_size = f"{Macros.ARRAY_SIZE}_{arr_id}"
 
         return array_size
 
@@ -159,15 +159,29 @@ class ValidationGenerator(ABC):
             headers += self.get_api_calls(defs)
             headers.append("")
 
-        headers += [
-            define_macro(POINTER_SIZE_MACRO, self.pointersize),
-            define_macro(FUEL_MACRO, self.fuel),
-        ]
-
-        headers += self.gen_macros(ARRAY_SIZE_MACRO, self.arraysize)
-        headers += self.gen_macros(MAX_MACRO, self.maxnum)
+        headers += self.gen_macros(Macros.ARRAY_SIZE, self.arraysize)
+        headers += self.gen_macros(Macros.MAX_NUM, self.maxnum)
+        headers += self.gen_file_macros(self.argspec)
 
         return headers
+
+    def gen_file_macros(self, argspec: dict):
+        macros = []
+        for i, spec in enumerate(argspec.values(), 1):
+
+            if spec.get('semantic') != 'file':
+                continue
+
+            fblock = spec.get('file', {})
+            ftype = fblock.get('type', 'descriptor')
+
+            if ftype in ('descriptor', 'pointer'):
+                name = f"{Macros.FNAME_SIZE}_{i}"
+                value = spec.get('file').get('fname').get('size')
+                macro = define_macro(name, value)
+                macros.append(macro)
+
+        return macros
 
     def gen_macros(self, macro, values=[]):
         macros = []
@@ -196,7 +210,8 @@ class ValidationGenerator(ABC):
         default = self.get_dict_value(id, self.default)
         concrete = self.get_dict_value(id, self.concrete_arrays)
 
-        max_value = f"{MAX_MACRO}_{id}" if id <= len(self.maxnum) else None
+        max_value = f"{Macros.MAX_NUM}_{id}" if id <= len(
+            self.maxnum) else None
 
         test_gen = self.test_generator(args, ret_type, cncrt_name, summ_name)
 

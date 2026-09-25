@@ -1,13 +1,7 @@
 from .generator import ValidationGenerator
 from .test import SummaryFuzzTestGen, ConcreteFuzzTestGen
 
-from .utils import (
-    MAX_MACRO,
-    FUEL_MACRO,
-    ARRAY_SIZE_MACRO,
-    POINTER_SIZE_MACRO,
-    define_macro
-)
+from .utils import Macros, define_macro
 
 
 class SummaryFuzzGenerator(ValidationGenerator):
@@ -48,11 +42,10 @@ class ConcreteFuzzGenerator(ValidationGenerator):
             "#include <stdio.h>",
             "#include <sys/types.h>",
             "",
-            define_macro(POINTER_SIZE_MACRO, self.pointersize),
-            define_macro(FUEL_MACRO, self.fuel)
         ]
-        headers += self.gen_macros(ARRAY_SIZE_MACRO, self.arraysize)
-        headers += self.gen_macros(MAX_MACRO, self.maxnum)
+        headers += self.gen_macros(Macros.ARRAY_SIZE, self.arraysize)
+        headers += self.gen_macros(Macros.MAX_NUM, self.maxnum)
+        headers += self.gen_file_macros(self.argspec)
         return headers
 
     def test_generator(self, args, ret_type, cncrt_name, _):

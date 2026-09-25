@@ -35,6 +35,7 @@ from ..api import (
 )
 
 from summboundverify.api import api_map
+from summboundverify.validation_gen.utils import Macros, get_defined_macro
 
 
 class TestGen(ABC):
@@ -142,7 +143,9 @@ class TestGen(ABC):
 
     @staticmethod
     def _filename_constraints(
-        fname_var: str, fname_size: int, use_api: bool = False,
+        fname_var: str,
+        fname_size: int,
+        use_api: bool = False,
     ) -> list[Node]:
         """Generate __assume constraints excluding invalid filenames.
 
@@ -177,8 +180,14 @@ class TestGen(ABC):
         # Not "."
         if fname_size >= 2:
             not_dot = or_expr(
-                neq(ArrayRef(ID(fname_var), Constant('int', '0')), Constant('char', "'.'")),
-                neq(ArrayRef(ID(fname_var), Constant('int', '1')), Constant('int', '0')),
+                neq(
+                    ArrayRef(ID(fname_var), Constant('int', '0')),
+                    Constant('char', "'.'")
+                ),
+                neq(
+                    ArrayRef(ID(fname_var), Constant('int', '1')),
+                    Constant('int', '0')
+                )
             )
             nodes.append(FuncCall(ID(assume), ExprList([not_dot])))
 
@@ -186,28 +195,55 @@ class TestGen(ABC):
         if fname_size >= 3:
             not_dotdot = or_expr(
                 or_expr(
-                    neq(ArrayRef(ID(fname_var), Constant('int', '0')), Constant('char', "'.'")),
-                    neq(ArrayRef(ID(fname_var), Constant('int', '1')), Constant('char', "'.'")),
+                    neq(
+                        ArrayRef(ID(fname_var), Constant('int', '0')),
+                        Constant('char', "'.'")
+                    ),
+
+                    neq(
+                        ArrayRef(ID(fname_var), Constant('int', '1')),
+                        Constant('char', "'.'")
+                    ),
                 ),
-                neq(ArrayRef(ID(fname_var), Constant('int', '2')), Constant('int', '0')),
+                neq(
+                    ArrayRef(ID(fname_var), Constant('int', '2')),
+                    Constant('int', '0')
+                )
             )
             nodes.append(FuncCall(ID(assume), ExprList([not_dotdot])))
 
         # No '/' in any byte
         loop_var = f"__i_{fname_var}"
-        loop_init = DeclList([Decl(
-            loop_var, [], [], [], [],
-            TypeDecl(loop_var, [], None, IdentifierType(names=["int"])),
-            Constant('int', '0'), None,
-        )])
-        loop_cond = BinaryOp('<', ID(loop_var), Constant('int', str(fname_size)))
+        loop_init = DeclList(
+            [
+                Decl(
+                    loop_var, [], [], [], [],
+                    TypeDecl(
+                        loop_var, [], None,
+                        IdentifierType(names=["int"])
+                    ),
+                    Constant('int', '0'), None
+                )
+            ]
+        )
+
+        loop_cond = BinaryOp(
+            '<', ID(loop_var),
+            Constant('int', str(fname_size))
+        )
+
         loop_next = UnaryOp('p++', ID(loop_var))
-        loop_body = FuncCall(ID(assume), ExprList([
-            neq(
-                ArrayRef(ID(fname_var), ID(loop_var)),
-                Constant('char', "'/'"),
-            ),
-        ]))
+        loop_body = Compound(
+            block_items=[
+                FuncCall(
+                    ID(assume),
+                    ExprList([neq(
+                        ArrayRef(ID(fname_var), ID(loop_var)),
+                        Constant('char', "'/'")
+                    )])
+                )
+            ]
+        )
         nodes.append(For(loop_init, loop_cond, loop_next, loop_body))
 
         return nodes
@@ -218,11 +254,19 @@ class TestGen(ABC):
         for name, spec in self.argspec.items():
             if spec.get('semantic') != 'file':
                 continue
+
             fblock = spec.get('file', {})
             if fblock.get('type') != 'name':
                 continue
+
             fname_size = fblock.get('fname', {}).get('size', 5)
-            nodes.extend(self._filename_constraints(name, fname_size, use_api=use_api))
+            nodes.extend(
+                self._filename_constraints(
+                    name,
+                    fname_size,
+                    use_api=use_api
+                )
+            )
         return nodes
 
     def _gen_file_setup(self, use_api: bool = False) -> tuple[list[Node], set[str]]:
@@ -239,22 +283,32 @@ class TestGen(ABC):
         setup: list[Node] = []
         skip = set()
 
-        for entry in fd_args:
+        for i, entry in enumerate(fd_args, 1):
             name = entry['name']
             ftype = entry['file_type']
-            fname_spec = entry['fname']
             data_spec = entry['data']
 
-            fname_size = fname_spec.get('size', 5)
+            fname_size_macro = f"{Macros.FNAME_SIZE}_{i}"
+            fname_size = get_defined_macro(fname_size_macro)
             fname_var = f"__fname_{name}"
 
             skip.add(name)
 
             # Symbolic file name array
-            fname_gen = ArrayTypeGen(ID(fname_var), "char", [str(fname_size)])
+            fname_gen = ArrayTypeGen(
+                ID(fname_var),
+                "char",
+                [fname_size_macro]
+            )
             setup.extend(fname_gen.gen())
 
-            setup.extend(self._filename_constraints(fname_var, fname_size, use_api=use_api))
+            setup.extend(
+                self._filename_constraints(
+                    fname_var,
+                    fname_size,
+                    use_api=use_api
+                )
+            )
 
             # __file_create(fname)
             setup.append(file_create(fname_var))
@@ -278,11 +332,17 @@ class TestGen(ABC):
                 if data_symbolic:
                     # Allocate size+1 so the null terminator doesn't eat a data byte
                     alloc_size = data_size + 1
-                    data_gen = ArrayTypeGen(ID(data_var), "char", [str(alloc_size)])
+                    data_gen = ArrayTypeGen(
+                        ID(data_var), "char", [str(alloc_size)])
                     setup.extend(data_gen.gen())
                 else:
                     # Concrete zero-filled array (declaration only, no symbolic init)
-                    data_gen = ArrayTypeGen(ID(data_var), "char", [str(data_size)])
+                    data_gen = ArrayTypeGen(
+                        ID(data_var),
+                        "char",
+                        [str(data_size)]
+                    )
+
                     setup.extend(data_gen.gen(const=0))
 
                 setup.append(file_write(fd_var, data_var, data_size))
