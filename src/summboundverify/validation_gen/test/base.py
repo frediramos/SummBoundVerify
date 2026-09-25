@@ -170,12 +170,12 @@ class TestGen(ABC):
         nodes: list[Node] = []
 
         # Non-empty: first byte must not be null
-        nodes.append(FuncCall(ID(assume), ExprList([
-            neq(
-                ArrayRef(ID(fname_var), Constant('int', '0')),
-                Constant('int', '0'),
-            ),
-        ])))
+        # nodes.append(FuncCall(ID(assume), ExprList([
+        #     neq(
+        #         ArrayRef(ID(fname_var), Constant('int', '0')),
+        #         Constant('int', '0'),
+        #     ),
+        # ])))
 
         # Not "."
         if fname_size >= 2:

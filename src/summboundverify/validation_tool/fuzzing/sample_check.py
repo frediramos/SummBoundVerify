@@ -226,8 +226,10 @@ def check_sample(formula: BoolRef, sample) -> Check:
 
     # Can it produce what the function produced?
     outputs = _memory_bindings(sample, declared)
+
     fs_binds, fs_content_unchecked = _fs_bindings(sample, declared)
     outputs.extend(fs_binds)
+
     fd_binds, fd_values = _fd_bindings(sample, declared)
     outputs.extend(fd_binds)
     bindings.update(fd_values)
@@ -268,7 +270,7 @@ def check_sample(formula: BoolRef, sample) -> Check:
 
     return Check(
         Verdict.mismatched, sample,
-        "the summary covers this input but cannot produce this result",
+        "the summary does not accept this model",
         bindings,
     )
 

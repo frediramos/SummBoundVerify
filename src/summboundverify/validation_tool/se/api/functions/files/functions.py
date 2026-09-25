@@ -238,4 +238,5 @@ class file_flags(FileSummary):
 class fs_to_constraint(FileSummary):
     def run(self):
         c = self.fs.to_constraint()
+        print(self.fs)
         print(f"lifted fs: {c}")

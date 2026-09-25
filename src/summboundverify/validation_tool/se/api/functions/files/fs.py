@@ -509,9 +509,7 @@ class SymbolicFS(angr.SimStatePlugin):
         char_size = 8
         fd_cases = []
 
-        all_fds = {**self.fds, **self.closed_fds}
-
-        for fd, fde in all_fds.items():
+        for fd, fde in self.fds.items():
             prefix = f"file_fd{fd}"
 
             flags = self.sym_var(f"{prefix}_flags", int_size)
@@ -522,7 +520,7 @@ class SymbolicFS(angr.SimStatePlugin):
                 mode == self.bvv_int(fde.mode),
             )
 
-            content_cases = []
+            file_cases = []
 
             for entry in fde.entries:
                 bytes = []
@@ -544,14 +542,11 @@ class SymbolicFS(angr.SimStatePlugin):
                 if bytes:
                     content = claripy.And(content, *bytes)
 
-                content_cases.append((entry.cond, claripy.And(metadata, content)))
+                file_cases.append((entry.cond, claripy.And(metadata, content)))
 
-            if content_cases:
-                fd_cases.append(claripy.ite_cases(content_cases, true()))
-            else:
-                fd_cases.append(metadata)
+            fd_cases.append(claripy.ite_cases(file_cases, true()))
 
-        constraint = claripy.And(*fd_cases)
+        constraint = claripy.simplify(claripy.And(*fd_cases))
 
         if not self.state.solver.satisfiable(extra_constraints=(constraint,)):
             raise UnsatFSError()
