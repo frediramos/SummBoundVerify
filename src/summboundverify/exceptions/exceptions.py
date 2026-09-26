@@ -67,8 +67,7 @@ class UnsatConstraintError(RunError):
 class AssertConstraintError(RunError):
     def __init__(self, constraint):
         message = (
-            f"The constraint: '{constraint}' does not hold.\n"
-            f"I.e., the current path condition does not imply such constraint."
+            f"The current path condition does not imply: '{constraint}'.\n"
         )
         super().__init__(message)
 
