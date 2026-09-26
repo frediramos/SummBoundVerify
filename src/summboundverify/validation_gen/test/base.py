@@ -145,6 +145,7 @@ class TestGen(ABC):
     def _filename_constraints(
         fname_var: str,
         fname_size: int,
+        fname_size_macro: str | None = None,
         use_api: bool = False,
     ) -> list[Node]:
         """Generate __assume constraints excluding invalid filenames.
@@ -168,14 +169,6 @@ class TestGen(ABC):
 
         assume = api_map().assume
         nodes: list[Node] = []
-
-        # Non-empty: first byte must not be null
-        # nodes.append(FuncCall(ID(assume), ExprList([
-        #     neq(
-        #         ArrayRef(ID(fname_var), Constant('int', '0')),
-        #         Constant('int', '0'),
-        #     ),
-        # ])))
 
         # Not "."
         if fname_size >= 2:
@@ -229,7 +222,7 @@ class TestGen(ABC):
 
         loop_cond = BinaryOp(
             '<', ID(loop_var),
-            Constant('int', str(fname_size))
+            Constant('int', str(fname_size_macro))
         )
 
         loop_next = UnaryOp('p++', ID(loop_var))
@@ -306,6 +299,7 @@ class TestGen(ABC):
                 self._filename_constraints(
                     fname_var,
                     fname_size,
+                    fname_size_macro,
                     use_api=use_api
                 )
             )
