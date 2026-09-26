@@ -645,9 +645,6 @@ void __file_addr(char *name, const char *path) {
     if (g_nfile_paths >= SBV_MAX_FILE_PATHS)
         return;
 
-    if (!sbv_path_safe(path))
-        return;
-
     fp = &g_file_paths[g_nfile_paths++];
     sbv_strcpy(fp->name, sizeof(fp->name), name);
     sbv_strcpy(fp->path, sizeof(fp->path), path);
