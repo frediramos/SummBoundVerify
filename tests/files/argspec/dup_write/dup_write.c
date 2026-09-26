@@ -9,18 +9,16 @@ typedef unsigned int cnstr_t;
 int dup_write(int fd, const char *data)
 {
   int fd2 = __file_dup(fd);
-  if (__is_certain(_LT_(fd2, 0)))
+  if (fd2 < 0)
   {
     return -1;
   }
-  __assume(_GE_(fd2, 0));
   ssize_t written = __file_write(fd2, data, WRITE_SIZE);
-  if (__is_certain(_NEQ_(written, WRITE_SIZE)))
+  if (written != WRITE_SIZE)
   {
     __file_close(fd2);
     return -1;
   }
-  __assume(_EQ_(written, WRITE_SIZE));
   __file_close(fd2);
   return fd2;
 }

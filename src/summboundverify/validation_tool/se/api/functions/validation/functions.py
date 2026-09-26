@@ -102,7 +102,11 @@ class get_cnstr(CSummary):
         fs = self.state.fs
         constraints = []
 
-        if isinstance(fs, SymbolicFS) and (fs.fds or fs.closed_fds):
+        # Lifted whenever the test touches the file system at all, even with
+        # no descriptor open: `file_open_fds == 0` is what catches a concrete
+        # function that leaves one open. A test that never touches it (every
+        # libc string test) gets no file variables.
+        if isinstance(fs, SymbolicFS) and (fs.fnames or fs.fds or self.ctx.FILE_TAGS):
             constraints.append(fs.to_constraint())
 
         if isinstance(fs, SymbolicFS) and self.ctx.FILE_TAGS:

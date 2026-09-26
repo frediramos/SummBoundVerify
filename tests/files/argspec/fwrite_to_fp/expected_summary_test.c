@@ -18,17 +18,13 @@ typedef int mode_t;
 typedef void *FILE;
 
 FILE *__FILE_from_fd(int fd) { return 0; }
-cnstr_t _GE_(symbolic var1, symbolic var2) { return 0; }
-cnstr_t _LT_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _NEQ_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _OR_(cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
 cnstr_t _ULE_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t __get_cnstr(symbolic var, size_t size) { return 0; }
 int __fd_from_FILE(FILE *fp) { return 0; }
-int __file_close(int fd) { return 0; }
 int __file_create(const char *name) { return 0; }
 int __file_open(const char *name, const char *flags) { return 0; }
-int __is_certain(cnstr_t cnstr) { return 0; }
 result_t __check_implications(char *summ, char *cncrt) { return 0; }
 ssize_t __file_set_offset(int fd, size_t offset) { return 0; }
 ssize_t __file_write(int fd, const void *buffer, size_t count) { return 0; }
@@ -42,25 +38,21 @@ void __mem_addr(char *name, void *addr, size_t n) { }
 void __print_counterexamples(result_t result) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
-#define POINTER_SIZE 5
-#define FUEL 5
 #define ARRAY_SIZE_1 4
+#define FNAME_SIZE_1 5
 
 size_t fwrite_to_fp(FILE *fp, const char *data)
 {
   int fd = __fd_from_FILE(fp);
-  if (__is_certain(_LT_(fd, 0)))
+  if (fd < 0)
   {
     return 0;
   }
-  __assume(_GE_(fd, 0));
   ssize_t written = __file_write(fd, data, 4);
-  __file_close(fd);
-  if (__is_certain(_LT_(written, 0)))
+  if (written < 0)
   {
     return 0;
   }
-  __assume(_GE_(written, 0));
   return written;
 }
 
@@ -73,18 +65,19 @@ void test_1()
   }
 
   data[ARRAY_SIZE_1 - 1] = '\0';
-  char __fname_fp[5];
-  for (int __fname_fp_idx_1 = 0; __fname_fp_idx_1 < 5; __fname_fp_idx_1++)
+  char __fname_fp[FNAME_SIZE_1];
+  for (int __fname_fp_idx_1 = 0; __fname_fp_idx_1 < FNAME_SIZE_1; __fname_fp_idx_1++)
   {
     __fname_fp[__fname_fp_idx_1] = __sym_var_array("__fname_fp", __fname_fp_idx_1, sizeof(char) * 8);
   }
 
-  __fname_fp[5 - 1] = '\0';
-  __assume(_NEQ_(__fname_fp[0], 0));
+  __fname_fp[FNAME_SIZE_1 - 1] = '\0';
   __assume(_OR_(_NEQ_(__fname_fp[0], '.'), _NEQ_(__fname_fp[1], 0)));
   __assume(_OR_(_OR_(_NEQ_(__fname_fp[0], '.'), _NEQ_(__fname_fp[1], '.')), _NEQ_(__fname_fp[2], 0)));
   for (int __i___fname_fp = 0; __i___fname_fp < 5; __i___fname_fp++)
+  {
     __assume(_NEQ_(__fname_fp[__i___fname_fp], '/'));
+  }
 
   __file_create(__fname_fp);
   int __fd_fp = __file_open(__fname_fp, "w");

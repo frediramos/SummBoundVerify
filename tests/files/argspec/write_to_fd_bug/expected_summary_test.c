@@ -18,12 +18,14 @@ typedef int mode_t;
 typedef void *FILE;
 
 FILE *__FILE_from_fd(int fd) { return 0; }
+cnstr_t _LT_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _NEQ_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _OR_(cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
 cnstr_t _ULE_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t __get_cnstr(symbolic var, size_t size) { return 0; }
 int __file_create(const char *name) { return 0; }
 int __file_open(const char *name, const char *flags) { return 0; }
+int __is_certain(cnstr_t cnstr) { return 0; }
 result_t __check_implications(char *summ, char *cncrt) { return 0; }
 ssize_t __file_set_offset(int fd, size_t offset) { return 0; }
 ssize_t __file_write(int fd, const void *buffer, size_t count) { return 0; }
@@ -38,45 +40,23 @@ void __print_counterexamples(result_t result) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
 #define ARRAY_SIZE_1 5
-#define MAX_NUM_1 5
+#define FNAME_SIZE_1 5
 
-void fork_save_data(unsigned int n)
+ssize_t write_to_fd(int fd, const char *data)
 {
-  if (n == 0)
-    return;
-  fork_save_data(n - 1);
-}
-
-int save_data(const char *path, const char *data, size_t len)
-{
-  int ret = __file_create(path);
-  if (ret != 1)
+  ssize_t written = __file_write(fd, data, 5);
+  __file_create("zz");
+  int fd2 = __file_open("zz", "w");
+  __file_write(fd2, "junk", 4);
+  if (__is_certain(_LT_(written, 0)))
   {
     return -1;
   }
-  int fd = __file_open(path, "w");
-  if (fd < 0)
-  {
-    return -1;
-  }
-  fork_save_data(len);
-  int written = __file_write(fd, data, len);
-  if (written != len)
-  {
-    return -1;
-  }
-  return 0;
+  return written;
 }
 
 void test_1()
 {
-  char path[ARRAY_SIZE_1];
-  for (int path_idx_1 = 0; path_idx_1 < ARRAY_SIZE_1; path_idx_1++)
-  {
-    path[path_idx_1] = __sym_var_array("path", path_idx_1, sizeof(char) * 8);
-  }
-
-  path[ARRAY_SIZE_1 - 1] = '\0';
   char data[ARRAY_SIZE_1];
   for (int data_idx_1 = 0; data_idx_1 < ARRAY_SIZE_1; data_idx_1++)
   {
@@ -84,19 +64,24 @@ void test_1()
   }
 
   data[ARRAY_SIZE_1 - 1] = '\0';
-  size_t len = __sym_var_named("len", sizeof(size_t) * 8);
-  size_t max_1 = MAX_NUM_1;
-  __assume(_ULE_(len, max_1));
-  __assume(_OR_(_NEQ_(path[0], '.'), _NEQ_(path[1], 0)));
-  __assume(_OR_(_OR_(_NEQ_(path[0], '.'), _NEQ_(path[1], '.')), _NEQ_(path[2], 0)));
-  for (int __i_path = 0; __i_path < 5; __i_path++)
+  char __fname_fd[FNAME_SIZE_1];
+  for (int __fname_fd_idx_1 = 0; __fname_fd_idx_1 < FNAME_SIZE_1; __fname_fd_idx_1++)
   {
-    __assume(_NEQ_(path[__i_path], '/'));
+    __fname_fd[__fname_fd_idx_1] = __sym_var_array("__fname_fd", __fname_fd_idx_1, sizeof(char) * 8);
   }
 
-  __file_addr("path", path);
-  int ret = save_data(path, data, len);
-  cnstr_t cnstr = __get_cnstr(&ret, sizeof(int) * 8);
+  __fname_fd[FNAME_SIZE_1 - 1] = '\0';
+  __assume(_OR_(_NEQ_(__fname_fd[0], '.'), _NEQ_(__fname_fd[1], 0)));
+  __assume(_OR_(_OR_(_NEQ_(__fname_fd[0], '.'), _NEQ_(__fname_fd[1], '.')), _NEQ_(__fname_fd[2], 0)));
+  for (int __i___fname_fd = 0; __i___fname_fd < 5; __i___fname_fd++)
+  {
+    __assume(_NEQ_(__fname_fd[__i___fname_fd], '/'));
+  }
+
+  __file_create(__fname_fd);
+  int fd = __file_open(__fname_fd, "w");
+  ssize_t ret = write_to_fd(fd, data);
+  cnstr_t cnstr = __get_cnstr(&ret, sizeof(ssize_t) * 8);
   __store_cnstr("summ_test1", cnstr);
   __halt_all(NULL);
   return ;

@@ -22,6 +22,7 @@ cnstr_t _NEQ_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _OR_(cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
 cnstr_t _ULE_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t __get_cnstr(symbolic var, size_t size) { return 0; }
+int __file_close(int fd) { return 0; }
 int __file_create(const char *name) { return 0; }
 int __file_open(const char *name, const char *flags) { return 0; }
 result_t __check_implications(char *summ, char *cncrt) { return 0; }
@@ -61,6 +62,7 @@ int save_data(const char *path, const char *data, size_t len)
   }
   fork_save_data(len);
   int written = __file_write(fd, data, len);
+  __file_close(fd);
   if (written != len)
   {
     return -1;

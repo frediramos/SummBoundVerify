@@ -24,6 +24,10 @@ int save_data(const char *path, const char *data, size_t len)
   }
   fork_save_data(len);
   int written = __file_write(fd, data, len);
+  /* Bug on purpose: the summary closes the file, but the concrete function
+   * leaves it open. The descriptor is open only on the concrete side, so the
+   * fuzz engine must report the open-descriptor sets as a mismatch. */
+  __file_close(fd);
   if (written != len)
   {
     return -1;

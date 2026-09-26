@@ -10,17 +10,14 @@ typedef struct _IO_FILE FILE;
 size_t fwrite_to_fp(FILE *fp, const char *data)
 {
   int fd = __fd_from_FILE(fp);
-  if (__is_certain(_LT_(fd, 0)))
+  if (fd < 0)
   {
     return 0;
   }
-  __assume(_GE_(fd, 0));
   ssize_t written = __file_write(fd, data, WRITE_SIZE);
-  __file_close(fd);
-  if (__is_certain(_LT_(written, 0)))
+  if (written < 0)
   {
     return 0;
   }
-  __assume(_GE_(written, 0));
   return written;
 }

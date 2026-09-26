@@ -18,7 +18,6 @@ typedef int mode_t;
 typedef void *FILE;
 
 FILE *__FILE_from_fd(int fd) { return 0; }
-cnstr_t _GE_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _LT_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _NEQ_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _OR_(cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
@@ -41,9 +40,8 @@ void __mem_addr(char *name, void *addr, size_t n) { }
 void __print_counterexamples(result_t result) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
-#define POINTER_SIZE 5
-#define FUEL 5
 #define ARRAY_SIZE_1 4
+#define FNAME_SIZE_1 5
 
 ssize_t read_from_fd(int fd, char *buf)
 {
@@ -52,7 +50,6 @@ ssize_t read_from_fd(int fd, char *buf)
   {
     return -1;
   }
-  __assume(_GE_(nread, 0));
   return nread;
 }
 
@@ -65,18 +62,19 @@ void test_1()
   }
 
   buf[ARRAY_SIZE_1 - 1] = '\0';
-  char __fname_fd[5];
-  for (int __fname_fd_idx_1 = 0; __fname_fd_idx_1 < 5; __fname_fd_idx_1++)
+  char __fname_fd[FNAME_SIZE_1];
+  for (int __fname_fd_idx_1 = 0; __fname_fd_idx_1 < FNAME_SIZE_1; __fname_fd_idx_1++)
   {
     __fname_fd[__fname_fd_idx_1] = __sym_var_array("__fname_fd", __fname_fd_idx_1, sizeof(char) * 8);
   }
 
-  __fname_fd[5 - 1] = '\0';
-  __assume(_NEQ_(__fname_fd[0], 0));
+  __fname_fd[FNAME_SIZE_1 - 1] = '\0';
   __assume(_OR_(_NEQ_(__fname_fd[0], '.'), _NEQ_(__fname_fd[1], 0)));
   __assume(_OR_(_OR_(_NEQ_(__fname_fd[0], '.'), _NEQ_(__fname_fd[1], '.')), _NEQ_(__fname_fd[2], 0)));
   for (int __i___fname_fd = 0; __i___fname_fd < 5; __i___fname_fd++)
+  {
     __assume(_NEQ_(__fname_fd[__i___fname_fd], '/'));
+  }
 
   __file_create(__fname_fd);
   int fd = __file_open(__fname_fd, "w+");

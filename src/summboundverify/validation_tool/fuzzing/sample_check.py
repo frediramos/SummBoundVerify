@@ -178,6 +178,14 @@ def _fd_bindings(sample, declared: dict) -> tuple[list, dict]:
     bindings = []
     values = {}
 
+    # The set of open descriptors, as one variable. Per-fd variables for a
+    # descriptor only one side has open would otherwise be left free, and the
+    # sample admitted whatever the summary did with it.
+    open_fds = declared.get('file_open_fds')
+    if open_fds is not None and sample.open_fds is not None:
+        bindings.append(open_fds == sample.open_fds)
+        values['file_open_fds'] = sample.open_fds
+
     for name, fdv in sample.fds.items():
         prefix = f'file_{name}'
 

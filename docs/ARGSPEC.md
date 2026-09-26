@@ -397,11 +397,13 @@ __file_set_offset(fd, 0);
   - `file_fd3_offset` — final file offset
   - `file_fd3_size` — file size in bytes
   - `file_fd3_byte_N` — file content, byte by byte
+  - `file_open_fds` — the set of open descriptors (see [Open descriptors](#open-descriptors))
 - **Concrete:** `__file_create`/`__file_open`/`__file_write`/`__file_set_offset`
   in `sbv_sample.c` perform real OS operations. `sbv_open` tracks the fd via
   `fd_track_t`. At recording time, `sbv_record` reads the file and emits
-  `D fd3 <flags> <mode> <offset> <size> <hex>`, where `fd3` is the real
-  descriptor number (see [Intercepted Operations](#concrete-harness--intercepted-operations)).
+  `D fd3 <flags> <mode> <offset> <size> <hex>` for each descriptor still open,
+  where `fd3` is the real descriptor number, and `O <mask>` for the set (see
+  [Intercepted Operations](#concrete-harness--intercepted-operations)).
 
 When `data` is present, the file is opened with `"w+"` (read+write) instead of
 `"w"` (write-only), so the function can read the pre-populated data.
@@ -463,13 +465,16 @@ the descriptor refers to.
 | `creat`  | `sbv_creat`  | new descriptor: path, `O_WRONLY\|O_CREAT\|O_TRUNC`     |
 | `openat` | `sbv_openat` | new descriptor: path (relative to `dirfd`), flags      |
 | `dup`    | `sbv_dup`    | new descriptor sharing the original's path and flags   |
-| `dup2`   | `sbv_dup2`   | same, after snapshotting the descriptor it replaces    |
-| `close`  | `sbv_close`  | snapshot, then mark closed                             |
-| `fclose` | `sbv_fclose` | flush, snapshot, then mark closed                      |
+| `dup2`   | `sbv_dup2`   | same, forgetting the descriptor it replaces            |
+| `close`  | `sbv_close`  | forget the descriptor                                  |
+| `fclose` | `sbv_fclose` | forget the descriptor                                  |
+
+A closed descriptor is forgotten, as on the symbolic side: it no longer
+exists, and its number goes to the next open. Only descriptors still open when
+the test is recorded are observed.
 
 `read`, `write` and `lseek` are **not** wrapped. The state that depends on
-them is asked of the kernel instead, in a *snapshot* taken when a descriptor
-is closed or, for one still open, when the test is recorded:
+them is asked of the kernel when the test is recorded:
 
 - **offset** — `lseek(fd, 0, SEEK_CUR)`. This is correct for `O_APPEND`,
   for descriptors sharing an offset through `dup`, and for I/O through stdio
@@ -479,11 +484,30 @@ is closed or, for one still open, when the test is recorded:
 - **size** and **content** — read back through the path at recording time.
 
 Descriptors are recorded by their **real number** (`fd3`, `fd4`, ...), which
-matches the symbolic side: both hand out the lowest free number from 3. When a
-number is closed and reused, only the newest descriptor is recorded, as
-`to_constraint()` describes the open one. After every test the harness closes
-every descriptor still open and deletes the files it touched, so each test
-starts with an empty sandbox and descriptor 3 free.
+matches the symbolic side: both hand out the lowest free number from 3. After
+every test the harness closes every descriptor still open and deletes the
+files it touched, so each test starts with an empty sandbox and descriptor 3
+free.
+
+#### Open descriptors
+
+The per-descriptor variables (`file_fd3_*`, ...) only describe descriptors
+that exist. On their own, a descriptor that one side has open and the other
+does not would go unnoticed: its variables would simply be left
+unconstrained, and any sample admitted. `file_open_fds` closes that gap with a
+single variable for the whole set — a bit mask with bit N set when fd N is
+open (`8` is fd 3 alone, `24` is fds 3 and 4):
+
+- **Symbolic:** `to_constraint()` sets bit N under the conditions of fd N's
+  entries, so a descriptor for a symbolic name is open only where its open
+  succeeded — for a name that may be empty, `If(name_0 == 0, 0, 8)`. It is
+  lifted whenever the test touches the file system, even with nothing open
+  (`file_open_fds == 0`).
+- **Concrete:** the harness emits the same mask as `O <mask>`, after the `D`
+  lines.
+
+Equal masks mean the same descriptors are open on both sides, so every
+`file_fd{N}_*` variable the formula constrains is bound by the sample.
 
 `sbv_unwrap.h` undoes these redirections for `sbv_sample.c` and `driver.c`,
 so their own calls (the wrappers themselves, tape reading, stats writing)

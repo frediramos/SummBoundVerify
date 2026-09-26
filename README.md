@@ -340,6 +340,10 @@ The trade is that sampling **cannot prove a summary correct**. It is a
 falsification test: it either produces a real input the summary gets wrong, or
 it says nothing was found.
 
+For functions that use files, use `fuzz`: under `se` the concrete function's
+`open`/`read`/`write` do not reach the symbolic file system, so its verdict is
+meaningless (see [docs/LIMITATIONS.md](docs/LIMITATIONS.md#engines)).
+
 ### Verdicts
 
 Written to `<test>_check.json` and printed at the end of the run:
@@ -417,6 +421,11 @@ To obtain a full description of our test generation tool one can use the flag `-
 ```sh
 summbv -h
 ```
+
+- **[docs/ARGSPEC.md](docs/ARGSPEC.md)** — the argspec schema, and how each
+  argument type is generated, observed and compared.
+- **[docs/LIMITATIONS.md](docs/LIMITATIONS.md)** — what is *not* checked:
+  memory outside tagged arguments, closed descriptors, directories, and more.
 
 ## Generate a simple validation test 
 

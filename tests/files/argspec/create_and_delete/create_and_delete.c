@@ -6,11 +6,10 @@ typedef unsigned int cnstr_t;
 int create_and_delete(const char *path)
 {
   int ret = __file_create(path);
-  if (__is_certain(_NEQ_(ret, 1)))
+  if (ret != 1)
   {
     return -1;
   }
-  __assume(_EQ_(ret, 1));
   ret = __file_delete(path);
   return ret;
 }

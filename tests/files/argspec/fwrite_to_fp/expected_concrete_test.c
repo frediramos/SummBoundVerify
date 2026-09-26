@@ -5,15 +5,12 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#define POINTER_SIZE 5
-#define FUEL 5
 #define ARRAY_SIZE_1 4
+#define FNAME_SIZE_1 5
 
 size_t concrete_fwrite_to_fp(FILE *fp, const char *data)
 {
-  size_t n = fwrite(data, 1, 4, fp);
-  fclose(fp);
-  return n;
+  return fwrite(data, 1, 4, fp);
 }
 
 void test_1()
@@ -25,18 +22,19 @@ void test_1()
   }
 
   data[ARRAY_SIZE_1 - 1] = '\0';
-  char __fname_fp[5];
-  for (int __fname_fp_idx_1 = 0; __fname_fp_idx_1 < 5; __fname_fp_idx_1++)
+  char __fname_fp[FNAME_SIZE_1];
+  for (int __fname_fp_idx_1 = 0; __fname_fp_idx_1 < FNAME_SIZE_1; __fname_fp_idx_1++)
   {
     __fname_fp[__fname_fp_idx_1] = __sym_var_array("__fname_fp", __fname_fp_idx_1, sizeof(char) * 8);
   }
 
-  __fname_fp[5 - 1] = '\0';
-  __assume(__fname_fp[0] != 0);
+  __fname_fp[FNAME_SIZE_1 - 1] = '\0';
   __assume((__fname_fp[0] != '.') | (__fname_fp[1] != 0));
   __assume(((__fname_fp[0] != '.') | (__fname_fp[1] != '.')) | (__fname_fp[2] != 0));
   for (int __i___fname_fp = 0; __i___fname_fp < 5; __i___fname_fp++)
+  {
     __assume(__fname_fp[__i___fname_fp] != '/');
+  }
 
   __file_create(__fname_fp);
   int __fd_fp = __file_open(__fname_fp, "w");

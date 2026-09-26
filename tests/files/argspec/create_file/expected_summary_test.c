@@ -37,8 +37,6 @@ void __mem_addr(char *name, void *addr, size_t n) { }
 void __print_counterexamples(result_t result) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
-#define POINTER_SIZE 5
-#define FUEL 5
 #define ARRAY_SIZE_1 5
 
 int create_file(const char *path)
@@ -56,11 +54,12 @@ void test_1()
   }
 
   path[ARRAY_SIZE_1 - 1] = '\0';
-  __assume(_NEQ_(path[0], 0));
   __assume(_OR_(_NEQ_(path[0], '.'), _NEQ_(path[1], 0)));
   __assume(_OR_(_OR_(_NEQ_(path[0], '.'), _NEQ_(path[1], '.')), _NEQ_(path[2], 0)));
   for (int __i_path = 0; __i_path < 5; __i_path++)
+  {
     __assume(_NEQ_(path[__i_path], '/'));
+  }
 
   __file_addr("path", path);
   int ret = create_file(path);
