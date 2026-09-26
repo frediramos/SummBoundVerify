@@ -27,11 +27,21 @@ def save_current_state(name=None):
     return decl
 
 
+def _is_void(ret_type) -> bool:
+    """Whether `ret_type` (a type node, as parsed) is plain `void`."""
+    return (
+        isinstance(ret_type, TypeDecl)
+        and getattr(ret_type.type, 'names', None) == ['void']
+    )
+
+
 def get_cnstr(name, ret_name: str, ret_type: Decl):
     call = ID(api_map().get_cnstr)
     cnstr_t = IdentifierType(names=['cnstr_t'])
 
-    if ret_type == 'void':
+    # A void function has no return value to lift: get_cnstr is told so by
+    # a zero width, and never dereferences the NULL.
+    if _is_void(ret_type):
         args = [ID('NULL'), Constant('int', str(0))]
 
     else:

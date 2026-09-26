@@ -1,0 +1,13 @@
+dst:
+  type: char*
+  semantic: memory
+  memory:
+    type: write
+    size: 4
+
+src:
+  type: char*
+  semantic: memory
+  memory:
+    type: read
+    size: 4

@@ -5,8 +5,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#define POINTER_SIZE 5
-#define FUEL 5
 #define ARRAY_SIZE_1 5
 
 int concrete_create_and_delete(const char *path)
@@ -29,11 +27,12 @@ void test_1()
   }
 
   path[ARRAY_SIZE_1 - 1] = '\0';
-  __assume(path[0] != 0);
   __assume((path[0] != '.') | (path[1] != 0));
   __assume(((path[0] != '.') | (path[1] != '.')) | (path[2] != 0));
   for (int __i_path = 0; __i_path < 5; __i_path++)
+  {
     __assume(path[__i_path] != '/');
+  }
 
   __file_addr("path", path);
   int ret = concrete_create_and_delete(path);

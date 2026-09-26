@@ -1,0 +1,5 @@
+func: concrete.c
+summ: copy_buffer.c
+summname: copy_buffer
+compile: x86
+argspec: argspec.yaml

@@ -170,6 +170,11 @@ class Sample:
     memory: dict[str, Value] = field(default_factory=dict)
     files: dict[str, FileValue] = field(default_factory=dict)
     fds: dict[str, FdValue] = field(default_factory=dict)
+
+    # The descriptors open when the test was recorded, bit N for fd N. None
+    # for a harness that did not report it.
+    open_fds: int | None = None
+
     ret: Value | None = None
 
     # An address, rather than a value. The number is meaningless across runs,
@@ -185,6 +190,7 @@ class Sample:
             'memory': {k: v.as_dict() for k, v in self.memory.items()},
             'files': {k: v.as_dict() for k, v in self.files.items()},
             'fds': {k: v.as_dict() for k, v in self.fds.items()},
+            'open_fds': self.open_fds,
             'ret': self.ret.as_dict() if self.ret else None,
             'ret_is_pointer': self.ret_is_pointer,
         }
@@ -539,6 +545,9 @@ class AflEngine():
                     size=int(size_str),
                     raw=bytes.fromhex(raw) if raw else b'',
                 )
+
+            elif kind == 'O' and len(parts) == 1:
+                current.open_fds = int(parts[0])
 
             elif kind == 'R' and len(parts) == 3:
                 bits, pointer, raw = parts

@@ -87,27 +87,30 @@ class TestGen(ABC):
         )
 
     @staticmethod
-    def _tag_memory(ptr_names: list[str], size_macro: str | list[str] | None) -> list[Node]:
+    def _tag_memory(sym_args, ptr_names: list[str]) -> list[Node]:
+        """Tag each region with the size its array was declared with.
 
-        if isinstance(size_macro, list):
-            return [
-                mem_addr(ptr, size)
-                for ptr, size in zip(ptr_names, size_macro)
-            ]
-
-        return [mem_addr(ptr, size_macro) for ptr in ptr_names]
+        Looked up by name rather than paired by position: the sizes are
+        consumed one per function argument, scalars included, so a position
+        in one list says nothing about the other.
+        """
+        return [
+            mem_addr(ptr, sym_args.sizes.get(ptr) or Macros.POINTER_SIZE)
+            for ptr in ptr_names
+        ]
 
     def _memory_args(self, sym_args) -> list[str]:
-        """Return pointer args that should be tagged with __mem_addr."""
-        mem_args = []
-        for name in sym_args.pointer_args:
-            spec = self.argspec.get(name, {})
-            semantic = spec.get('semantic', 'scalar')
-            if semantic == 'memory':
-                mem = spec.get('memory', {})
-                if mem.get('type', 'write') == 'write':
-                    mem_args.append(name)
-        return mem_args
+        """Return pointer args that should be tagged with __mem_addr.
+
+        Every `semantic: memory` argument, read as well as write: a region
+        the function only reads must still be unchanged afterwards, and
+        tagging it is what lets a summary that writes to it be caught.
+        """
+        return [
+            name
+            for name in sym_args.pointer_args
+            if self.argspec.get(name, {}).get('semantic') == 'memory'
+        ]
 
     def _file_descriptor_args(self) -> list[dict]:
         """Collect argspec entries for descriptor and pointer file args."""

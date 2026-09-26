@@ -73,7 +73,7 @@ class SymbolicTestGen(TestGen):
 
         mem_args = self._memory_args(sym_args)
         if mem_args:
-            body.extend(self._tag_memory(mem_args, size_macro))
+            body.extend(self._tag_memory(sym_args, mem_args))
 
         body.extend(self._gen_name_file_constraints(use_api=True))
         body.extend(self._tag_files())

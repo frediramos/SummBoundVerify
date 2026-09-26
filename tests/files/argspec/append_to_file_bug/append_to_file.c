@@ -6,17 +6,15 @@ typedef unsigned int cnstr_t;
 int append_to_file(const char *path)
 {
   int ret = __file_create(path);
-  if (__is_certain(_NEQ_(ret, 1)))
+  if (ret != 1)
   {
     return -1;
   }
-  __assume(_EQ_(ret, 1));
   int fd = __file_open(path, "a");
-  if (__is_certain(_LT_(fd, 0)))
+  if (fd < 0)
   {
     return -1;
   }
-  __assume(_GE_(fd, 0));
   __file_write(fd, "ab", 2);
   __file_set_offset(fd, 0);
   /* Bug on purpose: O_APPEND is ignored, so "cd" overwrites "ab" instead of

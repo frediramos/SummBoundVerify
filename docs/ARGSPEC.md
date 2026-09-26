@@ -82,7 +82,7 @@ dest:
 
 | `memory` key | Values        | Default | Description |
 |------------|---------------|---------|-------------|
-| `type`     | `read`, `write` | `write` | Access mode. `read` = read-only, not tagged; `write` = read-write, tagged with `__mem_addr`. |
+| `type`     | `read`, `write` | `write` | Access mode, as documentation of intent: both are tagged with `__mem_addr` and compared after the call (see below). |
 | `size`     | `int`         |         | Size of the symbolic array allocated for this argument. |
 
 When any argument has `semantic: memory` with `memory.type: write`, the tool
@@ -314,7 +314,7 @@ for (int buf_idx_1 = 0; buf_idx_1 < 4; buf_idx_1++) {
 }
 buf[4 - 1] = '\0';
 
-// Tagging (only for type: write)
+// Tagging (read and write alike)
 __mem_addr("buf", buf, SIZE);
 ```
 
@@ -322,14 +322,19 @@ __mem_addr("buf", buf, SIZE);
   `size`.
 - `ArrayTypeGen` generates a symbolic array where each element is drawn from
   `__sym_var_array`.
-- For `type: write`, `_memory_args()` selects this argument for tagging:
+- `_memory_args()` selects every `semantic: memory` argument for tagging,
+  whatever its `type`:
   - **Symbolic:** `__mem_addr` registers the region. After the summary
     executes, `get_cnstr` reads the final memory contents and generates
     variables `mem_buf_0`, `mem_buf_1`, etc.
   - **Concrete:** `__mem_addr` records the address and size. After the
     function executes, `sbv_record` reads the final bytes and emits a record
     line `M buf 4 <hex>`.
-- For `type: read`, the buffer is input data — its final state is not observed.
+- A `type: read` region is compared too. A correct summary leaves it as it
+  was (`mem_buf_i == buf_i`), so this costs nothing — but a summary that
+  writes to memory the function only reads (or a function that writes to
+  memory the argspec declares read-only) is a mismatch instead of passing
+  unnoticed.
 
 ### File (`type: name`) — Generated Code
 
@@ -397,11 +402,13 @@ __file_set_offset(fd, 0);
   - `file_fd3_offset` — final file offset
   - `file_fd3_size` — file size in bytes
   - `file_fd3_byte_N` — file content, byte by byte
+  - `file_open_fds` — the set of open descriptors (see [Open descriptors](#open-descriptors))
 - **Concrete:** `__file_create`/`__file_open`/`__file_write`/`__file_set_offset`
   in `sbv_sample.c` perform real OS operations. `sbv_open` tracks the fd via
   `fd_track_t`. At recording time, `sbv_record` reads the file and emits
-  `D fd3 <flags> <mode> <offset> <size> <hex>`, where `fd3` is the real
-  descriptor number (see [Intercepted Operations](#concrete-harness--intercepted-operations)).
+  `D fd3 <flags> <mode> <offset> <size> <hex>` for each descriptor still open,
+  where `fd3` is the real descriptor number, and `O <mask>` for the set (see
+  [Intercepted Operations](#concrete-harness--intercepted-operations)).
 
 When `data` is present, the file is opened with `"w+"` (read+write) instead of
 `"w"` (write-only), so the function can read the pre-populated data.
@@ -427,9 +434,9 @@ before its offset and content are recorded, so buffered `fwrite`s count.
 | **C type**            | `int`, `size_t`... | `char*`, `void*`       | `char*`, `void*`       | `char*`                | `int`                  | `FILE*`                |
 | **Symbolic init**     | `__sym_var_named`  | `__sym_var_array`      | `__sym_var_array`      | `__sym_var_array`      | via `__file_open`      | via `__file_open`      |
 | **Setup code**        | None               | None                   | None                   | None                   | create+open+write+seek | create+open+write+seek |
-| **Tagging**           | None               | `__mem_addr`           | None                   | `__file_addr`          | None (auto via fd)     | None (auto via fd)     |
-| **Formula variables** | The var itself      | `mem_{name}_{i}`       | —                      | `file_{name}_exists`   | `file_fd{N}_*`         | `file_fd{N}_*`         |
-| **Concrete record**   | Part of `Ret`      | `M` line               | —                      | `F` line               | `D` line               | `D` line               |
+| **Tagging**           | None               | `__mem_addr`           | `__mem_addr`           | `__file_addr`          | None (auto via fd)     | None (auto via fd)     |
+| **Formula variables** | The var itself      | `mem_{name}_{i}`       | `mem_{name}_{i}`       | `file_{name}_exists`   | `file_fd{N}_*`, `file_open_fds` | `file_fd{N}_*`, `file_open_fds` |
+| **Concrete record**   | Part of `Ret`      | `M` line               | `M` line               | `F` line               | `D` and `O` lines      | `D` and `O` lines      |
 | **Skip in ArgGen?**   | No                 | No                     | No                     | No                     | Yes                    | Yes                    |
 
 ### Symbolic FS Constraints
@@ -463,13 +470,16 @@ the descriptor refers to.
 | `creat`  | `sbv_creat`  | new descriptor: path, `O_WRONLY\|O_CREAT\|O_TRUNC`     |
 | `openat` | `sbv_openat` | new descriptor: path (relative to `dirfd`), flags      |
 | `dup`    | `sbv_dup`    | new descriptor sharing the original's path and flags   |
-| `dup2`   | `sbv_dup2`   | same, after snapshotting the descriptor it replaces    |
-| `close`  | `sbv_close`  | snapshot, then mark closed                             |
-| `fclose` | `sbv_fclose` | flush, snapshot, then mark closed                      |
+| `dup2`   | `sbv_dup2`   | same, forgetting the descriptor it replaces            |
+| `close`  | `sbv_close`  | forget the descriptor                                  |
+| `fclose` | `sbv_fclose` | forget the descriptor                                  |
+
+A closed descriptor is forgotten, as on the symbolic side: it no longer
+exists, and its number goes to the next open. Only descriptors still open when
+the test is recorded are observed.
 
 `read`, `write` and `lseek` are **not** wrapped. The state that depends on
-them is asked of the kernel instead, in a *snapshot* taken when a descriptor
-is closed or, for one still open, when the test is recorded:
+them is asked of the kernel when the test is recorded:
 
 - **offset** — `lseek(fd, 0, SEEK_CUR)`. This is correct for `O_APPEND`,
   for descriptors sharing an offset through `dup`, and for I/O through stdio
@@ -479,11 +489,30 @@ is closed or, for one still open, when the test is recorded:
 - **size** and **content** — read back through the path at recording time.
 
 Descriptors are recorded by their **real number** (`fd3`, `fd4`, ...), which
-matches the symbolic side: both hand out the lowest free number from 3. When a
-number is closed and reused, only the newest descriptor is recorded, as
-`to_constraint()` describes the open one. After every test the harness closes
-every descriptor still open and deletes the files it touched, so each test
-starts with an empty sandbox and descriptor 3 free.
+matches the symbolic side: both hand out the lowest free number from 3. After
+every test the harness closes every descriptor still open and deletes the
+files it touched, so each test starts with an empty sandbox and descriptor 3
+free.
+
+#### Open descriptors
+
+The per-descriptor variables (`file_fd3_*`, ...) only describe descriptors
+that exist. On their own, a descriptor that one side has open and the other
+does not would go unnoticed: its variables would simply be left
+unconstrained, and any sample admitted. `file_open_fds` closes that gap with a
+single variable for the whole set — a bit mask with bit N set when fd N is
+open (`8` is fd 3 alone, `24` is fds 3 and 4):
+
+- **Symbolic:** `to_constraint()` sets bit N under the conditions of fd N's
+  entries, so a descriptor for a symbolic name is open only where its open
+  succeeded — for a name that may be empty, `If(name_0 == 0, 0, 8)`. It is
+  lifted whenever the test touches the file system, even with nothing open
+  (`file_open_fds == 0`).
+- **Concrete:** the harness emits the same mask as `O <mask>`, after the `D`
+  lines.
+
+Equal masks mean the same descriptors are open on both sides, so every
+`file_fd{N}_*` variable the formula constrains is bound by the sample.
 
 `sbv_unwrap.h` undoes these redirections for `sbv_sample.c` and `driver.c`,
 so their own calls (the wrappers themselves, tape reading, stats writing)

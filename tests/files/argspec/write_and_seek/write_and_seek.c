@@ -9,16 +9,14 @@ typedef unsigned int cnstr_t;
 ssize_t write_and_seek(int fd, const char *data)
 {
   ssize_t written = __file_write(fd, data, WRITE_SIZE);
-  if (__is_certain(_LT_(written, 0)))
+  if (written < 0)
   {
     return -1;
   }
-  __assume(_GE_(written, 0));
   int pos = __file_set_offset(fd, 0);
-  if (__is_certain(_LT_(pos, 0)))
+  if (pos < 0)
   {
     return -1;
   }
-  __assume(_GE_(pos, 0));
   return written;
 }

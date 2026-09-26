@@ -7,7 +7,8 @@
  *                                       where off/len locate it on the tape
  *   M <name> <nbytes> <hex>            one per tagged region, contents after
  *   F <name> <exists> <nbytes> <hex>   one per tagged file path
- *   D fd<N> <flags> <mode> <offset> <size> <hex>   one per descriptor number
+ *   D fd<N> <flags> <mode> <offset> <size> <hex>   one per open descriptor
+ *   O <mask>                           the open descriptors, bit N for fd N
  *   R <bits> <is_pointer> <hex>        absent for a void function
  *   E ok <test>                        closes the block and names it
  *
@@ -44,6 +45,9 @@
 #define SBV_MAX_FILE_CONTENT 4096
 #define SBV_ARENA_SIZE (1u << 20)
 #define SBV_NAME_LEN 64
+
+/* Width of the O line's mask; OPEN_FDS_BITS in fs.py must match. */
+#define SBV_OPEN_FDS_BITS 64
 
 /* Input tape ------------------------------------------------------------ */
 
@@ -178,17 +182,16 @@ static int g_nfile_paths;
 /*
  * One descriptor the test or the function under test opened.
  *
- * `offset` and `mode` are the kernel's view, snapshotted when the descriptor
- * is closed or, for one still open, when the test is recorded. `fp` is set
- * when the descriptor was handed out as a FILE*, whose buffer must be flushed
- * before the kernel's view is current.
+ * Only descriptors still open when the test is recorded are observed, as on
+ * the symbolic side: a closed descriptor no longer exists, and its number
+ * goes to the next open. Its offset and mode are asked of the kernel at that
+ * point. `fp` is set when the descriptor was handed out as a FILE*, whose
+ * buffer must be flushed before the kernel's view is current.
  */
 typedef struct {
     int fd;
     char path[SBV_NAME_LEN];
     int flags;
-    int mode;
-    size_t offset;
     int closed;
     FILE *fp;
 } fd_track_t;
@@ -218,54 +221,16 @@ static void fd_track_add(int fd, const char *path, int flags) {
     t->fd = fd;
     sbv_strcpy(t->path, sizeof(t->path), path);
     t->flags = flags;
-    t->mode = 0;
-    t->offset = 0;
     t->closed = 0;
     t->fp = NULL;
 }
 
-static void fd_track_snapshot(fd_track_t *t) {
-    struct stat st;
-    off_t offset;
-
-    if (t->fp)
-        fflush(t->fp);
-
-    offset = lseek(t->fd, 0, SEEK_CUR);
-    t->offset = offset < 0 ? 0 : (size_t)offset;
-
-    if (fstat(t->fd, &st) == 0)
-        t->mode = (int)(st.st_mode & 07777);
-}
-
-/* A FILE* still attached to a retired track is leaked rather than closed:
- * its descriptor is gone, and its number may already belong to another. */
-static void fd_track_retire(fd_track_t *t) {
+/* Forget `t`: its descriptor has been released. A FILE* still attached is
+ * leaked rather than closed, since its number may already belong to another
+ * descriptor. */
+static void fd_track_close(fd_track_t *t) {
     t->closed = 1;
     t->fp = NULL;
-}
-
-/* Snapshot and retire `t`, just before its descriptor is released. */
-static void fd_track_close(fd_track_t *t) {
-    fd_track_snapshot(t);
-    fd_track_retire(t);
-}
-
-/*
- * Whether a later track reuses the number of track `i`.
- *
- * The symbolic side keys descriptors by number too, and after a close and a
- * reopen it describes the newer one, so only the latest track per number is
- * recorded.
- */
-static int fd_track_superseded(int i) {
-    int j;
-
-    for (j = i + 1; j < g_nfd_tracks; j++)
-        if (g_fd_tracks[j].fd == g_fd_tracks[i].fd)
-            return 1;
-
-    return 0;
 }
 
 static int optional_mode(int flags, va_list ap) {
@@ -325,18 +290,14 @@ int sbv_dup2(int fd, int fd2) {
     if (fd == fd2)
         return dup2(fd, fd2);
 
-    /* dup2 silently closes whatever `fd2` referred to, so its state has to
-     * be taken before the call reuses the number. */
-    replaced = fd_track_find(fd2);
-    if (replaced)
-        fd_track_snapshot(replaced);
-
     r = dup2(fd, fd2);
     if (r < 0)
         return r;
 
+    /* dup2 silently closes whatever `fd2` referred to. */
+    replaced = fd_track_find(fd2);
     if (replaced)
-        fd_track_retire(replaced);
+        fd_track_close(replaced);
 
     t = fd_track_find(fd);
     if (t)
@@ -355,13 +316,8 @@ int sbv_close(int fd) {
 }
 
 int sbv_fclose(FILE *fp) {
-    fd_track_t *t;
+    fd_track_t *t = fd_track_find(fileno(fp));
 
-    /* The FILE may not be the track's own (the function fdopen'd the
-     * descriptor itself), so flush it here rather than rely on t->fp. */
-    fflush(fp);
-
-    t = fd_track_find(fileno(fp));
     if (t)
         fd_track_close(t);
 
@@ -677,32 +633,50 @@ static void emit_files(void) {
     }
 }
 
-/* Content is read back through the path, not the descriptor: a descriptor
- * opened O_WRONLY cannot be read, and a closed one no longer exists. */
+/*
+ * One D line per descriptor still open, then the O line: the same set as a
+ * bit mask (bit N for fd N), which the symbolic side lifts as file_open_fds.
+ * The mask is what makes a descriptor that only one side has open a
+ * mismatch -- the D lines alone would leave the other side's variables for
+ * it unconstrained.
+ *
+ * Content is read back through the path, not the descriptor: a descriptor
+ * opened O_WRONLY cannot be read.
+ */
 static void emit_fds(void) {
     unsigned char buf[SBV_MAX_FILE_CONTENT];
+    unsigned long long open_fds = 0;
     struct stat st;
-    size_t nbytes, size;
+    size_t nbytes;
+    off_t offset;
     fd_track_t *t;
     int i;
 
     for (i = 0; i < g_nfd_tracks; i++) {
         t = &g_fd_tracks[i];
 
-        if (fd_track_superseded(i))
+        if (t->closed || t->fd >= SBV_OPEN_FDS_BITS)
             continue;
 
-        if (!t->closed)
-            fd_track_snapshot(t);
+        if (t->fp)
+            fflush(t->fp);
 
+        if (fstat(t->fd, &st) != 0)
+            continue;
+
+        open_fds |= 1ULL << t->fd;
+        offset = lseek(t->fd, 0, SEEK_CUR);
         nbytes = read_path(t->path, buf, sizeof(buf));
-        size = stat(t->path, &st) == 0 ? (size_t)st.st_size : nbytes;
 
-        printf("D fd%d %d %d %lu %lu ", t->fd, t->flags, t->mode,
-               (unsigned long)t->offset, (unsigned long)size);
+        printf("D fd%d %d %d %lu %lu ", t->fd, t->flags,
+               (int)(st.st_mode & 07777),
+               (unsigned long)(offset < 0 ? 0 : offset),
+               (unsigned long)st.st_size);
         put_hex(buf, nbytes);
         putchar('\n');
     }
+
+    printf("O %llu\n", open_fds);
 }
 
 static void emit_return(void *ret, size_t bits, int is_pointer) {

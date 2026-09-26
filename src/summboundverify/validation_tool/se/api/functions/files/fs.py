@@ -34,6 +34,11 @@ from ...utils import (
 )
 
 
+# Width of `file_open_fds`, the bit mask of open descriptors. The sampling
+# harness records the same mask (see sbv_sample.c), so the two must agree.
+OPEN_FDS_BITS = 64
+
+
 # ---------------------------------------------------------------------------
 # Filenames
 # ---------------------------------------------------------------------------
@@ -503,13 +508,23 @@ class SymbolicFS(angr.SimStatePlugin):
     # ---------------------------------------------------------------------------
 
     def to_constraint(self) -> Bool:
-        """Lifts the current state of the FS to a boolean constraint."""
+        """Lifts the current state of the FS to a boolean constraint.
+
+        Besides the per-fd variables, `file_open_fds` is a bit mask of the
+        descriptors open at this point (bit N for fd N). It describes the
+        whole set in one variable, so a descriptor that one side has open and
+        the other does not is a mismatch, instead of leaving that descriptor's
+        variables unconstrained.
+        """
 
         int_size = self.state.arch.sizeof["int"]
         char_size = 8
         fd_cases = []
+        open_mask = BVV(0, OPEN_FDS_BITS)
 
         for fd, fde in self.fds.items():
+            open_mask += self.open_bit(fd, fde)
+
             prefix = f"file_fd{fd}"
 
             flags = self.sym_var(f"{prefix}_flags", int_size)
@@ -546,12 +561,33 @@ class SymbolicFS(angr.SimStatePlugin):
 
             fd_cases.append(claripy.ite_cases(file_cases, true()))
 
-        constraint = claripy.simplify(claripy.And(*fd_cases))
+        open_fds = self.sym_var("file_open_fds", OPEN_FDS_BITS)
+        constraint = claripy.simplify(
+            claripy.And(open_fds == open_mask, *fd_cases)
+        )
 
         if not self.state.solver.satisfiable(extra_constraints=(constraint,)):
             raise UnsatFSError()
 
         return constraint
+
+    def open_bit(self, fd: int, fde: FdEntries) -> BV:
+        """Bit `fd` of `file_open_fds`, set where `fd` is open.
+
+        A descriptor for a symbolic name is open only under the conditions of
+        its entries: the open failed (returned -1) everywhere else, e.g. when
+        the name may be empty.
+        """
+        zero = BVV(0, OPEN_FDS_BITS)
+
+        if fd >= OPEN_FDS_BITS or not fde.entries:
+            return zero
+
+        is_open = fde.entries[0].cond
+        for entry in fde.entries[1:]:
+            is_open = claripy.Or(is_open, entry.cond)
+
+        return claripy.If(is_open, BVV(1 << fd, OPEN_FDS_BITS), zero)
 
     def empty_string(self, s: SymbString) -> tuple[bool, bool]:
         """
@@ -1163,11 +1199,16 @@ class SymbolicFS(angr.SimStatePlugin):
             default = read_buffer(buffer, i)
             read_cases = []
 
+            # A byte the read does not reach keeps what the buffer held: past
+            # EOF, and where no entry applies (the open failed, so the fd is
+            # really -1 there).
+            unchanged = self.state.memory.load(buffer + i, 1)
+
             for j, e in enumerate(entries):
                 c = read_byte(e.file, e.offset)
 
                 if c is None:
-                    c = default
+                    c = unchanged
                     if ret_cases[j] is None:
                         ret_cases[j] = i
                 else:
@@ -1176,7 +1217,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
                 read_cases.append((e.cond, c))
 
-            read = claripy.ite_cases(read_cases, default)
+            read = claripy.ite_cases(read_cases, unchanged)
             store_byte(buffer, read, i)
 
         ret = (
