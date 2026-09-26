@@ -47,6 +47,7 @@ void test_1()
 
   __file_create(__fname_fd);
   int fd = __file_open(__fname_fd, "w");
+  __mem_addr("data", data, ARRAY_SIZE_1);
   int ret = concrete_dup_write(fd, data);
   sbv_record("test_1", &ret, sizeof(int) * 8, 0);
   return ;

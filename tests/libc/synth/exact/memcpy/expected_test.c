@@ -124,6 +124,7 @@ void test_1()
   __assume(_ULE_(n, max_1));
   state_t initial_state = __save_current_state();
   __mem_addr("dest", dest, ARRAY_SIZE_1_VAR1);
+  __mem_addr("src", src, ARRAY_SIZE_1_VAR2);
   void * ret1 = concrete_memcpy(dest, src, n);
   cnstr_t cnstr1 = __get_cnstr(&ret1, sizeof(void *) * 8);
   __store_cnstr("cnctr_test1", cnstr1);

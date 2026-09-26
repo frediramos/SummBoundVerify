@@ -55,6 +55,7 @@ class SymbolicArgGen:
         self._call_args: list[str] = []
         self._types: list[Any] = []
         self._arg_types: dict[str, Any] = {}
+        self._sizes: dict[str, Any] = {}
 
     @staticmethod
     def _iterator(values: Any) -> Iterator[Any]:
@@ -124,6 +125,7 @@ class SymbolicArgGen:
             self._code.extend(visitor.gen_code())
             self._types.extend(arg_type)
             self._arg_types[argname] = arg_type
+            self._sizes[argname] = size_macro
 
         return self._code
 
@@ -139,6 +141,15 @@ class SymbolicArgGen:
     def call_args(self) -> list[str]:
         """Return the generated function call arguments."""
         return self._call_args
+
+    @property
+    def sizes(self) -> dict[str, Any]:
+        """The size macro each argument was generated with, by name.
+
+        None where no size was given, in which case an array argument was
+        declared with POINTER_SIZE.
+        """
+        return self._sizes
 
     @property
     def pointer_args(self) -> list[str]:

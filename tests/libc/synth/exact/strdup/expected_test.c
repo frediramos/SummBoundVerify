@@ -106,6 +106,7 @@ void test_1()
 
   str[ARRAY_SIZE_1 - 1] = '\0';
   state_t initial_state = __save_current_state();
+  __mem_addr("str", str, ARRAY_SIZE_1);
   char * ret1 = concrete_strdup(str);
   cnstr_t cnstr1 = __get_cnstr(&ret1, sizeof(char *) * 8);
   __store_cnstr("cnctr_test1", cnstr1);

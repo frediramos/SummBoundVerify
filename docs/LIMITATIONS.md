@@ -23,9 +23,11 @@ wrong about it and still pass.
 ### Memory: only argspec-tagged arguments *(scope)*
 
 Memory is compared only for pointer arguments declared with
-`semantic: memory` (and `type: write`) in the argspec. Each such region is
-tagged with `__mem_addr` in both generated tests and lifted as
-`mem_<name>_<i>`, one variable per byte.
+`semantic: memory` in the argspec. Each such region is tagged with
+`__mem_addr` in both generated tests and lifted as `mem_<name>_<i>`, one
+variable per byte. This includes `type: read` regions: their final contents
+are compared too, so a summary that writes to memory the function only reads
+is caught.
 
 Not observed:
 

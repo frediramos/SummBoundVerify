@@ -86,55 +86,41 @@ void __push_pc(void) { }
 void __report_error(const char *filename, unsigned int line, const char *message) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
-#define ARRAY_SIZE_1_VAR1 3
-#define ARRAY_SIZE_1_VAR2 3
+#define ARRAY_SIZE_1_VAR1 4
+#define ARRAY_SIZE_1_VAR2 4
 
-int concrete_strcasecmp(char *s1, char *s2)
+void copy_buffer(char *dst, const char *src)
 {
-  while (1)
-  {
-    unsigned char u1 = (unsigned char) _tolower((int) (*s1));
-    unsigned char u2 = (unsigned char) _tolower((int) (*s2));
-    s1++;
-    s2++;
-    if (u1 != u2)
-      return u1 - u2;
-    if (u1 == '\0')
-      return 0;
-  }
+  for (int i = 0; i < 4; i++)
+    dst[i] = src[i];
 
-  return 0;
+  for (int i = 0; i < 4; i++)
+    ((char *) src)[i] = 0;
+
 }
 
 void test_1()
 {
-  char s1[ARRAY_SIZE_1_VAR1];
-  for (int s1_idx_1 = 0; s1_idx_1 < ARRAY_SIZE_1_VAR1; s1_idx_1++)
+  char dst[ARRAY_SIZE_1_VAR1];
+  for (int dst_idx_1 = 0; dst_idx_1 < ARRAY_SIZE_1_VAR1; dst_idx_1++)
   {
-    s1[s1_idx_1] = __sym_var_array("s1", s1_idx_1, sizeof(char) * 8);
+    dst[dst_idx_1] = __sym_var_array("dst", dst_idx_1, sizeof(char) * 8);
   }
 
-  s1[ARRAY_SIZE_1_VAR1 - 1] = '\0';
-  char s2[ARRAY_SIZE_1_VAR2];
-  for (int s2_idx_1 = 0; s2_idx_1 < ARRAY_SIZE_1_VAR2; s2_idx_1++)
+  dst[ARRAY_SIZE_1_VAR1 - 1] = '\0';
+  char src[ARRAY_SIZE_1_VAR2];
+  for (int src_idx_1 = 0; src_idx_1 < ARRAY_SIZE_1_VAR2; src_idx_1++)
   {
-    s2[s2_idx_1] = __sym_var_array("s2", s2_idx_1, sizeof(char) * 8);
+    src[src_idx_1] = __sym_var_array("src", src_idx_1, sizeof(char) * 8);
   }
 
-  s2[ARRAY_SIZE_1_VAR2 - 1] = '\0';
-  state_t initial_state = __save_current_state();
-  __mem_addr("s1", s1, ARRAY_SIZE_1_VAR1);
-  __mem_addr("s2", s2, ARRAY_SIZE_1_VAR2);
-  int ret1 = concrete_strcasecmp(s1, s2);
-  cnstr_t cnstr1 = __get_cnstr(&ret1, sizeof(int) * 8);
-  __store_cnstr("cnctr_test1", cnstr1);
-  __halt_all(initial_state);
-  int ret2 = strcasecmp(s1, s2);
-  cnstr_t cnstr2 = __get_cnstr(&ret2, sizeof(int) * 8);
-  __store_cnstr("summ_test1", cnstr2);
+  src[ARRAY_SIZE_1_VAR2 - 1] = '\0';
+  __mem_addr("dst", dst, ARRAY_SIZE_1_VAR1);
+  __mem_addr("src", src, ARRAY_SIZE_1_VAR2);
+  copy_buffer(dst, src);
+  cnstr_t cnstr = __get_cnstr(NULL, 0);
+  __store_cnstr("summ_test1", cnstr);
   __halt_all(NULL);
-  result_t result = __check_implications("cnctr_test1", "summ_test1");
-  __print_counterexamples(result);
   return ;
 }
 

@@ -82,7 +82,7 @@ dest:
 
 | `memory` key | Values        | Default | Description |
 |------------|---------------|---------|-------------|
-| `type`     | `read`, `write` | `write` | Access mode. `read` = read-only, not tagged; `write` = read-write, tagged with `__mem_addr`. |
+| `type`     | `read`, `write` | `write` | Access mode, as documentation of intent: both are tagged with `__mem_addr` and compared after the call (see below). |
 | `size`     | `int`         |         | Size of the symbolic array allocated for this argument. |
 
 When any argument has `semantic: memory` with `memory.type: write`, the tool
@@ -314,7 +314,7 @@ for (int buf_idx_1 = 0; buf_idx_1 < 4; buf_idx_1++) {
 }
 buf[4 - 1] = '\0';
 
-// Tagging (only for type: write)
+// Tagging (read and write alike)
 __mem_addr("buf", buf, SIZE);
 ```
 
@@ -322,14 +322,19 @@ __mem_addr("buf", buf, SIZE);
   `size`.
 - `ArrayTypeGen` generates a symbolic array where each element is drawn from
   `__sym_var_array`.
-- For `type: write`, `_memory_args()` selects this argument for tagging:
+- `_memory_args()` selects every `semantic: memory` argument for tagging,
+  whatever its `type`:
   - **Symbolic:** `__mem_addr` registers the region. After the summary
     executes, `get_cnstr` reads the final memory contents and generates
     variables `mem_buf_0`, `mem_buf_1`, etc.
   - **Concrete:** `__mem_addr` records the address and size. After the
     function executes, `sbv_record` reads the final bytes and emits a record
     line `M buf 4 <hex>`.
-- For `type: read`, the buffer is input data — its final state is not observed.
+- A `type: read` region is compared too. A correct summary leaves it as it
+  was (`mem_buf_i == buf_i`), so this costs nothing — but a summary that
+  writes to memory the function only reads (or a function that writes to
+  memory the argspec declares read-only) is a mismatch instead of passing
+  unnoticed.
 
 ### File (`type: name`) — Generated Code
 
@@ -429,9 +434,9 @@ before its offset and content are recorded, so buffered `fwrite`s count.
 | **C type**            | `int`, `size_t`... | `char*`, `void*`       | `char*`, `void*`       | `char*`                | `int`                  | `FILE*`                |
 | **Symbolic init**     | `__sym_var_named`  | `__sym_var_array`      | `__sym_var_array`      | `__sym_var_array`      | via `__file_open`      | via `__file_open`      |
 | **Setup code**        | None               | None                   | None                   | None                   | create+open+write+seek | create+open+write+seek |
-| **Tagging**           | None               | `__mem_addr`           | None                   | `__file_addr`          | None (auto via fd)     | None (auto via fd)     |
-| **Formula variables** | The var itself      | `mem_{name}_{i}`       | —                      | `file_{name}_exists`   | `file_fd{N}_*`         | `file_fd{N}_*`         |
-| **Concrete record**   | Part of `Ret`      | `M` line               | —                      | `F` line               | `D` line               | `D` line               |
+| **Tagging**           | None               | `__mem_addr`           | `__mem_addr`           | `__file_addr`          | None (auto via fd)     | None (auto via fd)     |
+| **Formula variables** | The var itself      | `mem_{name}_{i}`       | `mem_{name}_{i}`       | `file_{name}_exists`   | `file_fd{N}_*`, `file_open_fds` | `file_fd{N}_*`, `file_open_fds` |
+| **Concrete record**   | Part of `Ret`      | `M` line               | `M` line               | `F` line               | `D` and `O` lines      | `D` and `O` lines      |
 | **Skip in ArgGen?**   | No                 | No                     | No                     | No                     | Yes                    | Yes                    |
 
 ### Symbolic FS Constraints

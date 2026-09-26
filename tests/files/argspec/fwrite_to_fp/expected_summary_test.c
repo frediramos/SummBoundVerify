@@ -82,6 +82,7 @@ void test_1()
   __file_create(__fname_fp);
   int __fd_fp = __file_open(__fname_fp, "w");
   FILE *fp = __FILE_from_fd(__fd_fp);
+  __mem_addr("data", data, ARRAY_SIZE_1);
   size_t ret = fwrite_to_fp(fp, data);
   cnstr_t cnstr = __get_cnstr(&ret, sizeof(size_t) * 8);
   __store_cnstr("summ_test1", cnstr);

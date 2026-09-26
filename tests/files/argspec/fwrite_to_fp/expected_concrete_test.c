@@ -39,6 +39,7 @@ void test_1()
   __file_create(__fname_fp);
   int __fd_fp = __file_open(__fname_fp, "w");
   FILE *fp = __FILE_from_fd(__fd_fp);
+  __mem_addr("data", data, ARRAY_SIZE_1);
   size_t ret = concrete_fwrite_to_fp(fp, data);
   sbv_record("test_1", &ret, sizeof(size_t) * 8, 0);
   return ;

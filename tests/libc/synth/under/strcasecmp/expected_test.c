@@ -123,6 +123,8 @@ void test_1()
 
   s2[ARRAY_SIZE_1_VAR2 - 1] = '\0';
   state_t initial_state = __save_current_state();
+  __mem_addr("s1", s1, ARRAY_SIZE_1_VAR1);
+  __mem_addr("s2", s2, ARRAY_SIZE_1_VAR2);
   int ret1 = concrete_strcasecmp(s1, s2);
   cnstr_t cnstr1 = __get_cnstr(&ret1, sizeof(int) * 8);
   __store_cnstr("cnctr_test1", cnstr1);

@@ -87,6 +87,7 @@ void test_1()
   size_t len = __sym_var_named("len", sizeof(size_t) * 8);
   size_t max_1 = MAX_NUM_1;
   __assume(_ULE_(len, max_1));
+  __mem_addr("data", data, ARRAY_SIZE_1);
   __assume(_OR_(_NEQ_(path[0], '.'), _NEQ_(path[1], 0)));
   __assume(_OR_(_OR_(_NEQ_(path[0], '.'), _NEQ_(path[1], '.')), _NEQ_(path[2], 0)));
   for (int __i_path = 0; __i_path < 5; __i_path++)

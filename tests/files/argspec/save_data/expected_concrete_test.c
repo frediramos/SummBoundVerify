@@ -47,6 +47,7 @@ void test_1()
   size_t len = __sym_var_named("len", sizeof(size_t) * 8);
   size_t max_2 = MAX_NUM_1;
   __assume(_ULE_(len, max_2));
+  __mem_addr("data", data, ARRAY_SIZE_1);
   __assume((path[0] != '.') | (path[1] != 0));
   __assume(((path[0] != '.') | (path[1] != '.')) | (path[2] != 0));
   for (int __i_path = 0; __i_path < 5; __i_path++)

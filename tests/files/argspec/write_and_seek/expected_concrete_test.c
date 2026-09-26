@@ -44,6 +44,7 @@ void test_1()
 
   __file_create(__fname_fd);
   int fd = __file_open(__fname_fd, "w");
+  __mem_addr("data", data, ARRAY_SIZE_1);
   ssize_t ret = concrete_write_and_seek(fd, data);
   sbv_record("test_1", &ret, sizeof(ssize_t) * 8, 0);
   return ;
