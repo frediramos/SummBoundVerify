@@ -4,7 +4,10 @@ from abc import ABC, abstractmethod
 
 from claripy.ast.bv import BV as BitVector
 
-from summboundverify.exceptions import SymbolicPointerError
+from summboundverify.exceptions import (
+    SymbolicPointerError,
+    InvalidIteFileDescriptor
+)
 
 from .fs import SymbolicFS
 
@@ -53,22 +56,32 @@ class FileSummary(CSummary, ABC):
             raise SymbolicPointerError(caller, addr)
         return super().load_string(addr, include_null)
 
-    def unfold_ite(self, ite):
-        return claripy.reverse_ite_cases(ite)
+    def unfold_fds(self, ite):
+        cases = list(claripy.reverse_ite_cases(ite))
 
-    def call_ite(self, func, ite, *args, signed=True, default=-1):
+        # ITE fds must have the form: ite(cond, fd, -1)
+        if (
+            len(cases) > 2 or
+            not any(self._signed(v) == -1 for _, v in cases)
+        ):
+            raise InvalidIteFileDescriptor(ite)
+
+        return cases
+
+    def call_fds(self, func, ite, *args, signed=True, default=-1):
         default = claripy.BVV(default, self.int_size)
-        cases = self.unfold_ite(ite)
+        cases = self.unfold_fds(ite)
+        print(list(cases))
         ret = [
             (cond, func(self._signed(v) if signed else v, *args))
             for cond, v in cases
         ]
         return claripy.ite_cases(ret, default)
 
-    def call_ite_nested(self, func, ite1, ite2, *args, signed=True, default=-1):
+    def call_fds_nested(self, func, ite1, ite2, *args, signed=True, default=-1):
         default = claripy.BVV(default, self.int_size)
-        cases1 = self.unfold_ite(ite1)
-        cases2 = self.unfold_ite(ite2)
+        cases1 = self.unfold_fds(ite1)
+        cases2 = self.unfold_fds(ite2)
 
         ret_cases = []
         for cond1, v1 in cases1:
@@ -119,7 +132,7 @@ class file_close(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.close_file
-        status = self.call_ite(f, fd)
+        status = self.call_fds(f, fd)
         return status
 
 
@@ -129,7 +142,7 @@ class file_write(FileSummary):
         buffer = self.load_string(buffer_addr, include_null=True)
         count = self.load_numeric(count_bv)
         f = self.fs.write_file
-        n = self.call_ite(f, fd, buffer, count)
+        n = self.call_fds(f, fd, buffer, count)
         return n
 
 
@@ -138,7 +151,7 @@ class file_read(FileSummary):
         fd = self.load_int(fd_bv)
         count = self.load_numeric(count_bv)
         f = self.fs.read_file
-        n = self.call_ite(f, fd, buffer, count)
+        n = self.call_fds(f, fd, buffer, count)
         return n
 
 
@@ -146,7 +159,7 @@ class FILE_from_fd(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.FILE_from_fd
-        fp = self.call_ite(f, fd)
+        fp = self.call_fds(f, fd)
         return fp
 
 
@@ -154,7 +167,7 @@ class fd_from_FILE(FileSummary):
     def run(self, fp_bv):
         fp = self.load_int(fp_bv)
         f = self.fs.fd_from_FILE
-        fd = self.call_ite(f, fp, signed=False, default=0)
+        fd = self.call_fds(f, fp, signed=False, default=0)
         return fd
 
 
@@ -162,7 +175,7 @@ class file_offset(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.file_offset
-        offset = self.call_ite(f, fd)
+        offset = self.call_fds(f, fd)
         return offset
 
 
@@ -171,7 +184,7 @@ class file_set_offset(FileSummary):
         fd = self.load_int(fd_bv)
         offset = self.load_numeric(offset_bv)
         f = self.fs.file_set_offset
-        offset = self.call_ite(f, fd, offset)
+        offset = self.call_fds(f, fd, offset)
         return offset
 
 
@@ -179,7 +192,7 @@ class file_size(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.file_size
-        offset = self.call_ite(f, fd)
+        offset = self.call_fds(f, fd)
         return offset
 
 
@@ -188,7 +201,7 @@ class file_set_size(FileSummary):
         fd = self.load_int(fd_bv)
         size = self.load_numeric(size_bv)
         f = self.fs.file_set_size
-        size = self.call_ite(f, fd, size)
+        size = self.call_fds(f, fd, size)
         return size
 
 
@@ -196,7 +209,7 @@ class file_dup(FileSummary):
     def run(self, fd_bv):
         fd1 = self.load_int(fd_bv)
         f = self.fs.file_dup
-        fd2 = self.call_ite(f, fd1)
+        fd2 = self.call_fds(f, fd1)
         return fd2
 
 
@@ -205,7 +218,7 @@ class file_dup2(FileSummary):
         fd1 = self.load_int(fd1_bv)
         fd2 = self.load_int(fd2_bv)
         f = self.fs.file_dup2
-        ret = self.call_ite_nested(f, fd1, fd2)
+        ret = self.call_fds_nested(f, fd1, fd2)
         return ret
 
 
@@ -214,7 +227,7 @@ class file_mode(FileSummary):
         fd = self.load_int(fd_bv)
         mode_ptr = self.load_numeric(mode_ptr_bv)
         f = self.fs.file_mode
-        status = self.call_ite(f, fd, mode_ptr)
+        status = self.call_fds(f, fd, mode_ptr)
         return status
 
 
@@ -223,7 +236,7 @@ class file_set_mode(FileSummary):
         fd = self.load_int(fd_bv)
         mode = self.load_numeric(mode_bv)
         f = self.fs.file_set_mode
-        status = self.call_ite(f, fd, mode)
+        status = self.call_fds(f, fd, mode)
         return status
 
 
@@ -231,7 +244,7 @@ class file_flags(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.file_flags
-        flags = self.call_ite(f, fd)
+        flags = self.call_fds(f, fd)
         return flags
 
 

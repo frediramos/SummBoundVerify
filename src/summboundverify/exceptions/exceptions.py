@@ -129,6 +129,17 @@ class InvalidOpenFlagError(RunError):
         super().__init__(message)
 
 
+class InvalidIteFileDescriptor(RunError):
+    def __init__(self, fd):
+        message = (
+            "Input file descriptors (fd) cannot be fully symbolic.\n"
+            "Symbolic fds must have the form ite(cond, fd, -1), "
+            "where fd is a positive file descriptor.\n"
+            f"Found: {fd}"
+        )
+        super().__init__(message)
+
+
 class InvalidArgumentError(RunError):
     argument: str
 
