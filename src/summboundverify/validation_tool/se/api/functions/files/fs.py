@@ -1148,13 +1148,19 @@ class SymbolicFS(angr.SimStatePlugin):
                 endness=self.state.arch.memory_endness,
             )
 
-        default = self.bvv_char(0)
+        def read_buffer(buffer: int, i: int):
+            c = self.state.memory.load(
+                buffer + i, 1,
+                endness=self.state.arch.memory_endness,
+            )
+            return self.bvv_char(c)
 
         ret_cases: dict[int, None | int] = {
             k: None for k in range(len(entries))
         }
 
         for i in range(count):
+            default = read_buffer(buffer, i)
             read_cases = []
 
             for j, e in enumerate(entries):
