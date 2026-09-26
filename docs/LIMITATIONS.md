@@ -147,7 +147,7 @@ receive the write.
 
 ## Engines
 
-### `--engine se` cannot validate concrete file functions *(gap)*
+### `--engine se` cannot validate concrete file functions *(by design)*
 
 Under symbolic execution only the summary's file API (`__file_*`) is routed
 to the `SymbolicFS`. A concrete function's `open`/`read`/`write` go to angr's
