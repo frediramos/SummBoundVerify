@@ -183,6 +183,8 @@ def log_report(results: dict) -> None:
         else:
             first = entry['findings'][0]
             logger.error(
-                "%s: %s -- %s\n  %s",
+                "%s: %s -- %s\n  compared:     %s%s",
                 test, entry['verdict'], first['reason'], first['bindings'],
+                f"\n  not compared: {first['ignored']}"
+                if first['ignored'] else '',
             )

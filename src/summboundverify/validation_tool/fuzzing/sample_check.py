@@ -28,13 +28,20 @@ class Check:
     verdict: Verdict
     sample: object
     reason: str = ''
+
+    # The sample's values the check pinned in the formula, inputs first.
     bindings: dict = field(default_factory=dict)
+
+    # The sample's values it did not: inputs the summary does not depend on,
+    # observations its formula has no variable for, a pointer return.
+    ignored: dict = field(default_factory=dict)
 
     def as_dict(self) -> dict:
         return {
             'verdict': self.verdict.value,
             'reason': self.reason,
             'bindings': {k: hex(v) for k, v in self.bindings.items()},
+            'ignored': {k: hex(v) for k, v in self.ignored.items()},
             'sample': self.sample.as_dict(),  # type: ignore[attr-defined]
         }
 
@@ -97,114 +104,108 @@ def _bind(var: ExprRef, value: int, bits: int, name: str) -> BoolRef | None:
     return var == value
 
 
+@dataclass
+class Pins:
+    """What a sample pins in the formula, and what it observed but could not.
+
+    Every observation goes through `pin`, so the report shows exactly the
+    values the check used -- and, apart, the ones it could not use -- rather
+    than whichever families of variables remembered to record theirs.
+    """
+
+    declared: dict
+    constraints: list = field(default_factory=list)
+    values: dict = field(default_factory=dict)
+    ignored: dict = field(default_factory=dict)
+
+    def pin(self, name: str, value: int, bits: int | None = None) -> None:
+        var = self.declared.get(name)
+
+        if var is None:
+            self.ignored[name] = value
+            return
+
+        if bits is None:
+            self.constraints.append(var == value)
+        else:
+            self.constraints.append(_bind(var, value, bits, name))
+
+        self.values[name] = value
+
+
+def _pin_inputs(pins: Pins, sample) -> None:
+    """The sample's arguments. One the formula never mentions is ignored, not
+    an error: a summary may legitimately not depend on an input."""
+    for name, value in sample.inputs.items():
+        pins.pin(name, value.value, value.bits)
+
+
 def input_bindings(declared: dict, sample) -> tuple[list, dict]:
     """Pin the sample's arguments to the formula's own variables.
 
     Returns the constraints and, separately, the values behind them, because a
     finding is only actionable if it says which input produced it.
-
-    An argument the formula never mentions is dropped rather than reported: a
-    summary may legitimately ignore an input the concrete function draws.
     """
-    bindings = []
-    values = {}
-
-    for name, value in sample.inputs.items():
-        var = declared.get(name)
-        if var is None:
-            continue
-
-        bindings.append(_bind(var, value.value, value.bits, name))
-        values[name] = value.value
-
-    return bindings, values
+    pins = Pins(declared)
+    _pin_inputs(pins, sample)
+    return pins.constraints, pins.values
 
 
-def _memory_bindings(sample, declared: dict) -> list:
-    """Pin the tagged regions, byte by byte.
+def _pin_memory(pins: Pins, sample) -> None:
+    """The tagged regions, byte by byte.
 
     get_cnstr lifts each region into one 8-bit variable per byte, named
     `mem_<region>_<index>`, so a region recorded as a blob has to be taken
     apart to match.
     """
-    bindings = []
-
     for name, value in sample.memory.items():
         for index, byte in enumerate(value.raw):
-            var = declared.get(f'mem_{name}_{index}')
-            if var is None:
-                continue
-            bindings.append(var == byte)
-
-    return bindings
+            pins.pin(f'mem_{name}_{index}', byte)
 
 
-def _fs_bindings(sample, declared: dict) -> tuple[list, bool]:
-    """Pin the tagged file observations: existence and content bytes.
+def _pin_files(pins: Pins, sample) -> bool:
+    """The tagged file paths: existence and content bytes.
 
-    Returns (bindings, content_unchecked).  ``content_unchecked`` is True
-    when the concrete side recorded file content but the formula declares
-    no ``file_{name}_byte_*`` variables for it — typically because the
-    summary closed the fd before ``get_cnstr``.
+    Returns True when the concrete side recorded content for a file but the
+    formula declares no `file_<name>_byte_*` variables for it -- typically
+    because the summary closed the fd before get_cnstr.
     """
-    bindings = []
     content_unchecked = False
 
     for name, fv in sample.files.items():
-        exists_var = declared.get(f'file_{name}_exists')
-        if exists_var is not None:
-            bindings.append(exists_var == (1 if fv.exists else 0))
+        pins.pin(f'file_{name}_exists', 1 if fv.exists else 0)
 
-        if fv.raw:
-            found_any = False
-            for index, byte in enumerate(fv.raw):
-                var = declared.get(f'file_{name}_byte_{index}')
-                if var is None:
-                    continue
-                bindings.append(var == byte)
-                found_any = True
-            if not found_any:
-                content_unchecked = True
+        before = len(pins.values)
+        for index, byte in enumerate(fv.raw):
+            pins.pin(f'file_{name}_byte_{index}', byte)
 
-    return bindings, content_unchecked
+        if fv.raw and len(pins.values) == before:
+            content_unchecked = True
+
+    return content_unchecked
 
 
-def _fd_bindings(sample, declared: dict) -> tuple[list, dict]:
-    """Pin tracked fd observations: flags, mode, offset, size and content.
+def _pin_fds(pins: Pins, sample) -> None:
+    """The open descriptors: the set, then each one's flags, mode, offset,
+    size and content.
 
     The key in sample.fds is 'fd3', 'fd4', ... -- the descriptor number,
     matching the symbolic side's 'file_fd3_flags', 'file_fd3_byte_0', etc.
     """
-    bindings = []
-    values = {}
-
     # The set of open descriptors, as one variable. Per-fd variables for a
     # descriptor only one side has open would otherwise be left free, and the
     # sample admitted whatever the summary did with it.
-    open_fds = declared.get('file_open_fds')
-    if open_fds is not None and sample.open_fds is not None:
-        bindings.append(open_fds == sample.open_fds)
-        values['file_open_fds'] = sample.open_fds
+    if sample.open_fds is not None:
+        pins.pin('file_open_fds', sample.open_fds)
 
     for name, fdv in sample.fds.items():
         prefix = f'file_{name}'
 
         for attr in ('flags', 'mode', 'offset', 'size'):
-            var = declared.get(f'{prefix}_{attr}')
-            if var is None:
-                continue
-            value = getattr(fdv, attr)
-            bindings.append(var == value)
-            values[f'{prefix}_{attr}'] = value
+            pins.pin(f'{prefix}_{attr}', getattr(fdv, attr))
 
         for index, byte in enumerate(fdv.raw):
-            var = declared.get(f'{prefix}_byte_{index}')
-            if var is None:
-                continue
-            bindings.append(var == byte)
-            values[f'{prefix}_byte_{index}'] = byte
-
-    return bindings, values
+            pins.pin(f'{prefix}_byte_{index}', byte)
 
 
 def check_sample(formula: BoolRef, sample) -> Check:
@@ -216,33 +217,35 @@ def check_sample(formula: BoolRef, sample) -> Check:
         )
 
     declared = declared_vars(formula)
-    inputs, bindings = input_bindings(declared, sample)
+
+    inputs = Pins(declared)
+    _pin_inputs(inputs, sample)
 
     solver = Solver()
     solver.add(formula)
 
     # Add input restrictions
     solver.push()
-    solver.add(inputs)
+    solver.add(inputs.constraints)
 
     # Can it produce what the function produced?
-    outputs = _memory_bindings(sample, declared)
+    outputs = Pins(declared)
+    _pin_memory(outputs, sample)
+    fs_content_unchecked = _pin_files(outputs, sample)
+    _pin_fds(outputs, sample)
 
-    fs_binds, fs_content_unchecked = _fs_bindings(sample, declared)
-    outputs.extend(fs_binds)
-
-    fd_binds, fd_values = _fd_bindings(sample, declared)
-    outputs.extend(fd_binds)
-    bindings.update(fd_values)
-
-    ret = declared.get('Ret')
     pointer_return = getattr(sample, 'ret_is_pointer', False)
 
-    if sample.ret is not None and ret is not None and not pointer_return:
-        outputs.append(_bind(ret, sample.ret.value, sample.ret.bits, 'Ret'))
-        bindings['Ret'] = sample.ret.value
+    if sample.ret is not None:
+        if pointer_return:
+            outputs.ignored['Ret'] = sample.ret.value
+        else:
+            outputs.pin('Ret', sample.ret.value, sample.ret.bits)
 
-    if not outputs:
+    bindings = {**inputs.values, **outputs.values}
+    ignored = {**inputs.ignored, **outputs.ignored}
+
+    if not outputs.constraints:
         solver.pop()
 
         if fs_content_unchecked:
@@ -260,19 +263,20 @@ def check_sample(formula: BoolRef, sample) -> Check:
         else:
             reason = "the summary constrains nothing observable for this input"
 
-        return Check(Verdict.skipped, sample, reason, bindings)
+        return Check(Verdict.skipped, sample, reason, bindings, ignored)
 
-    solver.add(outputs)
+    solver.add(outputs.constraints)
     result = solver.check()
     solver.pop()
 
     if result == sat:
-        return Check(Verdict.matched, sample, '', bindings)
+        return Check(Verdict.matched, sample, '', bindings, ignored)
 
     return Check(
         Verdict.mismatched, sample,
         "the summary does not accept this model",
         bindings,
+        ignored,
     )
 
 
