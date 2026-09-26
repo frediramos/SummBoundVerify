@@ -74,7 +74,7 @@ void test_1()
   __fname_fp[FNAME_SIZE_1 - 1] = '\0';
   __assume(_OR_(_NEQ_(__fname_fp[0], '.'), _NEQ_(__fname_fp[1], 0)));
   __assume(_OR_(_OR_(_NEQ_(__fname_fp[0], '.'), _NEQ_(__fname_fp[1], '.')), _NEQ_(__fname_fp[2], 0)));
-  for (int __i___fname_fp = 0; __i___fname_fp < 5; __i___fname_fp++)
+  for (int __i___fname_fp = 0; __i___fname_fp < FNAME_SIZE_1; __i___fname_fp++)
   {
     __assume(_NEQ_(__fname_fp[__i___fname_fp], '/'));
   }

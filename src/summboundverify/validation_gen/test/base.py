@@ -170,6 +170,11 @@ class TestGen(ABC):
                 return FuncCall(ID('_OR_'), ExprList([a, b]))
             return BinaryOp('|', a, b)
 
+        if fname_size_macro is None:
+            size_label = fname_size
+        else:
+            size_label = fname_size_macro
+
         assume = api_map().assume
         nodes: list[Node] = []
 
@@ -225,7 +230,7 @@ class TestGen(ABC):
 
         loop_cond = BinaryOp(
             '<', ID(loop_var),
-            Constant('int', str(fname_size_macro))
+            Constant('int', str(size_label))
         )
 
         loop_next = UnaryOp('p++', ID(loop_var))

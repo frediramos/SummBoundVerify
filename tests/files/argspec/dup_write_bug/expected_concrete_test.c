@@ -40,7 +40,7 @@ void test_1()
   __fname_fd[FNAME_SIZE_1 - 1] = '\0';
   __assume((__fname_fd[0] != '.') | (__fname_fd[1] != 0));
   __assume(((__fname_fd[0] != '.') | (__fname_fd[1] != '.')) | (__fname_fd[2] != 0));
-  for (int __i___fname_fd = 0; __i___fname_fd < 5; __i___fname_fd++)
+  for (int __i___fname_fd = 0; __i___fname_fd < FNAME_SIZE_1; __i___fname_fd++)
   {
     __assume(__fname_fd[__i___fname_fd] != '/');
   }
