@@ -1,16 +1,10 @@
 from .cli import parse_cmdline_args
-
-from .options import (
-    Options,
-    OptionTypes
-)
-
 from .parser import parse_config_file
 
 
-def parse_input_args(input=None):
+def parse_input_args(argv=None):
 
-    args = parse_cmdline_args(input)
+    args = parse_cmdline_args(argv)
 
     config_file = args.config
     if config_file:
@@ -24,7 +18,8 @@ def parse_input_args(input=None):
 
 
 def resolve_libc(args):
-    """Point ``funcname`` at the libc function selected by ``--libc``.
+    """
+    Point ``funcname`` at the libc function selected by ``--libc``.
 
     ``--libc`` alone reuses the summary name; ``--libc name`` names the
     libc function explicitly. The function is resolved at link time, so

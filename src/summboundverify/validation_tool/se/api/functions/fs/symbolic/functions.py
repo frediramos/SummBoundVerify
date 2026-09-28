@@ -11,9 +11,10 @@ from summboundverify.exceptions import (
 
 from .fs import SymbolicFS
 
-from ...utils import SymbString, called_by
-from ...summary import CSummary
-from ...context import ValidationCTX
+from ....summary import CSummary
+from ....context import ValidationCTX
+
+from ....utils import SymbString, called_by
 
 
 class FileSummary(CSummary, ABC):
@@ -61,7 +62,7 @@ class FileSummary(CSummary, ABC):
 
         # ITE fds must have the form: ite(cond, fd, -1)
         if (
-            len(cases) > 2 or
+            len(cases) > 2 and
             not any(self._signed(v) == -1 for _, v in cases)
         ):
             raise InvalidIteFileDescriptor(ite)
