@@ -61,7 +61,7 @@ class FileSummary(CSummary, ABC):
 
         # ITE fds must have the form: ite(cond, fd, -1)
         if (
-            len(cases) > 2 or
+            len(cases) > 2 and
             not any(self._signed(v) == -1 for _, v in cases)
         ):
             raise InvalidIteFileDescriptor(ite)
