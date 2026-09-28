@@ -71,7 +71,6 @@ class FileSummary(CSummary, ABC):
     def call_fds(self, func, ite, *args, signed=True, default=-1):
         default = claripy.BVV(default, self.int_size)
         cases = self.unfold_fds(ite)
-        print(list(cases))
         ret = [
             (cond, func(self._signed(v) if signed else v, *args))
             for cond, v in cases

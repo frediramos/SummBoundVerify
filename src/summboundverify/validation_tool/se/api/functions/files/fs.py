@@ -562,9 +562,9 @@ class SymbolicFS(angr.SimStatePlugin):
             fd_cases.append(claripy.ite_cases(file_cases, true()))
 
         open_fds = self.sym_var("file_open_fds", OPEN_FDS_BITS)
-        constraint = claripy.simplify(
-            claripy.And(open_fds == open_mask, *fd_cases)
-        )
+
+        constraint = claripy.And(open_fds == open_mask, *fd_cases)
+        constraint = claripy.simplify(constraint)
 
         if not self.state.solver.satisfiable(extra_constraints=(constraint,)):
             raise UnsatFSError()
@@ -589,30 +589,18 @@ class SymbolicFS(angr.SimStatePlugin):
 
         return claripy.If(is_open, BVV(1 << fd, OPEN_FDS_BITS), zero)
 
-    def empty_string(self, s: SymbString) -> tuple[bool, bool]:
-        """
-        Returns a tuple describing if a symb string is empty
-        ("for sure", "can be")
-        """
+    def valid_fname(self, s: SymbString) -> Bool:
         if s.is_empty():
-            return True, True
+            return false()
 
-        if self.is_certain(s[0] == '\0'):
-            return True, True
+        constraint = (s[0] != '\0')
 
-        if self.is_sat(s[0] == '\0'):
-            return False, True
-
-        return False, False
-
-    def not_empty(self, s: SymbString) -> Bool:
-        """Not empty constraint"""
-        empty = s.is_empty()
-        if empty:
-            return BoolV(empty)
-        c = s[0]
-        assert isinstance(c, BV)
-        return c != '\0'
+        if self.is_certain(constraint):
+            return true()
+        elif self.is_certain(claripy.Not(constraint)):
+            return false()
+        else:
+            return claripy.simplify(constraint)
 
     def file_exists_constraint(self, filename: str | SymbString) -> Bool:
         """
@@ -778,33 +766,25 @@ class SymbolicFS(angr.SimStatePlugin):
     def create_symbolic_file(self, filename: SymbString) -> int | BV:
         """Create a symbolic file."""
 
-        def append_new(can_be_empty: bool):
-            if not can_be_empty:
-                cond = true()
-            else:
-                cond = self.not_empty(filename)
-            entry = SymbolicNameEntry(filename, cond, True)
+        def append_new(valid: Bool):
+            entry = SymbolicNameEntry(filename, valid, True)
             self.fnames.append(entry)
-
-            if can_be_empty:
-                ret = claripy.If(cond, self.bvv_int(1), self.bvv_int(-1))
-            else:
-                ret = 1
+            ret = claripy.If(valid, self.bvv_int(1), self.bvv_int(-1))
             return ret
 
-        forsure, canbe = self.empty_string(filename)
+        valid = self.valid_fname(filename)
 
-        if forsure:
+        if valid is false():
             return -1
 
         if self.is_fnames_emtpy():
-            return append_new(canbe)
+            return append_new(valid)
 
         cnstr = self.file_not_exists_constraint(filename)
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
-            return append_new(canbe)
+            return append_new(valid)
 
         return -1
 
@@ -837,22 +817,14 @@ class SymbolicFS(angr.SimStatePlugin):
     def delete_symbolic(self, filename: SymbString) -> int | BV:
         """Delete a symbolic file and return 1 on success or -1 on failure."""
 
-        def append_new(can_be_empty: bool):
-            if not can_be_empty:
-                cond = true()
-            else:
-                cond = self.not_empty(filename)
-            entry = SymbolicNameEntry(filename, cond, False)
+        def append_new(valid: Bool):
+            entry = SymbolicNameEntry(filename, valid, False)
             self.fnames.append(entry)
-
-            if can_be_empty:
-                ret = claripy.If(cond, self.bvv_int(1), self.bvv_int(-1))
-            else:
-                ret = 1
+            ret = claripy.If(valid, self.bvv_int(1), self.bvv_int(-1))
             return ret
 
-        forsure, canbe = self.empty_string(filename)
-        if forsure:
+        valid = self.valid_fname(filename)
+        if valid is false():
             return -1
 
         if self.is_fnames_emtpy():
@@ -862,7 +834,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         if self.is_sat(cnstr):
             self.state.add_constraints(cnstr)
-            return append_new(canbe)
+            return append_new(valid)
 
         return -1
 
@@ -1071,15 +1043,14 @@ class SymbolicFS(angr.SimStatePlugin):
         if isinstance(filename, str) or not filename.is_symbolic():
             return self.open_concrete(str(filename), flags)
 
-        forsure, canbe = self.empty_string(filename)
+        valid = self.valid_fname(filename)
 
-        if forsure:
+        if valid is false():
             return -1
 
         fd = self.open_symbolic(filename, flags)
-        cond = self.not_empty(filename)
 
-        ret = claripy.If(cond, fd, self.bvv_int(-1)) if canbe else fd
+        ret = claripy.If(valid, fd, self.bvv_int(-1))
         return ret
 
     def close_file(self, fd: int | BV) -> int:
