@@ -20,8 +20,9 @@ class MetaOptions(type):
         for name, opt in self.__items():
             optname = opt[1]
             opttype = opt[2]
+            normalised = optname.replace('-', '_')
             assert opttype in vars(OptionTypes).values()
-            assert name == optname, f"option names must match => self.'{name}' != '{optname}'"
+            assert name == normalised, f"option names must match => self.'{name}' != '{optname}'"
 
     def __iter__(self):
         for v in self.__values():
@@ -62,4 +63,5 @@ class Options(metaclass=MetaOptions):
     results = ('--', 'results', OptionTypes.SIMPLE)
     stats = ('--', 'stats', OptionTypes.SIMPLE)
     ascii = ('-', 'ascii', OptionTypes.BOOL)
+    angr_fs = ('-', 'angr-fs', OptionTypes.BOOL)
     debug = ('-', 'debug', OptionTypes.BOOL)

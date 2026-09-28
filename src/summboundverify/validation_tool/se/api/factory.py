@@ -3,29 +3,35 @@ import inspect
 from functools import cache
 from pathlib import Path
 
-from angr import Project, SimulationManager
+from angr import Project, SimState, SimulationManager
 
 from summboundverify.api import PREFIX, all_stubs, required_stubs
 
 from .context import ValidationCTX
-from .functions import constraints
+
+from .functions import heap
 from .functions import lists
 from .functions import solver
-from .functions import heap
-from .functions.files import functions as files
-from .functions.validation import functions as validation
+from .functions import constraints
 
+
+from .functions.validation import functions as validation
 from .functions.validation.functions import halt_all, print_counterexamples
 
 
-class ValidationAPI:
+class SymbolicReflectionAPI:
+    """Symbolic Reflection API"""
+
     def __init__(
         self,
         project: Project,
+        state: SimState,
         sm: SimulationManager,
         binary: str,
         out: str | Path,
-        convert: bool
+        convert: bool,
+        angr_fs: bool
+
     ):
         self.prefix = PREFIX
         self.ctx = ValidationCTX()
@@ -36,6 +42,16 @@ class ValidationAPI:
         self.project = project
         self.binary = binary
         self.convert = convert
+        self.angr_fs = angr_fs
+
+        if angr_fs:
+            from .functions.fs.native import functions as files
+        else:
+            from .functions.fs.symbolic.fs import SymbolicFS
+            from .functions.fs.symbolic import functions as files
+            state.register_plugin("fs", SymbolicFS())
+
+        self.files = files
 
         # Hooks that require arguments
         self.arg_hooks = [
@@ -56,7 +72,7 @@ class ValidationAPI:
     @cache
     def _implemented(self):
         impl = {}
-        for module in (solver, validation, heap, constraints, lists, files):
+        for module in (solver, validation, heap, constraints, lists, self.files):
             for name, cls in inspect.getmembers(module, inspect.isclass):
                 if cls.__module__ != module.__name__:
                     continue

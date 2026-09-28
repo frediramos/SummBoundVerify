@@ -73,6 +73,9 @@ def parse_cmdline_args(input=None):
     validation.add_argument(flag(Options.ascii), action='store_true',
                             help='Convert ASCII values to characters in counterexamples')
 
+    validation.add_argument(flag(Options.angr_fs), action='store_true',
+                            help='Use angr\'s native file system')
+
     validation.add_argument(flag(Options.debug), action='store_true',
                             help='Enable debug logging to console')
 

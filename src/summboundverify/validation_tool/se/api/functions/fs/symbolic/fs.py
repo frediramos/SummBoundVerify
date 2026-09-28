@@ -25,7 +25,7 @@ from summboundverify.exceptions import (
     InvalidOpenFlagError
 )
 
-from ...utils import (
+from ....utils import (
     SymbString,
     constraint,
     eq_strings,

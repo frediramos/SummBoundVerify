@@ -11,9 +11,10 @@ from summboundverify.exceptions import (
 
 from .fs import SymbolicFS
 
-from ...utils import SymbString, called_by
-from ...summary import CSummary
-from ...context import ValidationCTX
+from ....summary import CSummary
+from ....context import ValidationCTX
+
+from ....utils import SymbString, called_by
 
 
 class FileSummary(CSummary, ABC):

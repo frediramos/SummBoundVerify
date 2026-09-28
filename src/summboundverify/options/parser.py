@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 def parse_config_file(conf: str) -> dict:
-    """Parse a YAML configuration file.
+    """
+    Parse a YAML configuration file.
 
     Returns a dict whose keys are Option names and whose values are
     the parsed configuration values.

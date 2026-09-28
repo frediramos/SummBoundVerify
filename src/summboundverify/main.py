@@ -161,9 +161,14 @@ def plan_engines(args: Namespace) -> list[Engine]:
     return engines
 
 
-def main():
+def angr():
+    args = sys.argv[1:]
+    return main(["-angr-fs"] + args)
+
+
+def main(argv=None):
     try:
-        args = parse_input_args()
+        args = parse_input_args(argv)
         setup_logging(args.debug)
 
         # Run a given binary directly.

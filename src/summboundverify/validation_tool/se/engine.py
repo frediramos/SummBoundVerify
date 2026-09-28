@@ -16,8 +16,7 @@ from angr import (
 
 from summboundverify.exceptions import TimeoutError
 
-from .api import ValidationAPI
-from .api.functions.files.fs import SymbolicFS
+from .api import SymbolicReflectionAPI
 
 from .stats import save_paths, save_stats
 
@@ -33,7 +32,8 @@ class AngrEngine:
         stats_dir: str | Path | None = None,
         paths_dir: str | Path | None = None,
         convert_ascii: bool = False,
-        ignore: str | Path | None = None,
+        ignore: list | None = None,
+        angr_fs: bool = False
     ):
         self.binary = Path(binary)
         self.binary_name = self.binary.name
@@ -45,11 +45,12 @@ class AngrEngine:
         self.paths_dir = Path(paths_dir) if paths_dir else None
 
         self.convert_ascii = convert_ascii
-        self.ignore_list = self._ignore_list(ignore)
+        self.ignore = [] if ignore is None else ignore 
 
         self.fcalled: dict[str, int] = {}
 
-        self.api: ValidationAPI
+        self.angr_fs = angr_fs
+        self.api: SymbolicReflectionAPI
 
     @property
     def constraints(self) -> dict:
@@ -61,20 +62,20 @@ class AngrEngine:
 
         return {**api.ctx.CONSTRAINTS, **api.ctx.STORED_CNSTR}
 
-    @staticmethod
-    def _ignore_list(ignore: str | Path | None) -> list[str]:
-        if not ignore:
-            return []
-        with open(ignore) as f:
-            return [line.strip() for line in f]
-
-    def _set_hooks(self, project: Project, sm: SimulationManager):
-        self.api = ValidationAPI(
+    def _configure_function_hooks(
+        self,
+        project: Project,
+        state: SimState,
+        sm: SimulationManager
+    ):
+        self.api = SymbolicReflectionAPI(
             project=project,
+            state=state,
             sm=sm,
             binary=self.binary_name,
             out=self.results_dir,
             convert=self.convert_ascii,
+            angr_fs=self.angr_fs
         )
         self.api.hook_api()
 
@@ -91,7 +92,6 @@ class AngrEngine:
         )
 
         state.register_plugin("heap", SimHeapPTMalloc())
-        state.register_plugin("fs", SymbolicFS())
 
         state.libc.simple_strtok = False  # type: ignore
 
@@ -164,7 +164,7 @@ class AngrEngine:
 
         project = Project(
             self.binary,
-            exclude_sim_procedures_list=self.ignore_list,
+            exclude_sim_procedures_list=self.ignore,
         )
 
         self.project = project
@@ -173,7 +173,7 @@ class AngrEngine:
         sm = project.factory.simulation_manager(state)
 
         self._register_timeout(sm)
-        self._set_hooks(project, sm)
+        self._configure_function_hooks(project, state, sm)
 
         start = time.monotonic()
         self.step(sm, start)
