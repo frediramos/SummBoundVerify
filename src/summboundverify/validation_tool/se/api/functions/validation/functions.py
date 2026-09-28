@@ -97,7 +97,7 @@ class get_cnstr(CSummary):
         return cnstrs
 
     def get_fs(self):
-        from ..files.fs import SymbolicFS
+        from ..fs.symbolic import SymbolicFS
 
         fs = self.state.fs
         constraints = []

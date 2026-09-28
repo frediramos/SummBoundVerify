@@ -5,7 +5,7 @@ from pathlib import Path
 from angr import SimulationManager
 
 from .macros import SYM_VAR
-from .api import ValidationAPI
+from .api import SymbolicReflectionAPI
 
 
 def get_states(sm: SimulationManager):
@@ -61,7 +61,7 @@ def save_stats(
     stats_dir: Path,
     binary_name: str,
     sm: SimulationManager,
-    api: ValidationAPI,
+    api: SymbolicReflectionAPI,
     fcalled: dict[str, int],
     *,
     time_spent: float | None = None,
