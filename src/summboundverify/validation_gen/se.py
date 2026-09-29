@@ -27,6 +27,6 @@ class SymbolicValidationGenerator(ValidationGenerator):
             ret_type,
             cname,
             sname,
-            self.memory,
             self.maxnames,
+            argspec=self.argspec,
         )

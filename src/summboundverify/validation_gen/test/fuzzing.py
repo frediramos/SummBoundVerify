@@ -29,10 +29,10 @@ class SummaryFuzzTestGen(TestGen):
         args: list[Node] | None,
         ret: Decl,
         summary_name: str,
-        memory: bool,
         max_args: list[Any] | None,
+        argspec: dict | None = None,
     ) -> None:
-        super().__init__(args, ret, memory, max_args)
+        super().__init__(args, ret, max_args, argspec)
 
         self.summary_name = summary_name
 
@@ -47,20 +47,26 @@ class SummaryFuzzTestGen(TestGen):
         test_id: int,
     ) -> FuncDef:
 
+        file_setup, skip_names = self._gen_file_setup(use_api=True)
+
         args_code, call_args, sym_args = self._create_args(
             size_macro,
             null_bytes,
             max_macro,
             default,
             concrete,
+            skip=skip_names,
         )
 
         body: list[Node] = [*args_code]
+        body.extend(file_setup)
 
-        if self.memory:
-            body.extend(
-                self._tag_memory(sym_args.pointer_args, size_macro)
-            )
+        mem_args = self._memory_args(sym_args)
+        if mem_args:
+            body.extend(self._tag_memory(sym_args, mem_args))
+
+        body.extend(self._gen_name_file_constraints(use_api=True))
+        body.extend(self._tag_files())
 
         body.extend(self._summary_body(call_args, test_id))
         body.append(return_value(None))
@@ -95,10 +101,10 @@ class ConcreteFuzzTestGen(TestGen):
         args: list[Node] | None,
         ret: Decl,
         concrete_name: str,
-        memory: bool,
         max_args: list[Any] | None,
+        argspec: dict | None = None,
     ) -> None:
-        super().__init__(args, ret, memory, max_args)
+        super().__init__(args, ret, max_args, argspec)
 
         self.concrete_name = concrete_name
 
@@ -113,20 +119,26 @@ class ConcreteFuzzTestGen(TestGen):
         test_id: int,
     ) -> FuncDef:
 
+        file_setup, skip_names = self._gen_file_setup()
+
         args_code, call_args, sym_args = self._create_args(
             size_macro,
             null_bytes,
             max_macro,
             default,
             concrete,
+            skip=skip_names,
         )
 
         body: list[Node] = [*args_code]
+        body.extend(file_setup)
 
-        if self.memory:
-            body.extend(
-                self._tag_memory(sym_args.pointer_args, size_macro)
-            )
+        mem_args = self._memory_args(sym_args)
+        if mem_args:
+            body.extend(self._tag_memory(sym_args, mem_args))
+
+        body.extend(self._gen_name_file_constraints())
+        body.extend(self._tag_files())
 
         body.extend(self._body(call_args, test_id))
         body.append(return_value(None))

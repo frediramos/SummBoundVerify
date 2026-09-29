@@ -1,0 +1,24 @@
+fd:
+  type: int
+  semantic: file
+  file:
+    type: descriptor
+    fname:
+      symbolic: true
+      size: 3
+    data:
+      symbolic: true
+      size: 3
+
+buf:
+  type: void*
+  semantic: memory
+  memory:
+    type: read
+    size: 5
+
+count:
+  type: size_t
+  semantic: scalar
+  scalar:
+    maxvalue: 5

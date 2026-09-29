@@ -64,6 +64,14 @@ class UnsatConstraintError(RunError):
         super().__init__(message)
 
 
+class AssertConstraintError(RunError):
+    def __init__(self, constraint):
+        message = (
+            f"The current path condition does not imply: '{constraint}'.\n"
+        )
+        super().__init__(message)
+
+
 class ClaripyConstraintError(RunError):
     def __init__(
         self,
@@ -121,6 +129,17 @@ class InvalidOpenFlagError(RunError):
         super().__init__(message)
 
 
+class InvalidIteFileDescriptor(RunError):
+    def __init__(self, fd):
+        message = (
+            "Input file descriptors (fd) cannot be fully symbolic.\n"
+            "Symbolic fds must have the form ite(cond, fd, -1), "
+            "where fd is a positive file descriptor.\n"
+            f"Found: {fd}"
+        )
+        super().__init__(message)
+
+
 class InvalidArgumentError(RunError):
     argument: str
 
@@ -130,6 +149,12 @@ class InvalidArgumentError(RunError):
             f"'{self.argument}' values.\n"
             f"Invalid argument found: {value}"
         )
+        super().__init__(message)
+
+
+class UnsatFSError(RunError):
+    def __init__(self):
+        message = "The symbolic file system is in an unsat state."
         super().__init__(message)
 
 

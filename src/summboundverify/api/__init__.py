@@ -13,6 +13,8 @@ from .helpers import get_stubs, get_code
 PREFIX = "__"
 
 REQUIRED_FUNCTIONS = [
+    "_NEQ_",
+    "_OR_",
     "_ULE_",
     "assume",
     "save_current_state",
@@ -23,7 +25,13 @@ REQUIRED_FUNCTIONS = [
     "print_counterexamples",
     "mem_addr",
     "sym_var_array",
-    "sym_var_named"
+    "sym_var_named",
+    "file_addr",
+    "file_create",
+    "file_open",
+    "file_write",
+    "file_set_offset",
+    "FILE_from_fd",
 ]
 
 CURRENT = current_dir(__file__)
@@ -37,6 +45,13 @@ class APIFiles:
     stub_types = CURRENT / "stub_types.h"
 
     macros = CURRENT / "macros.h"
+
+
+def api(fname: str):
+    """Returns the actual function name in the Symbolic Reflaction API"""
+    if not (fname.startswith(PREFIX)) and not (fname.startswith('_')):
+        fname = PREFIX + fname
+    return fname
 
 
 @cache
@@ -109,9 +124,7 @@ def required_stubs() -> dict[str, str]:
     stubs = all_stubs()
     required = {}
     for req in REQUIRED_FUNCTIONS:
-        name = req
-        if not (name.startswith(PREFIX)) and not (name.startswith('_')):
-            name = PREFIX + name
+        name = api(req)
         required[name] = stubs[name]
     return required
 
@@ -129,10 +142,7 @@ def api_map() -> SimpleNamespace:
     values = {}
 
     for func in REQUIRED_FUNCTIONS:
-        name = func
-        if not (name.startswith(PREFIX)) and not (name.startswith('_')):
-            name = PREFIX + name
-
+        name = api(func)
         if name not in stubs:
             raise ValueError(
                 f"Required function {func!r} not found in "

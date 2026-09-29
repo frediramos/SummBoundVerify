@@ -1,14 +1,10 @@
 """Sampling the concrete function with AFL++.
 
-Counterpart to `angrEngine`, but not its mirror image. The symbolic engine
-executes both the summary and the concrete function and proves an implication
-between them. This one never touches the summary: it compiles the concrete
-function on its own, lets AFL++ explore it, and writes down what it returned
-for the inputs it was given.
+Compiles the concrete function on its own, lets AFL++ explore it, and writes down what it returned for the inputs it was given.
 
 The result is a set of `(input, output)` pairs. What makes them useful is that
 they are named the same way the summary's symbolic run names its variables --
-`n` for a scalar, `str_0` for an array element -- so a pair can be matched
+`n` for a scalar, `str_0` for an array element. A pair can be matched
 against the formula angr produced without either side knowing about the other.
 
 AFL++ is an input *generator* here, not an oracle. Recording every execution
@@ -29,6 +25,7 @@ import re
 import shutil
 import struct
 import subprocess as sp
+import tempfile
 
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -123,6 +120,40 @@ class Value:
 
 
 @dataclass
+class FileValue:
+    """One tagged file's post-call state: existence and content bytes."""
+
+    exists: bool
+    raw: bytes
+
+    def as_dict(self) -> dict:
+        return {
+            'exists': self.exists,
+            'bytes': self.raw.hex(),
+        }
+
+
+@dataclass
+class FdValue:
+    """One tracked fd's post-call state: flags, mode, offset, content."""
+
+    flags: int
+    mode: int
+    offset: int
+    size: int
+    raw: bytes
+
+    def as_dict(self) -> dict:
+        return {
+            'flags': self.flags,
+            'mode': self.mode,
+            'offset': self.offset,
+            'size': self.size,
+            'bytes': self.raw.hex(),
+        }
+
+
+@dataclass
 class Sample:
     """What one execution of one test did.
 
@@ -137,6 +168,13 @@ class Sample:
     rejected: bool = False
     inputs: dict[str, Value] = field(default_factory=dict)
     memory: dict[str, Value] = field(default_factory=dict)
+    files: dict[str, FileValue] = field(default_factory=dict)
+    fds: dict[str, FdValue] = field(default_factory=dict)
+
+    # The descriptors open when the test was recorded, bit N for fd N. None
+    # for a harness that did not report it.
+    open_fds: int | None = None
+
     ret: Value | None = None
 
     # An address, rather than a value. The number is meaningless across runs,
@@ -150,6 +188,9 @@ class Sample:
             'rejected': self.rejected,
             'inputs': {k: v.as_dict() for k, v in self.inputs.items()},
             'memory': {k: v.as_dict() for k, v in self.memory.items()},
+            'files': {k: v.as_dict() for k, v in self.files.items()},
+            'fds': {k: v.as_dict() for k, v in self.fds.items()},
+            'open_fds': self.open_fds,
             'ret': self.ret.as_dict() if self.ret else None,
             'ret_is_pointer': self.ret_is_pointer,
         }
@@ -189,7 +230,8 @@ class AflEngine():
         self.constraints = constraints or {}
 
         self.binary = self.testfile.with_suffix('.fuzz')
-        self.workdir = self.testfile.parent / f'{self.testfile.stem}.aflwork'
+        self._tmpdir = tempfile.mkdtemp(prefix=f'{self.testfile.stem}_afl_')
+        self.workdir = Path(self._tmpdir)
 
         self.samples: list[Sample] = []
         self.crashes: list[Path] = []
@@ -216,6 +258,18 @@ class AflEngine():
             # AFL++ would read the dead process as a crash. sbv_exit discards
             # the run instead. sbv_sample.c and driver.c #undef this.
             '-Dexit=sbv_exit',
+
+            # Intercept the calls that create or release a descriptor, so the
+            # harness knows which files the test's descriptors refer to. The
+            # offset is asked of the kernel, so read/write/lseek need no
+            # wrapper. sbv_unwrap.h undoes these and must list the same names.
+            '-Dopen=sbv_open',
+            '-Dcreat=sbv_creat',
+            '-Dopenat=sbv_openat',
+            '-Ddup=sbv_dup',
+            '-Ddup2=sbv_dup2',
+            '-Dclose=sbv_close',
+            '-Dfclose=sbv_fclose',
 
             '-Wno-int-conversion',
             '-Wno-unused-variable',
@@ -471,6 +525,29 @@ class AflEngine():
                 current.memory[name] = Value(
                     int(nbytes) * 8, bytes.fromhex(raw)
                 )
+
+            elif kind == 'F' and len(parts) >= 3:
+                name, exists_str, nbytes_str = parts[0], parts[1], parts[2]
+                raw = parts[3] if len(parts) > 3 else ''
+                current.files[name] = FileValue(
+                    exists=int(exists_str) == 1,
+                    raw=bytes.fromhex(raw) if raw else b'',
+                )
+
+            elif kind == 'D' and len(parts) >= 5:
+                name = parts[0]
+                flags_str, mode_str, offset_str, size_str = parts[1:5]
+                raw = parts[5] if len(parts) > 5 else ''
+                current.fds[name] = FdValue(
+                    flags=int(flags_str),
+                    mode=int(mode_str),
+                    offset=int(offset_str),
+                    size=int(size_str),
+                    raw=bytes.fromhex(raw) if raw else b'',
+                )
+
+            elif kind == 'O' and len(parts) == 1:
+                current.open_fds = int(parts[0])
 
             elif kind == 'R' and len(parts) == 3:
                 bits, pointer, raw = parts

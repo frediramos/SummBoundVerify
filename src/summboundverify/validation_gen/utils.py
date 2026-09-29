@@ -18,11 +18,17 @@ from pycparser.c_parser import ParseError
 from summboundverify.utils.files import fake_libc_path, tmp_file
 from summboundverify.exceptions import FileParseError
 
-SIZE_MACRO = 'SIZE'
-FUEL_MACRO = 'FUEL'
-MAX_MACRO = 'MAX_NUM'
-ARRAY_SIZE_MACRO = 'ARRAY_SIZE'
-POINTER_SIZE_MACRO = 'POINTER_SIZE'
+
+class Macros:
+    MAX_NUM = "MAX_NUM"
+    ARRAY_SIZE = "ARRAY_SIZE"
+    FNAME_SIZE = "FNAME_SIZE"
+
+    POINTER_SIZE = "POINTER_SIZE"
+    FUEL = "FUEL"
+
+
+DEFINED_MACROS: dict[str, int] = {}
 
 
 def add_fake_include(file):
@@ -64,8 +70,13 @@ def parse_file(file):
         raise FileParseError(file, e)
 
 
-def define_macro(label, value):
+def define_macro(label: str, value: int):
+    DEFINED_MACROS[label] = value
     return f'#define {label} {value}'
+
+
+def get_defined_macro(label: str):
+    return DEFINED_MACROS[label]
 
 
 def define_include(name):

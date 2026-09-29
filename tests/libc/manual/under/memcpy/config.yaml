@@ -1,0 +1,4 @@
+func: concrete.c
+summ: memcpy.c
+compile: x86
+argspec: argspec.yaml

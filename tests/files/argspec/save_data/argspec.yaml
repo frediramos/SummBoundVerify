@@ -1,0 +1,21 @@
+path:
+  type: char*
+  semantic: file
+  file:
+    type: name
+    fname:
+      symbolic: true
+      size: 5
+
+data:
+  type: void*
+  semantic: memory
+  memory:
+    type: read
+    size: 5
+
+len:
+  type: size_t
+  semantic: scalar
+  scalar:
+    maxvalue: 5
