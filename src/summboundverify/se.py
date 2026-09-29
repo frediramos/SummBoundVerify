@@ -84,6 +84,7 @@ def run_angr(binary: str | Path, args: Namespace) -> tuple[Path, dict]:
         results_dir=args.results,
         stats_dir=args.stats,
         convert_ascii=args.ascii,
+        angr_fs=args.angr_fs
     )
 
     engine.run()

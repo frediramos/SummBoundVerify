@@ -7,14 +7,14 @@ MAGENTA := \033[35m
 RESET   := \033[0m
 
 FLAGS  := -Wno-int-conversion
-SUMMBV := summbv -run --binary
+SUMMBV := angr -angr-fs -run --binary
 
 BINS  	 := bins
 LIB_PATH := lib
 
 TESTS 	 := $(patsubst %.c,%.test,$(wildcard *.c))
 
-LIB := $(LIB_PATH)/sra.c $(LIB_PATH)/utils.c -I$(LIB_PATH)
+LIB := $(LIB_PATH)/sra.c -I$(LIB_PATH)
 
 .PHONY: sra compile run clean
 
