@@ -14,14 +14,6 @@
 long __concretize(symbolic var);
 
 /**
- * Asserts that `cnstr` holds.
- *
- * If `cnstr` is unsatisfiable, reports an assertion failure and terminates
- * execution.
- */
-void __assert(cnstr_t cnstr);
-
-/**
  * Reports an error originating from `filename` at line `line` with the
  * message `message`.
  *
@@ -322,154 +314,204 @@ size_t __allocd(void *ptr, size_t n);
  * Files
  * ==========================================================================
  *
- * File names may be either concrete or symbolic strings. All other arguments
- * must be concrete values.
+ * File names
+ * ----------
+ * File names may be concrete or symbolic strings, but the pointer to the
+ * name must be concrete. A name that is empty (or, if symbolic, may start
+ * with '\0') is invalid.
+ *
+ * Operations on symbolic names never fork. When success is feasible, the
+ * required existence (or non-existence) constraint is added to the path
+ * condition and the operation succeeds; the result is then
+ * `ite(valid, <success>, -1)`, where `valid` states that the name is not
+ * empty.
+ *
+ * File descriptors
+ * ----------------
+ * File descriptors are never fully symbolic. Every fd produced by this API
+ * is either concrete or has the form `ite(cond, fd, -1)`, with `fd`
+ * concrete (e.g., the result of `__file_open` on a symbolic name).
+ *
+ * Every function below taking an `fd` accepts exactly these two forms;
+ * anything else raises an error. For `ite(cond, fd, -1)`, the operation is
+ * applied to `fd` and the result is `ite(cond, <result>, <error>)`, where
+ * `<error>` is the function's error value (`-1`, or `NULL` for
+ * `__FILE_from_fd`). `FILE*` values follow the same rule with `NULL` in
+ * place of `-1`.
+ *
+ * A single concrete fd may refer to several possible files, one for each
+ * feasible match of a symbolic name, each guarded by a condition. Hence
+ * sizes, offsets and the results of reads may be symbolic even when the fd
+ * is concrete.
+ *
+ * Passing an fd that is not open (negative, closed or never returned by
+ * this API) makes the function fail with its error value.
+ *
+ * Other arguments
+ * ---------------
+ * All other arguments (buffers, counts, sizes, offsets, modes and flags)
+ * must be concrete; a symbolic value raises an error. A symbolic value
+ * constrained to a single solution is accepted and concretized.
  * ========================================================================== */
 
 /**
- * Creates a new file named `name`.
+ * Creates a new, empty file named `name`.
  *
- * `name` may be either a concrete or symbolic string.
+ * The file must be able to not exist on the current path. When this depends
+ * on symbolic names (`name` or existing ones), the constraint that `name`
+ * differs from every existing file is added to the path condition.
  *
- * Returns `1` on success and `-1` if the file could not be created.
+ * Returns `1` on success and `-1` if the file already exists or `name` is
+ * invalid. For a symbolic `name`, returns `ite(valid, 1, -1)`.
  */
 int __file_create(const char* name);
 
 /**
- * Opens the file named `name` with the specified `flags`.
+ * Opens the existing file named `name`. Opening never creates a file.
  *
- * `name` may be either a concrete or symbolic string. `flags` must be
- * concrete.
+ * `flags` is a concrete `fopen`-style mode string: `"r"`, `"r+"`, `"w"`,
+ * `"w+"`, `"a"` or `"a+"`, optionally followed by `b`, `t`, `c` or `e`
+ * (which are ignored). Any other string raises an error. The mode determines
+ * the value returned by `__file_flags`, but it is not enforced: reads and
+ * writes are always allowed, `"w"` does not truncate and `"a"` does not
+ * append. The new descriptor starts at offset `0`.
  *
- * Returns the file descriptor on success, or `-1` if the file does not
- * exist or cannot be opened.
+ * Returns a new concrete file descriptor on success, or `-1` if the file
+ * does not exist or `name` is invalid. For a symbolic `name`, returns
+ * `ite(valid, fd, -1)`.
  */
 int __file_open(const char* name, const char* flags);
 
 /**
  * Checks whether the file named `name` exists.
  *
- * `name` may be either a concrete or symbolic string.
+ * Unlike `__file_create` and `__file_delete`, this does not constrain the
+ * path condition.
  *
- * Returns `1` if the file exists and `0` otherwise. The return value can be symbolic.
+ * Returns `1` if the file exists and `0` otherwise. The return value can be
+ * symbolic.
  */
 int __file_exists(const char* name);
 
 /**
  * Deletes the file named `name`.
  *
- * `name` may be either a concrete or symbolic string.
+ * The file must be able to exist on the current path and must not be
+ * referenced by an open file descriptor whose name it may equal. When this
+ * depends on symbolic names, the constraint that the file exists is added to
+ * the path condition.
  *
- * Returns `1` on success and `-1` on failure.
+ * Returns `1` on success and `-1` on failure. For a symbolic `name`, returns
+ * `ite(valid, 1, -1)`.
  */
 int __file_delete(const char* name);
 
 /**
- * Closes the file associated with file descriptor `fd`.
- *
- * `fd` must be concrete.
+ * Closes the file descriptor `fd`.
  *
  * Returns `0` on success and `-1` on failure.
  */
 int __file_close(int fd);
 
 /**
- * Reads up to `count` bytes from the file associated with file descriptor
- * `fd` into `buffer`. The bytes read may be symbolic.
+ * Reads up to `count` bytes from the file referenced by `fd` into `buffer`,
+ * starting at the current offset. The bytes read may be symbolic.
  *
- * `fd`, `buffer`, and `count` must be concrete.
+ * `buffer` and `count` must be concrete.
  *
- * Returns the number of bytes read, which may be less than `count`.
- * Advances the file offset by the number of bytes read.
- * Returns `0` if the end of the file has been reached.
- * Returns `-1` on error.
- * The return value can be symbolic.
+ * Bytes past the end of the file leave `buffer` unchanged. Advances the
+ * offset by the number of bytes read.
+ *
+ * Returns the number of bytes read, which may be less than `count`, `0` at
+ * the end of the file, or `-1` on error. The return value can be symbolic.
  */
 ssize_t __file_read(int fd, void* buffer, size_t count);
 
 /**
- * Writes up to `count` bytes from `buffer` to the file associated with file
- * descriptor `fd`.
+ * Writes `count` bytes from `buffer` to the file referenced by `fd`, starting
+ * at the current offset.
  *
- * `fd`, `buffer`, and `count` must be concrete.
+ * `buffer` and `count` must be concrete.
  *
- * Returns the number of bytes written, which may be less than `count`.
- * Advances the file offset by the number of bytes written.
- * Returns `-1` on error.
+ * `buffer` is read as a C string: bytes after its first concrete '\0' are
+ * not written (symbolic bytes are, even if they may be '\0'). Writing past
+ * the end of the file first extends it with '\0' bytes. Advances the offset
+ * by `count`.
+ *
+ * Returns `count` on success (writes are never partial), or `-1` on error.
  */
 ssize_t __file_write(int fd, const void* buffer, size_t count);
 
 /**
- * Returns the size, in bytes, of the file associated with file descriptor
- * `fd`. The returned size may be symbolic.
+ * Returns the size, in bytes, of the file referenced by `fd`. The returned
+ * size may be symbolic.
  *
- * `fd` must be concrete.
- *
- * Returns `-1` if `fd` is invalid.
+ * Returns `-1` on error.
  */
 ssize_t __file_size(int fd);
 
 /**
- * Returns the current file offset of the file associated with file descriptor
- * `fd`. The returned offset may be symbolic.
+ * Returns the current offset of the file referenced by `fd`. The returned
+ * offset may be symbolic.
  *
- * `fd` must be concrete.
- *
- * Returns `-1` if `fd` is invalid.
+ * Returns `-1` on error.
  */
 ssize_t __file_offset(int fd);
 
 /**
- * Sets the size of the file associated with file descriptor `fd` to `size`
- * bytes.
+ * Sets the size of the file referenced by `fd` to `size` bytes, truncating it
+ * or extending it with '\0' bytes.
  *
- * `fd` and `size` must be concrete.
+ * `size` must be concrete.
  *
  * Returns the new file size on success, or `-1` on failure.
  */
 ssize_t __file_set_size(int fd, size_t size);
 
 /**
- * Sets the current file offset of the file associated with file descriptor
- * `fd` to `offset`.
+ * Sets the current offset of the file referenced by `fd` to `offset`, which
+ * may lie past the end of the file.
  *
- * `fd` and `offset` must be concrete.
+ * `offset` must be concrete.
  *
- * Returns the new file offset on success, or `-1` on failure.
+ * Returns the new offset on success, or `-1` on failure.
  */
 ssize_t __file_set_offset(int fd, size_t offset);
 
 /**
- * Sets the mode (`st_mode`) of the file associated with file descriptor `fd`.
+ * Sets the permission bits of the descriptor `fd` to `mode`.
  *
- * `fd` and `mode` must be concrete.
+ * `mode` must be concrete. The umask `022` is applied, so the stored value
+ * is `mode & ~022`.
+ *
+ * The mode belongs to the descriptor (and its duplicates), not to the file:
+ * opening the same file again yields the default mode.
  *
  * Returns `1` on success and `-1` on failure.
  */
 int __file_set_mode(int fd, mode_t mode);
 
 /**
- * Stores the `st_mode` value of the file associated with file descriptor
- * `fd` in `*mode`.
+ * Stores the permission bits of the descriptor `fd` in `*mode`.
  *
- * The stored value encodes both the file type and permission bits (e.g.,
- * regular file, directory, `0644`, `0755`).
- *
- * `fd` and `mode` must be concrete.
+ * `mode` must be a concrete pointer. The default is `0644` (`0666` with the
+ * umask `022` applied). No file-type bits (e.g., `S_IFREG`) are set.
  *
  * Returns `1` on success and `-1` on failure.
  */
 int __file_mode(int fd, mode_t* mode);
 
 /**
- * Returns the open status flags associated with file descriptor `fd`.
+ * Returns the open status flags of `fd`, derived from the mode string given
+ * to `__file_open`:
  *
- * The returned value is a bitmask of the flags used when the file was opened
- * (e.g., `O_RDONLY`, `O_WRONLY`, `O_RDWR`, `O_APPEND`, `O_NONBLOCK`).
+ *   "r"  -> O_RDONLY           "r+" -> O_RDWR
+ *   "w"  -> O_WRONLY|O_CREAT|O_TRUNC
+ *   "w+" -> O_RDWR|O_CREAT|O_TRUNC
+ *   "a"  -> O_WRONLY|O_CREAT|O_APPEND
+ *   "a+" -> O_RDWR|O_CREAT|O_APPEND
  *
- * `fd` must be concrete.
- *
- * Returns `-1` if `fd` does not refer to a valid open file descriptor.
+ * Returns `-1` on error.
  */
 int __file_flags(int fd);
 
@@ -477,9 +519,7 @@ int __file_flags(int fd);
  * Creates a duplicate of the file descriptor `oldfd`.
  *
  * The duplicate refers to the same open file description as `oldfd`; both
- * descriptors share the same file offset and open status flags.
- *
- * `oldfd` must be concrete.
+ * descriptors share the same offset, mode and open status flags.
  *
  * Returns the new file descriptor on success, or `-1` on failure.
  */
@@ -488,30 +528,31 @@ int __file_dup(int oldfd);
 /**
  * Duplicates the file descriptor `oldfd` onto `newfd`.
  *
- * If `newfd` is already open, it is closed before being reused.
- * The resulting descriptor refers to the same open file description as
- * `oldfd`; both descriptors share the same file offset and open status flags.
+ * If `newfd` is open, it is closed before being reused. If `oldfd` equals
+ * `newfd`, nothing is done. The resulting descriptor refers to the same open
+ * file description as `oldfd`; both descriptors share the same offset, mode
+ * and open status flags.
  *
- * `oldfd` and `newfd` must be concrete.
+ * Both arguments may have the form `ite(cond, fd, -1)`; the operation is
+ * applied to each combination of their cases.
  *
  * Returns `newfd` on success, or `-1` on failure.
  */
 int __file_dup2(int oldfd, int newfd);
 
 /**
- * Returns the `FILE*` associated with file descriptor `fd`.
+ * Returns the `FILE*` associated with the file descriptor `fd`.
  *
- * `fd` must be concrete.
- *
- * Returns `NULL` if `fd` is invalid.
+ * Returns `NULL` on error.
  */
 FILE* __FILE_from_fd(int fd);
 
 /**
  * Returns the file descriptor associated with the file pointer `fp`.
  *
- * `fp` must be concrete.
+ * `fp` is either concrete or has the form `ite(cond, fp, NULL)`, as returned
+ * by `__FILE_from_fd`.
  *
- * Returns `-1` if `fp` is invalid.
+ * Returns `-1` if `fp` is `NULL` or does not belong to an open descriptor.
  */
 int __fd_from_FILE(FILE* fp);

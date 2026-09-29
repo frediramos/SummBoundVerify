@@ -56,21 +56,24 @@ class FileSummary(CSummary, ABC):
             raise SymbolicPointerError(caller, addr)
         return super().load_string(addr, include_null)
 
-    def unfold_fds(self, ite):
+    def unfold_fds(self, ite, invalid=-1):
         cases = list(claripy.reverse_ite_cases(ite))
 
-        # ITE fds must have the form: ite(cond, fd, -1)
+        # Fds are either concrete or have the form: ite(cond, fd, invalid)
+        if len(cases) == 1:
+            return cases
+
         if (
-            len(cases) > 2 and
-            not any(self._signed(v) == -1 for _, v in cases)
+            len(cases) > 2 or
+            not any(self._signed(v) == invalid for _, v in cases)
         ):
             raise InvalidIteFileDescriptor(ite)
 
         return cases
 
-    def call_fds(self, func, ite, *args, signed=True, default=-1):
+    def call_fds(self, func, ite, *args, signed=True, default=-1, invalid=-1):
         default = claripy.BVV(default, self.int_size)
-        cases = self.unfold_fds(ite)
+        cases = self.unfold_fds(ite, invalid)
         ret = [
             (cond, func(self._signed(v) if signed else v, *args))
             for cond, v in cases
@@ -158,7 +161,7 @@ class FILE_from_fd(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.FILE_from_fd
-        fp = self.call_fds(f, fd)
+        fp = self.call_fds(f, fd, default=0)
         return fp
 
 
@@ -166,7 +169,7 @@ class fd_from_FILE(FileSummary):
     def run(self, fp_bv):
         fp = self.load_int(fp_bv)
         f = self.fs.fd_from_FILE
-        fd = self.call_fds(f, fp, signed=False, default=0)
+        fd = self.call_fds(f, fp, signed=False, invalid=0)
         return fd
 
 

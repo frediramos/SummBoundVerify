@@ -938,7 +938,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def create_file(self, filename: str | SymbString) -> int | BV:
         """
-        Create a file and return its file descriptor.
+        Create a file.
 
         Succeeds only when the file can be established as non-existent under the
         current path condition.
@@ -946,7 +946,9 @@ class SymbolicFS(angr.SimStatePlugin):
         When this requires additional information, the
         corresponding constraint is added to the path condition.
 
-        Returns `-1` if the file already exists on the current path.
+        Returns `1` on success and `-1` if the file already exists on the
+        current path. For symbolic names, returns `ite(valid, 1, -1)`, where
+        `valid` states that the name is not empty.
         """
         if isinstance(filename, str) or not filename.is_symbolic():
             return self.create_concrete_file(str(filename))
@@ -1033,7 +1035,11 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def open_file(self, filename: str | SymbString, flag_string: str | SymbString) -> int | BV:
         """
-        Open a file and returns a concrete descriptor.
+        Open a file and return its descriptor.
+
+        The descriptor is concrete for concrete names. For symbolic names it is
+        `ite(valid, fd, -1)`, where `fd` is concrete and `valid` states that
+        the name is not empty.
 
         Returns `-1` if the file system is empty or the file cannot be found.
         """
@@ -1061,9 +1067,6 @@ class SymbolicFS(angr.SimStatePlugin):
         """
         fd = self.check_valid_fd(fd)
 
-        if fd < 0:
-            return -1
-
         if fd not in self.fds:
             return -1
 
@@ -1090,7 +1093,7 @@ class SymbolicFS(angr.SimStatePlugin):
         count = self.check_valid_count(count)
         buffer = buffer[:count]
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         entries = self.fds[fd].entries
@@ -1127,7 +1130,7 @@ class SymbolicFS(angr.SimStatePlugin):
         buffer = self.check_valid_pointer(buffer)
         count = self.check_valid_count(count)
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         entries = self.fds[fd].entries
@@ -1202,7 +1205,7 @@ class SymbolicFS(angr.SimStatePlugin):
     def file_offset(self, fd: int | BV) -> int | BV:
         fd = self.check_valid_fd(fd)
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         entries = self.fds[fd].entries
@@ -1219,7 +1222,7 @@ class SymbolicFS(angr.SimStatePlugin):
         fd = self.check_valid_fd(fd)
         offset = self.check_valid_offset(offset)
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         entries = self.fds[fd].entries
@@ -1235,7 +1238,7 @@ class SymbolicFS(angr.SimStatePlugin):
     def file_size(self, fd: int | BV) -> int | BV:
         fd = self.check_valid_fd(fd)
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         entries = self.fds[fd].entries
@@ -1254,7 +1257,7 @@ class SymbolicFS(angr.SimStatePlugin):
         fd = self.check_valid_fd(fd)
         size = self.check_valid_size(size)
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         entries = self.fds[fd].entries
@@ -1277,14 +1280,11 @@ class SymbolicFS(angr.SimStatePlugin):
         return size
 
     def FILE_from_fd(self, fd: int | BV) -> int:
-        """Return the `FILE *` pointer associated with `fd`, or `-1` if it is not found."""
+        """Return the `FILE *` pointer associated with `fd`, or `NULL` (0) if it is not found."""
         fd = self.check_valid_fd(fd)
 
-        if fd < 0:
-            return -1
-
         if fd not in self.fds:
-            fp = -1
+            return 0
 
         fp = self.fds[fd].fp
         fd_ = self.load_fd_from_fp(fp)
@@ -1309,7 +1309,7 @@ class SymbolicFS(angr.SimStatePlugin):
     def file_dup(self, fd: int | BV) -> int:
         fd = self.check_valid_fd(fd)
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         entries = self.fds[fd].entries
@@ -1326,16 +1326,20 @@ class SymbolicFS(angr.SimStatePlugin):
         fd1 = self.check_valid_fd(fd1)
         fd2 = self.check_valid_fd(fd2)
 
-        if fd1 < 0 or fd2 < 0:
+        if fd1 not in self.fds or fd2 < 0:
             return -1
-
-        if fd2 in self.fds:
-            self.close_file(fd2)
 
         entries = self.fds[fd1].entries
 
         if len(entries) == 0:
             return -1
+
+        # POSIX: duplicating an fd onto itself is a no-op
+        if fd1 == fd2:
+            return fd2
+
+        if fd2 in self.fds:
+            self.close_file(fd2)
 
         self.fds[fd2] = self.fds[fd1]
 
@@ -1345,7 +1349,7 @@ class SymbolicFS(angr.SimStatePlugin):
         fd = self.check_valid_fd(fd)
         mode_ptr = self.check_valid_pointer(mode_ptr)
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         fde = self.fds[fd]
@@ -1367,9 +1371,9 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def file_set_mode(self, fd, mode) -> Literal[-1, 1]:
         fd = self.check_valid_fd(fd)
-        mode = self.check_valid_pointer(mode)
+        mode = self.check_valid_mode(mode)
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         fde = self.fds[fd]
@@ -1384,7 +1388,7 @@ class SymbolicFS(angr.SimStatePlugin):
     def file_flags(self, fd) -> int:
         fd = self.check_valid_fd(fd)
 
-        if fd < 0:
+        if fd not in self.fds:
             return -1
 
         fde = self.fds[fd]

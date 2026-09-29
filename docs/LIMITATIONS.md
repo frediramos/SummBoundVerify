@@ -134,14 +134,15 @@ with a `dirfd` other than `AT_FDCWD` the path is recorded relative to `dirfd`.
 `rename` is not tracked either: a descriptor's recorded path goes stale, and
 its contents are then read from the old path.
 
-### Descriptors with several possible values *(gap)*
+### Descriptors with several possible values *(restriction)*
 
-When a file-API call receives a descriptor that is an `If` over several
-values (from an `open` of a symbolic name), only its **return value** is made
-conditional; the side effects of every branch are applied unconditionally.
-This is correct for the usual `If(cond, fd, -1)` — the `-1` branch has no
-effects — but not for an `If` between two valid descriptors, where both
-receive the write.
+A file-API call accepts a descriptor that is either concrete or an
+`If(cond, fd, -1)` (from an `open` of a symbolic name); `FILE*` values
+likewise accept `If(cond, fp, NULL)`. Only the **return value** is made
+conditional: the side effects of the `fd` branch are applied
+unconditionally, which is sound because the `-1` branch has none. Any other
+shape, such as an `If` between two valid descriptors, raises
+`InvalidIteFileDescriptor` instead of writing to both.
 
 ---
 
@@ -224,8 +225,9 @@ if (fd < 0)
 
 ### Counts must be concrete
 
-`fd`, `count`, `offset`, `size` and `mode` must be concrete in file-API calls
-(`__file_write` raises `InvalidCountError` on a symbolic count). With a
+`count`, `offset`, `size` and `mode` must be concrete in file-API calls
+(`__file_write` raises `InvalidCountError` on a symbolic count), and `fd` must
+be concrete or `If(cond, fd, -1)`. With a
 symbolic length, fork on it natively first, so each path sees one value:
 
 ```c
