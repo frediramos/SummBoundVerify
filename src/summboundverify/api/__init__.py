@@ -180,5 +180,10 @@ def make_lib(directory: str | Path, mkdir=True):
         f"{functions}\n"
     )
 
-    write_file(d / SRA_H, hcode, mkdir=mkdir)
-    write_file(d / SRA_C, ccode, mkdir=mkdir)
+    dot_h = d / SRA_H
+    dot_c = d / SRA_C
+
+    write_file(dot_h, hcode, mkdir=mkdir)
+    write_file(dot_c, ccode, mkdir=mkdir)
+
+    return dot_h, dot_c
