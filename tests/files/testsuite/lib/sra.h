@@ -1,6 +1,10 @@
 #ifndef SRA_H
 #define SRA_H
 
+#include <stdio.h>
+#include <sys/types.h>
+
+#undef NULL
 #define NULL ((void*)0)
 #define INT_SIZE (sizeof(int) * 8)
 #define LONG_SIZE (sizeof(long) * 8)
@@ -12,11 +16,6 @@ typedef int state_t;
 typedef unsigned int cnstr_t;
 typedef unsigned int result_t;
 typedef unsigned int list_t;
-
-typedef unsigned int size_t;
-typedef int ssize_t;
-typedef int mode_t;
-typedef void *FILE;
 /* ============================================================================
  *** Symbolic Reflection API ***
  * ========================================================================== */
