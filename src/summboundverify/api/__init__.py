@@ -162,13 +162,18 @@ def make_lib(directory: str | Path, mkdir=True):
     d = Path(directory)
 
     macros_ = macros()
-    types = '\n'.join(type_stubs())
+    types = '\n'.join(get_code(APIFiles.sra_types))
     decls = read_file(APIFiles.sra)
     functions = '\n'.join(sra_stubs().values())
 
+    # size_t, ssize_t, mode_t and FILE come from libc rather than the type
+    # stubs, so programs can include sra.h next to libc headers.
     hcode = (
         f"#ifndef SRA_H\n"
         f"#define SRA_H\n\n"
+        f"#include <stdio.h>\n"
+        f"#include <sys/types.h>\n\n"
+        f"#undef NULL\n"
         f"{macros_}\n"
         f"{types}\n"
         f"{decls}\n"

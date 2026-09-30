@@ -86,9 +86,15 @@ class AngrEngine:
             options.ZERO_FILL_UNCONSTRAINED_REGISTERS,
         }
 
+        # FAIR CHANCE: symbolic mode sets ALL_FILES_EXIST, which makes angr's
+        # open invent any missing file instead of failing. Turn it off on
+        # angr's file system (see docs/notes/angr.md).
+        remove_options = {options.ALL_FILES_EXIST} if self.angr_fs else set()
+
         state = project.factory.entry_state(
             mode="symbolic",
             add_options=state_options,
+            remove_options=remove_options,
         )
 
         state.register_plugin("heap", SimHeapPTMalloc())
