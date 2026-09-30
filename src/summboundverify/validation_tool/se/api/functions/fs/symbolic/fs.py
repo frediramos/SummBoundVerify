@@ -25,12 +25,13 @@ from summboundverify.exceptions import (
     InvalidOpenFlagError
 )
 
-from ....utils import (
+from summboundverify.validation_tool.se.api.utils import (
     SymbString,
+    called_by,
     constraint,
     eq_strings,
     neq_strings,
-    called_by
+    call_simprocedure,
 )
 
 
@@ -683,24 +684,12 @@ class SymbolicFS(angr.SimStatePlugin):
     # Factories
     # ---------------------------------------------------------------------------
 
-    def call_simprocedure(self, procedure, *args, **kwargs):
-        """Execute an angr SimProcedure with the supplied arguments."""
-        e_args = [
-            claripy.BVV(a, self.state.arch.bits)
-            if isinstance(a, int)
-            else a
-            for a in args
-        ]
-
-        p = procedure(project=self.state.project, **kwargs)
-        return p.execute(self.state, None, arguments=e_args)
-
     def create_file_pointer(self, fd: int):
         """Allocate and initialize a C `FILE` structure for `fd`."""
         malloc = angr.SIM_PROCEDURES["libc"]["malloc"]
         io_file_data = io_file_data_for_arch(self.state.arch)
 
-        fp = self.call_simprocedure(
+        fp = call_simprocedure(
             malloc,
             io_file_data["size"],
         ).ret_expr

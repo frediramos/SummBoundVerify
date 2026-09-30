@@ -3,6 +3,8 @@ import claripy
 
 from typing import Callable, Any
 
+from angr import SimState
+
 from claripy import ClaripyError
 from claripy.ast import Bool, false
 from claripy.ast.bv import BV as BitVector
@@ -10,6 +12,19 @@ from claripy.ast.bv import BV as BitVector
 from summboundverify.exceptions import (
     ClaripyConstraintError
 )
+
+
+def call_simprocedure(state: SimState, procedure, *args, **kwargs):
+    """Execute an angr SimProcedure with the supplied arguments."""
+    e_args = [
+        claripy.BVV(a, state.arch.bits)
+        if isinstance(a, int)
+        else a
+        for a in args
+    ]
+
+    p = procedure(project=state.project, **kwargs)
+    return p.execute(state, None, arguments=e_args)
 
 
 def called_by(n: int):
@@ -24,7 +39,8 @@ class SymbString:
     """
 
     def __init__(self, init: str | list | None = None):
-        self._string = [] if init is None else list(init)
+        self._string: list[str | BitVector] = [
+        ] if init is None else list(init)
 
     def __copy__(self) -> "SymbString":
         return type(self)(self._string.copy())
