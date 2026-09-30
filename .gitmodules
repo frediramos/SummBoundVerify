@@ -1,4 +1,4 @@
 [submodule "tests/files/klee-testsuite"]
-	path = tests/files/klee-testsuite
+	path = tests/files/testsuite/klee-testsuite
 	url = git@github.com:joaorsmatos02/klee-tests.git
 	branch = main
