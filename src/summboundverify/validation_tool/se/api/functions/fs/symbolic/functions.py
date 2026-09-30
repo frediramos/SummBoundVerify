@@ -9,12 +9,10 @@ from summboundverify.exceptions import (
     InvalidIteFileDescriptor
 )
 
+from summboundverify.validation_tool.se.api import CSummary, ValidationCTX
+from summboundverify.validation_tool.se.api.utils import SymbString, called_by
+
 from .fs import SymbolicFS
-
-from ....summary import CSummary
-from ....context import ValidationCTX
-
-from ....utils import SymbString, called_by
 
 
 class FileSummary(CSummary, ABC):

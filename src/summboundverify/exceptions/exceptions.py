@@ -158,6 +158,12 @@ class UnsatFSError(RunError):
         super().__init__(message)
 
 
+class NotImplementedApiError(RunError):
+    def __init__(self, function):
+        message = f"The API function {function} is not implemented in the current FS."
+        super().__init__(message)
+
+
 class SymbolicPointerError(InvalidArgumentError):
     argument = "pointer"
 
