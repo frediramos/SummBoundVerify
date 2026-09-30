@@ -20,21 +20,24 @@ class file_create(AngrFileSummary):
     def run(self, filename_addr):
         filename = self.load_string(filename_addr)
 
-        if any(self.state.solver.symbolic(c) for c in filename):
+        if filename.is_symbolic():
             return -1
 
-        filename = b"".join(
-            self.state.solver.eval(c, cast_to=bytes)  # type: ignore
-            for c in filename
-        )
+        filename = str(filename).encode()
 
-        fd = self.state.posix.open(
-            filename,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
-            0o644,
-        )
-        status = claripy.If(fd >= 0, 1, -1)
-        return status
+        # Check for an existing file
+        if self.state.fs.get(filename) is not None:  # type: ignore
+            return -1
+
+        flags = claripy.BVV(os.O_WRONLY | os.O_CREAT, self.state.arch.bits)
+        fd = self.state.posix.open(filename, flags)
+
+        if not isinstance(fd, int) or fd < 0:
+            return -1
+
+        # Creating a file must not hold a descriptor so we close it
+        self.state.posix.close(fd)
+        return 1
 
 
 class file_delete(AngrFileSummary):
