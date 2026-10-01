@@ -670,7 +670,10 @@ class SymbolicFS(angr.SimStatePlugin):
                 assert isinstance(entry, SymbolicNameEntry)
                 fnames = [
                     (
-                        eq_strings(entry.filename, filename),
+                        claripy.And(
+                            eq_strings(entry.filename, filename),
+                            entry.cond
+                        ),
                         to_int(entry.exists),
                     )
                 ]
