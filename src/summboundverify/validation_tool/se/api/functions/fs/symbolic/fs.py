@@ -693,6 +693,7 @@ class SymbolicFS(angr.SimStatePlugin):
         io_file_data = io_file_data_for_arch(self.state.arch)
 
         fp = call_simprocedure(
+            self.state,
             malloc,
             io_file_data["size"],
         ).ret_expr
