@@ -24,7 +24,7 @@
 
 Changes the KLEE fork (dino-fan777/klee, branch `api_klee`) needs so the test suite runs on it. The tests are written against the shared API (`sra.h`); the fork provides it in `klee/file_api.h`, which the suite's `include/klee/sra.h` includes.
 
-- [ ] Rename `__gen_assert(c)` to `__assert(c)`: fails when the path condition does not imply `c`.
+- [ ] Rename `__gen_assert(c)` to `__assert(c)`. Problem uclib already deines `__assert()` so there is a conflict.
 - [ ] Add `int __file_exists(const char *name)`, returning `1` or `0`, possibly symbolic. It replaces `file_exists`, which returned a constraint.
 - [ ] `__file_create(name)` must create the file under `name`, which may be symbolic, and return `1` or `-1` without leaving a descriptor open. Today it names files by letter (`'A'`, `'B'`, ...), ignores `name` and returns an open `fd`.
 - [ ] `__file_open(name)` must become `__file_open(name, mode)`, with an `fopen` mode string (`"r"`, `"w"`, `"a"`, `"r+"`, `"w+"`, `"a+"`).
