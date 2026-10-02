@@ -70,9 +70,12 @@ class assume(CSummary):
         super().__init__(ctx)
 
     def run(self, cnstr: BitVector):
-        cnstr_id = self.state.solver.eval(cnstr)
-        cnstr = self.ctx.CNSTR_MAP[cnstr_id]
-        self.assume(cnstr)
+        if not self.is_symbolic(cnstr):
+            cnstr_id = self.state.solver.eval(cnstr)
+            constraint = self.ctx.CNSTR_MAP[cnstr_id]
+        else:
+            constraint = (cnstr == 1)
+        self.assume(constraint)
         self.ret()
 
 
