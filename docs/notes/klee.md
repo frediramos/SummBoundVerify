@@ -6,7 +6,7 @@
 
 2. Could read from a file opened as write-only.
 
-3. Never rejects a read-only file, even when it was opened as write-only.
+3. `open("file", O_RDONLY)` overrides files permissions.
 
 4. `open` changes the file permissions (POSIX permissions, e.g. `0666`).
 
