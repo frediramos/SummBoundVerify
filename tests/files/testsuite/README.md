@@ -40,10 +40,74 @@ These can be combined, e.g. `make run FS=angr SUITE=dup SYM_FILE=3`.
 | `FS=angr`    | Use angr's native file system (`summbv -angr-fs`). Default: ours.   |
 | `SUITE=name` | Run only the tests for one system call.                             |
 | `TEST=name`  | Run one test and show summbv's output.                              |
+| `LOG=dir`    | Save the logs to `dir` instead of `logs` (see [Logs](#logs)). `LOG=` saves none. |
 | `SYM_FILE=N` | Make the tests' file names `N` symbolic bytes followed by `'\0'`. The first byte is non-null; the others are unconstrained, so a name has 1 to `N` characters. Default: 1 byte. |
 
 `SYM_FILE=N` builds into `bins/sym-file-N/`, so it never reuses binaries
 built with another value or without it. The KLEE build does not use it.
+
+## Logs
+
+`run` saves each test's summbv output to
+`logs/<fs>/sym-file-<N>/<test>.log`, ending in `== PASSED` or `== FAILED`.
+`N` is the `SYM_FILE` value, 1 by default, so a plain `make run FS=angr`
+saves `logs/angr/sym-file-1/open/test_01.log`, and `SYM_FILE=3` runs save
+to `logs/angr/sym-file-3/`. A test's log is from the last run that included it, so a `TEST=` or `SUITE=` run updates
+only those tests' logs. Git tracks the `logs` directory but not the logs.
+
+## Why tests fail
+
+`run` only prints whether each test passed. To see why, run `report.py`,
+which explains the logs:
+
+```bash
+make run FS=angr
+./report.py                        # every run in logs/
+./report.py logs/angr/sym-file-1              # one run: every test, then the failures by reason
+./report.py logs/angr/sym-file-1 --failed     # failed tests only
+```
+
+It lists each suite with how many of its tests passed, then each test: its
+verdict, its description (from the test's header comment) and, if it failed,
+why:
+
+```
+open  9/57 passed
+  FAILED   test_01  O_RDONLY on existing file succeeds
+                    precondition failed: an __assume can never hold
+  FAILED   test_53  __file_open mode "w" gives the open flags O_WRONLY | O_CREAT | O_TRUNC
+                    assertion failed: False
+  PASSED   test_54  __file_open mode "a" gives the open flags O_WRONLY | O_CREAT | O_APPEND
+```
+
+and ends with how many tests failed for each reason:
+
+```
+Failures by reason
+   106  precondition failed: an __assume can never hold
+     7  assertion failed: False
+     ...
+```
+
+`./report.py --help` lists its options: `--failed`, `--suite` and
+`--summary`. It also takes several log directories, e.g.
+`./report.py logs/ours/sym-file-1 logs/angr/sym-file-1`.
+
+The same grouping straight from the logs, without the script:
+
+```bash
+grep -h Error: logs/angr/sym-file-1/*/*.log | sort | uniq -c | sort -rn
+```
+
+To check that a change did not alter any result, log a run before and after
+it, and compare:
+
+```bash
+make run FS=angr LOG=before
+# ... make the change ...
+make run FS=angr LOG=after
+diff -r before after
+```
 
 ## Other targets
 
