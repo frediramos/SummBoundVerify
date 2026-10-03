@@ -1,0 +1,4 @@
+# Test logs written by make run; only this directory is tracked
+*
+!.gitkeep
+!.gitignore
