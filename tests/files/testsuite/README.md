@@ -49,11 +49,12 @@ built with another value or without it. The KLEE build does not use it.
 ## Logs
 
 `run` saves each test's summbv output to
-`logs/<fs>/sym-file-<N>/<test>.log`, ending in `== PASSED` or `== FAILED`.
+`logs/<fs>/sym-file-<N>/<test>.log`.
+
 `N` is the `SYM_FILE` value, 1 by default, so a plain `make run FS=angr`
-saves `logs/angr/sym-file-1/open/test_01.log`, and `SYM_FILE=3` runs save
-to `logs/angr/sym-file-3/`. A test's log is from the last run that included it, so a `TEST=` or `SUITE=` run updates
-only those tests' logs. Git tracks the `logs` directory but not the logs.
+saves `logs/angr/sym-file-1/open/test_01.log`.
+
+A test's log is from the last run that included it, so a `TEST=` or `SUITE=` run update only those tests' logs. 
 
 ## Why tests fail
 
@@ -62,7 +63,7 @@ which explains the logs:
 
 ```bash
 make run FS=angr
-./report.py                        # every run in logs/
+./report.py                                   # every run in logs/
 ./report.py logs/angr/sym-file-1              # one run: every test, then the failures by reason
 ./report.py logs/angr/sym-file-1 --failed     # failed tests only
 ```
@@ -89,16 +90,6 @@ Failures by reason
      ...
 ```
 
-`./report.py --help` lists its options: `--failed`, `--suite` and
-`--summary`. It also takes several log directories, e.g.
-`./report.py logs/ours/sym-file-1 logs/angr/sym-file-1`.
-
-The same grouping straight from the logs, without the script:
-
-```bash
-grep -h Error: logs/angr/sym-file-1/*/*.log | sort | uniq -c | sort -rn
-```
-
 To check that a change did not alter any result, log a run before and after
 it, and compare:
 
@@ -114,4 +105,5 @@ diff -r before after
 ```bash
 make compile                   # regenerate lib/ and build every test
 make clean                     # remove all built tests
+make clean-logs                # remove all logs
 ```
