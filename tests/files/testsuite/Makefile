@@ -98,3 +98,6 @@ run-all:
 
 clean:
 	$(RM) -r $(BINS)/*.test $(BINS)/*/
+
+clean-logs:
+	$(RM) -r $(LOG)/**/
