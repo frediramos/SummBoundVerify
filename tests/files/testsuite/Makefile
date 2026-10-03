@@ -39,11 +39,20 @@ TESTS := $(patsubst $(KLEE_DIR)/%.c,%,$(wildcard $(KLEE_DIR)/*/test_*.c))
 
 # TEST=open/test_01 runs one test with its output shown
 # SUITE=open runs one suite
+
+# Each test's output is saved to $(LOG_DIR)/<test>.log, ending in "== PASSED"
+# or "== FAILED"; ./report.py explains them. LOG=dir saves elsewhere, LOG=
+# saves nothing. Runs are kept apart by file system and file-name type:
+# logs/<fs>/sym-file-<N>/, where N is SYM_FILE (default 1).
+LOG ?= logs
+LOG_DIR := $(LOG)/$(FS)/sym-file-$(or $(SYM_FILE),1)
+LOG_FILE := $(LOG_DIR)/$$test.log
+
 ifdef TEST
-TESTS := $(TEST:.c=)
-QUIET :=
+TESTS  := $(TEST:.c=)
+OUTPUT := $(if $(LOG),2>&1 | tee $(LOG_FILE))
 else
-QUIET := > /dev/null 2>&1
+OUTPUT := $(if $(LOG),> $(LOG_FILE),> /dev/null) 2>&1
 endif
 
 ifdef SUITE
@@ -62,17 +71,21 @@ $(BINS)/%.test: $(KLEE_DIR)/%.c klee-testsuite/include/test_helper.h
 compile: sra $(TESTS:%=$(BINS)/%.test)
 
 run:
-	@echo -e "$(YELLOW)== File system: $(FS) ==$(RESET)"; \
+	@set -o pipefail; \
+	echo -e "$(YELLOW)== File system: $(FS) ==$(RESET)"; \
 	passed=0; \
 	failed=0; \
 	for test in $(TESTS); do \
 		echo -e -n "$(YELLOW)->$(RESET) $(MAGENTA)$$test$(RESET)  "; \
-		if $(MAKE) -s $(BINS)/$$test.test && $(SUMMBV) $(BINS)/$$test.test $(QUIET); then \
+		$(if $(LOG),mkdir -p $$(dirname $(LOG_FILE));) \
+		if $(MAKE) -s $(BINS)/$$test.test && $(SUMMBV) $(BINS)/$$test.test $(OUTPUT); then \
 			passed=$$((passed + 1)); \
 			echo -e "$(GREEN)Passed!$(RESET)"; \
+			$(if $(LOG),echo "== PASSED" >> $(LOG_FILE);) \
 		else \
 			failed=$$((failed + 1)); \
 			echo -e "$(RED)Failed!$(RESET)"; \
+			$(if $(LOG),echo "== FAILED" >> $(LOG_FILE);) \
 		fi; \
 	done; \
 	echo -e "$(GREEN)Passed:$(RESET) $$passed"; \
