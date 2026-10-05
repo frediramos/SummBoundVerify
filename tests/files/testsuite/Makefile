@@ -90,7 +90,7 @@ ifdef SUITE
 TESTS := $(filter $(SUITE)/%,$(TESTS))
 endif
 
-.PHONY: sra compile run run-all clean
+.PHONY: sra compile run run-all clean clean-logs
 
 sra:
 	../sra.py $(LIB_PATH)

@@ -26,7 +26,9 @@
 
 12. `read` and `write` ignore the access mode: reading a file opened `O_WRONLY`, or writing one opened `O_RDONLY`, succeeds instead of failing with `EBADF`. A descriptor's flags are only checked for `O_APPEND`. (Read 03, Write 03)
 
-13. angr has no file permissions: a file keeps no mode, and `open` never checks one, so opening a `0444` file for writing succeeds. Nor can a program read a mode back: libc's `fstat` has no summary, so it returns an unconstrained value and leaves the `stat` buffer unchanged.
+13. angr has no file permissions: a file keeps no mode, and `open` never checks one, so opening a `0444` file for writing succeeds. Nor can a program read a mode back: libc's `fstat` has no summary, so it returns an unconstrained value and leaves the `stat` buffer unchanged. (Open 10-12)
+
+14. angr ignores the descriptor limit: there is no `setrlimit` summary, and descriptors are numbered up to a fixed 8192 (`max_fds`) whatever `RLIMIT_NOFILE` is. So after limiting a program to 32 descriptors, a further `open` and `dup2(fd, 32)` succeed instead of failing with `EMFILE` and `EBADF`. (Open 47, Dup 06)
 
 ## Test results
 
@@ -38,10 +40,7 @@ The suite on angr's native file system, with each kind of file name:
 | Fail at a precondition | 106 (bug 5) | 0 |
 | Fail at an assertion | 10 | 59 |
 
-With concrete names every test reaches what it tests, and each of the 59 failures has a cause: bug 6 (28), bug 10 (18), bugs 1, 3, 4, 9 and 12 (8), and 5 tests that assume KLEE's behaviour rather than POSIX's (they also fail when run natively, `make run FS=native`):
-
-- Open 10-12 expect permission errors without setting any permissions; they rely on KLEE creating files with a symbolic `st_mode`.
-- Open 47 and Dup 06 assume KLEE's limit of 32 descriptors; on Linux the `open` and `dup2` they expect to fail succeed.
+With concrete names every test reaches what it tests, and each of the 59 failures is an angr bug: bug 6 (28), bug 10 (18), bugs 1, 3, 4, 9 and 12 (8), bug 13 (3) and bug 14 (2). Run natively on Linux (`make run FS=native`), all 133 tests pass.
 
 ## Notes
 
