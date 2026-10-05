@@ -169,7 +169,7 @@ class sym_var_array(CSummary):
         self.ret(sym_var)
 
 
-class __assert(CSummary):
+class sra_assert(CSummary):
     def __init__(self, ctx: ValidationCTX):
         super().__init__(ctx)
 

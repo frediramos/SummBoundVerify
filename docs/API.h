@@ -19,7 +19,7 @@ long __concretize(symbolic var);
  * If `cnstr` is unsatisfiable, reports an assertion failure and terminates
  * execution.
  */
-void __assert(cnstr_t cnstr);
+void __sra_assert(cnstr_t cnstr);
 
 /**
  * Reports an error originating from `filename` at line `line` with the
@@ -90,7 +90,7 @@ void __assume(cnstr_t cnstr);
  * true given the current path condition.
  * If not, reports an assertion failure and terminates execution.
  */
-void __assert(cnstr_t cnstr);
+void __sra_assert(cnstr_t cnstr);
 
 /**
  * Saves the current path condition by creating a copy and pushing it
