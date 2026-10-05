@@ -32,12 +32,12 @@ int main(){
   valid_fname(s3);
 
   int ret1 = __file_create(s1);
-  __assert(ret1 == 1);
+  __sra_assert(ret1 == 1);
   
   int ret2 = __file_create(s2);
-  __assert(ret2 == 1);
+  __sra_assert(ret2 == 1);
 
   int ret3 = __file_open(s3, "r+");
-  __assert(ret3 == 3);
+  __sra_assert(ret3 == 3);
 
 }

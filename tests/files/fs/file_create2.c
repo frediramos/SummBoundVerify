@@ -26,6 +26,6 @@ int main(){
 
   int ret1 = __file_create(s1);
   int ret2 = __file_create(s2);
-  __assert(ret1 == 1);
-  __assert(ret2 == 1);
+  __sra_assert(ret1 == 1);
+  __sra_assert(ret2 == 1);
 }

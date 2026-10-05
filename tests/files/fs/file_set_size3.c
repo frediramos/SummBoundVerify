@@ -31,30 +31,30 @@ int main(){
 
   int ret1 = __file_create(s1);
   int ret2 = __file_create(s2);
-  __assert(ret1 == 1);
-  __assert(ret2 == 1);
+  __sra_assert(ret1 == 1);
+  __sra_assert(ret2 == 1);
 
   int fd1 = __file_open(s3, "r+");
   int fd2 = __file_open(s4, "r+");
-  __assert(fd1 == 3);
-  __assert(fd2 == 4);
+  __sra_assert(fd1 == 3);
+  __sra_assert(fd2 == 4);
   
   ssize_t written = __file_write(fd1, "abc", 3);
   ssize_t size = __file_size(fd2);
   
-  __assert(written == 3);
+  __sra_assert(written == 3);
 
   cnstr_t eq1 = eq_strings(s3, s2, SIZE);
   cnstr_t eq2 = eq_strings(s4, s2, SIZE);
 
   __assume(_AND_(eq1, eq2));
 
-  __assert(_EQ_(size, 3));
+  __sra_assert(_EQ_(size, 3));
   
   ssize_t set = __file_set_size(fd2, 5);
-  __assert(set == 5);
+  __sra_assert(set == 5);
 
   ssize_t size2 = __file_size(fd2);
-  __assert(_EQ_(size2, 5));
+  __sra_assert(_EQ_(size2, 5));
 
 }

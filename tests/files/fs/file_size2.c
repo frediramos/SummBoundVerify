@@ -19,10 +19,10 @@ int main(){
 
   int ret1 = __file_create(s1);
   int fd = __file_open(s1, "r+");
-  __assert(ret1 == 1);
-  __assert(fd == 3);
+  __sra_assert(ret1 == 1);
+  __sra_assert(fd == 3);
 
   ssize_t size = __file_size(fd);
-  __assert(size == 0);
+  __sra_assert(size == 0);
 
 }

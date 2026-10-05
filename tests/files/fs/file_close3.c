@@ -17,12 +17,12 @@ int main(){
   __assume(_NEQ_(s1[0], 0));
 
   int ret1 = __file_create(s1);
-  __assert(ret1 == 1);
+  __sra_assert(ret1 == 1);
   
   int ret2 = __file_open(s1, "r");
-  __assert(ret2 == 3);
+  __sra_assert(ret2 == 3);
 
   int ret3 = __file_close(100);
-  __assert(ret3 == -1);
+  __sra_assert(ret3 == -1);
 
 }

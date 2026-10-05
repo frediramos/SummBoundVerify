@@ -120,7 +120,7 @@ def explain(output: list[str]) -> str:
 
     kind, message = error
 
-    # Native runs (FS=native) number the failing __assume or __assert
+    # Native runs (FS=native) number the failing __assume or __sra_assert
     if kind == "PreconditionError":
         return f"precondition failed: {message}"
 

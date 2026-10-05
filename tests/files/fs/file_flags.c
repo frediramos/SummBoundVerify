@@ -20,10 +20,10 @@ int main(){
   int flags5 = __file_flags(fd5);
   int flags6 = __file_flags(fd6);
 
-  __assert(flags1 == 0);
-  __assert(flags2 == 577);
-  __assert(flags3 == 1089);
-  __assert(flags4 == 2);
-  __assert(flags5 == 578);
-  __assert(flags6 == 1090);
+  __sra_assert(flags1 == 0);
+  __sra_assert(flags2 == 577);
+  __sra_assert(flags3 == 1089);
+  __sra_assert(flags4 == 2);
+  __sra_assert(flags5 == 578);
+  __sra_assert(flags6 == 1090);
 }

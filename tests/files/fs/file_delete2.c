@@ -25,12 +25,12 @@ int main(){
   valid_fname(s2);
 
   int ret1 = __file_create(s1);
-  __assert(ret1 == 1);
+  __sra_assert(ret1 == 1);
 
   int ret2 = __file_delete(s1);
-  __assert(ret2 == 1);
+  __sra_assert(ret2 == 1);
 
   int ret3 = __file_delete(s1);
-  __assert(ret3 == -1);
+  __sra_assert(ret3 == -1);
 
 }

@@ -73,7 +73,6 @@ symbolic __sym_var(size_t size) { return 0; }
 symbolic __sym_var_array(char *name, size_t index, size_t size) { return 0; }
 symbolic __sym_var_named(char *name, size_t size) { return 0; }
 void *__mem_alloc(size_t nbytes) { return 0; }
-void __assert(cnstr_t cnstr) { }
 void __assume(cnstr_t cnstr) { }
 void __cond_write(void *ptr, symbolic c, cnstr_t pc) { }
 void __file_addr(char *name, const char *path) { }
@@ -84,6 +83,7 @@ void __pop_pc(void) { }
 void __print_counterexamples(result_t result) { }
 void __push_pc(void) { }
 void __report_error(const char *filename, unsigned int line, const char *message) { }
+void __sra_assert(cnstr_t cnstr) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
 #define ARRAY_SIZE_1 5

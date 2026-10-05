@@ -25,9 +25,9 @@ int main(){
   valid_fname(s2);
 
   int ret1 = __file_create(s1);
-  __assert(ret1 == 1);
+  __sra_assert(ret1 == 1);
   
   int ret2 = __file_exists(s2);
-  __assert(__is_sat(_EQ_(ret2, 0)));
-  __assert(__is_sat(_EQ_(ret2, 1)));
+  __sra_assert(__is_sat(_EQ_(ret2, 0)));
+  __sra_assert(__is_sat(_EQ_(ret2, 1)));
 }
