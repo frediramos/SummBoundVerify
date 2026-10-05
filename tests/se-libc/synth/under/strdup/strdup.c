@@ -34,7 +34,7 @@ list_t fold_cstr_strdup(char *s)
     __assume(_NOT_(_EQ_(var1, '\0')));
     list_t var2 = fold_cstr_strdup(s + 1);
     list_t lst = __lst_cons(var1, var2);
-    __assert(_NOT_(__lst_empty(lst)));
+    __sra_assert(_NOT_(__lst_empty(lst)));
     return lst;
   }
 }

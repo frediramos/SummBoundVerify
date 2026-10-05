@@ -49,7 +49,7 @@ list_t fold_cstr_strdup(char *s)
     {
       list_t var2 = fold_cstr_strdup(s + 1);
       lst = __lst_cons(var1, var2);
-      __assert(_NOT_(__lst_empty(lst)));
+      __sra_assert(_NOT_(__lst_empty(lst)));
     }
     else
     {
@@ -62,7 +62,7 @@ list_t fold_cstr_strdup(char *s)
       __assume(_NOT_(_EQ_(var1, '\0')));
       list_t var2 = fold_cstr_strdup(s + 1);
       lst = __lst_cons(var1, var2);
-      __assert(_NOT_(__lst_empty(lst)));
+      __sra_assert(_NOT_(__lst_empty(lst)));
       list_t aux2 = lst;
       __pop_pc();
       lst = _ITE_VAR_(_EQ_(var1, '\0'), aux1, aux2);

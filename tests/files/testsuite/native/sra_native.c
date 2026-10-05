@@ -7,7 +7,7 @@
  * behaviour, so it does not test a symbolic engine fairly either. Tests are
  * built with -DNATIVE, which makes their file names and flags concrete.
  *
- * A failed __assume or __assert exits with status 1 and an error line in the
+ * A failed __assume or __sra_assert exits with status 1 and an error line in the
  * style of summbv's, numbered by its position in the test, for report.py.
  */
 
@@ -47,11 +47,11 @@ void __assume(cnstr_t cnstr) {
         fail("PreconditionError", "__assume", n);
 }
 
-void __assert(cnstr_t cnstr) {
+void __sra_assert(cnstr_t cnstr) {
     static int n = 0;
     n++;
     if (!cnstr)
-        fail("AssertionError", "__assert", n);
+        fail("AssertionError", "__sra_assert", n);
 }
 
 void __report_error(const char *filename, unsigned int line, const char *message) {

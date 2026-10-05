@@ -21,13 +21,13 @@ int main(){
   int fd = __file_open(s1, "r+");
   ssize_t size1 = __file_size(fd);
 
-  __assert(ret1 == 1);
-  __assert(fd == 3);
-  __assert(size1 == 0);
+  __sra_assert(ret1 == 1);
+  __sra_assert(fd == 3);
+  __sra_assert(size1 == 0);
 
   ssize_t count1 = __file_write(fd, "abc", 3);
   
   ssize_t size2 = __file_size(fd);
-  __assert(size2 == 3);
+  __sra_assert(size2 == 3);
 
 }

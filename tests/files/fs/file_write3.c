@@ -24,15 +24,15 @@ int main(){
   valid_fname(s2);
 
   int ret1 = __file_create(s1);
-  __assert(ret1 == 1);
+  __sra_assert(ret1 == 1);
   
   int fd = __file_open(s1, "r+");
-  __assert(fd == 3);
+  __sra_assert(fd == 3);
 
   int count1 = __file_write(fd, "abc", 3);
   int count2 = __file_write(fd, s2, 3);
 
-  __assert(count1 == 3);
-  __assert(count2 == 3);
+  __sra_assert(count1 == 3);
+  __sra_assert(count2 == 3);
 
 }

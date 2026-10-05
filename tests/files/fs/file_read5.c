@@ -30,29 +30,29 @@ int main(){
 
   int ret1 = __file_create(s1);
   int ret2 = __file_create(s2);
-  __assert(ret1 == 1);
-  __assert(ret2 == 1);
+  __sra_assert(ret1 == 1);
+  __sra_assert(ret2 == 1);
   
   int fd1 = __file_open(s3, "r+");
   int fd2 = __file_open(s4, "r+");
 
-  __assert(fd1 == 3);
-  __assert(fd2 == 4);
+  __sra_assert(fd1 == 3);
+  __sra_assert(fd2 == 4);
 
   char buffer[5];
 
   int written = __file_write(fd1, "abc", 3);
   int read = __file_read(fd2, buffer, 3);
 
-  __assert(written == 3);
+  __sra_assert(written == 3);
 
   cnstr_t neq = _NOT_(eq_strings(s4, s3, SIZE));
 
   __assume(neq);
-  __assert(_EQ_(read, 0));
+  __sra_assert(_EQ_(read, 0));
   
-  __assert(_EQ_(buffer[0], '\0'));
-  __assert(_EQ_(buffer[1], '\0'));
-  __assert(_EQ_(buffer[2], '\0'));
+  __sra_assert(_EQ_(buffer[0], '\0'));
+  __sra_assert(_EQ_(buffer[1], '\0'));
+  __sra_assert(_EQ_(buffer[2], '\0'));
 
 }
