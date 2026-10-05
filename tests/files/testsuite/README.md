@@ -20,7 +20,7 @@ Python environment where summbv is installed.
 make run                       # all tests, on our file system
 make run FS=angr               # all tests, on angr's native file system
 make run FS=native             # all tests, run natively on Linux, as the reference
-make run-all                   # both, one after the other
+make run-all                   # ours, then angr (not native)
 make run SUITE=open            # only the open() tests
 make run TEST=open/test_01     # one test, with summbv's output shown
 ```
@@ -29,7 +29,7 @@ Tests are named by their path without `.c`: `open/test_01` for
 `klee-testsuite/individual-tests/open/test_01.c`. The suites are `open`,
 `close`, `read`, `write`, `lseek`, `chmod` and `dup`.
 
-A test passes when summbv exits with status 0. `run` prints a line per test
+A test passes when summbv exits with status 0 (natively, when the test itself does). `run` prints a line per test
 and the totals, and exits non-zero if any test failed.
 
 ## Options
@@ -59,8 +59,8 @@ a few seconds.
 
 The kernel is the reference: a test that fails natively expects something
 other than POSIX behaviour, so it cannot test any engine fairly. The tests are
-built with `-DNATIVE`, which makes their file names and flags concrete
-(`CNCR_FILE=N` sets the names' length; `SYM_FILE` is not allowed). A failed
+built with `-DNATIVE`, which makes their file names concrete (`CNCR_FILE=N`
+sets the names' length; `SYM_FILE` is not allowed). A failed
 `__assume` or `__assert` is reported by its position in the test, e.g.
 `__assert #2 does not hold`.
 

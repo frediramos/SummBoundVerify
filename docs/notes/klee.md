@@ -2,13 +2,13 @@
 
 ## Bugs
 
-1. Could write to a file opened as read-only.
+1. Could write to a file opened as read-only. ([PR](https://github.com/klee/klee/pull/1804))
 
-2. Could read from a file opened as write-only.
+2. Could read from a file opened as write-only. ([PR](https://github.com/klee/klee/pull/1804))
 
-3. `open("file", O_RDONLY)` overrides files permissions.
+3. `open("file", O_RDONLY)` overrides files permissions. ([issue](https://github.com/klee/klee/issues/1815) + [PR](https://github.com/klee/klee/pull/1825))
 
-4. `open` changes the file permissions (POSIX permissions, e.g. `0666`).
+4. `open` changes the file permissions (POSIX permissions, e.g. `0666`). ([issue](https://github.com/klee/klee/issues/1815) + [PR](https://github.com/klee/klee/pull/1825))
 
 5. `dup` copies the file struct instead of sharing it, so the offset is not propagated.
 
@@ -33,9 +33,10 @@ Changes the KLEE fork (dino-fan777/klee, branch `api_klee`) needs so the test su
 - [ ] Add `__sym_var_array(name, index, size)`, used for symbolic file names.
 - [ ] Decide how a test is judged. The KLEE runner fails a test when `completed paths = 0`; summbv fails it when an `__assert` fails.
 - [ ] Record results for Open 52-57, added after the first 127 tests were run.
-- [ ] Fix the 9 tests that expect KLEE's behaviour rather than POSIX's, which fail when run natively on Linux (`make run FS=native` in the test runner):
+- [x] Fix the 9 tests that expect KLEE's behaviour rather than POSIX's, which fail when run natively on Linux (`make run FS=native` in the test runner). They now set the permissions and descriptor limit they depend on, and expect POSIX's behaviour; all 133 tests pass natively:
   - Open 10-12 expect permission errors without setting permissions (KLEE's symbolic `st_mode`).
   - Open 47 and Dup 06 assume KLEE's limit of 32 descriptors.
   - Dup 11 asserts that `dup`'d descriptors do not share the offset; POSIX requires them to.
   - Open 44 expects `open(O_RDONLY)` on a `0222` file to succeed.
   - Open 45/46 expect `open`'s mode to overwrite an existing file's `st_mode` (KLEE bug 4 above).
+- [ ] Re-run those 9 tests on KLEE: their recorded results are for the old versions. They now use `__file_set_mode` and `setrlimit(RLIMIT_NOFILE)`.
