@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Explain the results of a logged test run: test by test, then grouped by reason.
 
-make run saves each test's log to logs/<fs>/sym-file-<N>/<suite>/test_NN.log: summbv's
+make run saves each test's log to logs/<fs>/sym-fname-<N>/<suite>/test_NN.log: summbv's
 output, ending in the "== PASSED" or "== FAILED" line the Makefile appends.
 
 examples:
   make run FS=angr
   ./report.py                            every run in logs/
-  ./report.py logs/angr/sym-file-1                  one run: every test, then the failures by reason
-  ./report.py logs/angr/sym-file-1 --failed         failed tests only
-  ./report.py logs/angr/sym-file-1 --suite open     one suite
-  ./report.py logs/angr/sym-file-1 --summary        only the totals and the reasons
+  ./report.py logs/angr/sym-fname-1                  one run: every test, then the failures by reason
+  ./report.py logs/angr/sym-fname-1 --failed         failed tests only
+  ./report.py logs/angr/sym-fname-1 --suite open     one suite
+  ./report.py logs/angr/sym-fname-1 --summary        only the totals and the reasons
 """
 
 import os
@@ -115,10 +115,17 @@ def explain(output: list[str]) -> str:
 
     if error is None:
         if not any(line.strip() for line in output):
-            return "no output from summbv: did the test compile?"
-        return "summbv failed without an error message"
+            return "no output: did the test compile?"
+        return "the test failed without an error message"
 
     kind, message = error
+
+    # Native runs (FS=native) number the failing __assume or __assert
+    if kind == "PreconditionError":
+        return f"precondition failed: {message}"
+
+    if kind == "AssertionError":
+        return f"assertion failed: {message}"
 
     if kind == "UnsatConstraintError":
         return "precondition failed: an __assume can never hold"
@@ -236,7 +243,7 @@ def report(logs: Path, args: argparse.Namespace) -> bool:
 
 def find_runs(logs: Path) -> list[Path]:
     """The run directories under `logs`: those holding <suite>/test_NN.log,
-    e.g. logs/angr/sym-file-1 and logs/angr/sym-file-3."""
+    e.g. logs/angr/sym-fname-1 and logs/angr/sym-fname-3."""
     runs = {log.parent.parent for log in logs.rglob("*/test_*.log")}
     return sorted(Path(os.path.relpath(run)) for run in runs)
 
@@ -251,7 +258,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "logs", type=Path, nargs="*",
-        help="log directory of one run, e.g. logs/angr/sym-file-1 (default: every run in logs/)",
+        help="log directory of one run, e.g. logs/angr/sym-fname-1 (default: every run in logs/)",
     )
     parser.add_argument(
         "-f", "--failed", action="store_true",
