@@ -26,6 +26,19 @@ FLAGS += -DFNAME_BYTES=$(SYM_FILE)
 BINS  := bins/sym-file-$(SYM_FILE)
 endif
 
+# CNCR_FILE=N makes them N concrete characters and a '\0' instead: a test's
+# first name is "AA...", its second "BB...", and so on.
+ifdef CNCR_FILE
+ifdef SYM_FILE
+$(error SYM_FILE and CNCR_FILE cannot be used together)
+endif
+FLAGS += -DFNAME_BYTES=$(CNCR_FILE) -DCONCRETE_FNAME
+BINS  := bins/cncr-file-$(CNCR_FILE)
+endif
+
+# The kind of file names a run uses, which keeps its logs apart
+FNAME_KIND := $(if $(CNCR_FILE),cncr-file-$(CNCR_FILE),sym-file-$(or $(SYM_FILE),1))
+
 LIB_PATH := lib
 
 LIB := $(LIB_PATH)/sra.c -I$(LIB_PATH)
@@ -42,10 +55,10 @@ TESTS := $(patsubst $(KLEE_DIR)/%.c,%,$(wildcard $(KLEE_DIR)/*/test_*.c))
 
 # Each test's output is saved to $(LOG_DIR)/<test>.log, ending in "== PASSED"
 # or "== FAILED"; ./report.py explains them. LOG=dir saves elsewhere, LOG=
-# saves nothing. Runs are kept apart by file system and file-name type:
-# logs/<fs>/sym-file-<N>/, where N is SYM_FILE (default 1).
+# saves nothing. Runs are kept apart by file system and kind of file names:
+# logs/<fs>/sym-file-<N>/ or logs/<fs>/cncr-file-<N>/.
 LOG ?= logs
-LOG_DIR := $(LOG)/$(FS)/sym-file-$(or $(SYM_FILE),1)
+LOG_DIR := $(LOG)/$(FS)/$(FNAME_KIND)
 LOG_FILE := $(LOG_DIR)/$$test.log
 
 ifdef TEST

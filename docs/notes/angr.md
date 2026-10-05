@@ -8,11 +8,11 @@
 
 3. `open` creates a missing file opened for writing, with or without `O_CREAT`, so `"r+"` or `O_RDWR` on a missing file succeeds. (Open 05/06)
 
-4. `open` ignores `O_EXCL`: `O_CREAT | O_EXCL` on an existing file succeeds.
+4. `open` ignores `O_EXCL`: `O_CREAT | O_EXCL` on an existing file succeeds. (Open 15)
 
-5. A symbolic file name is concretized to one of its values (`solver.eval`), without binding it: nothing records the choice, so each use of the name can choose again and mean a different file. Two `open(fname, O_CREAT | O_RDWR)` on the same symbolic `fname` opened `" "` and `"\x10"`: two different files, where a real system opens the same file twice. The same happens inside the tests' setup: `__file_create(fname)` created `"\x02"`, and the `__file_open(fname, "r+")` that follows created a second file, `"\x10"` (see 3). So a test is rarely about one file: `__assume(exists(fname))` is unsatisfiable when it picks a name that was not created (106 tests), and tests that get past it may be working on a different file from the one they created (e.g. Read 08/09). A correct engine either binds the value it picks (`fname == value`), or splits the path once per file the name could denote.
+5. A symbolic file name is concretized to one value (`solver.eval`) without binding it, so each use of the name can pick a different value and mean a different file: two `open(fname)` on the same symbolic `fname` opened `" "` and `"\x10"`. With symbolic names, `__assume(exists(fname))` therefore checks an arbitrary name that was never created, and fails. (106 tests)
 
-6. There is no `lseek` summary: it returns an unconstrained value. (Lseek 11)
+6. There is no `lseek` summary: it returns an unconstrained value and leaves the offset unchanged, so data written and then read back after `lseek(fd, 0, SEEK_SET)` does not match. (Lseek 01-15, and 13 other tests that seek)
 
 7. There is no `truncate` or `ftruncate` summary: they return an unconstrained value and leave the file unchanged. `SimFile` has no way to resize a file either: it keeps the size in the private `_size`, which only `write` changes.
 
@@ -20,9 +20,26 @@
 
 9. `open` ignores `O_CREAT`: it creates a missing file only when opened for writing, so `O_CREAT | O_RDONLY` on a missing file fails. (Open 09)
 
-10. There is no `chmod` summary: it returns an unconstrained value. (Chmod 02)
+10. There is no `chmod` summary: it returns an unconstrained value. (Chmod 01-13, Open 42-46)
 
 11. The libc `access` summary ignores the file system: it returns a symbolic `0` or `-1` for any file. (The `access` syscall summary does check it.)
+
+12. `read` and `write` ignore the access mode: reading a file opened `O_WRONLY`, or writing one opened `O_RDONLY`, succeeds instead of failing with `EBADF`. A descriptor's flags are only checked for `O_APPEND`. (Read 03, Write 03)
+
+## Test results
+
+The suite on angr's native file system, with each kind of file name:
+
+| | Symbolic names (`sym-file-1`) | Concrete names (`cncr-file-1`) |
+|---|---|---|
+| Pass | 17 | 74 |
+| Fail at a precondition | 106 (bug 5) | 0 |
+| Fail at an assertion | 10 | 59 |
+
+With concrete names every test reaches what it tests, and each of the 59 failures has a cause: bug 6 (28), bug 10 (18), bugs 1, 3, 4, 9 and 12 (8), and 5 tests that assume KLEE's behaviour rather than POSIX's:
+
+- Open 10-12 expect permission errors without setting any permissions; they rely on KLEE creating files with a symbolic `st_mode`.
+- Open 47 and Dup 06 assume KLEE's limit of 32 descriptors; on Linux the `open` and `dup2` they expect to fail succeed.
 
 ## Notes
 
