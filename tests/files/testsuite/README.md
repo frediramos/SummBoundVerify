@@ -29,8 +29,10 @@ Tests are named by their path without `.c`: `open/test_01` for
 `klee-testsuite/individual-tests/open/test_01.c`. The suites are `open`,
 `close`, `read`, `write`, `lseek`, `chmod` and `dup`.
 
-A test passes when summbv exits with status 0 (natively, when the test itself does). `run` prints a line per test
-and the totals, and exits non-zero if any test failed.
+A test passes when summbv exits with status 0 (natively, when the test itself
+does). `run` prints a line per test and the totals, and exits non-zero if any
+test failed. The results on each file system, and on KLEE, are in
+[RESULTS.md](RESULTS.md).
 
 ## Options
 
@@ -61,8 +63,8 @@ The kernel is the reference: a test that fails natively expects something
 other than POSIX behaviour, so it cannot test any engine fairly. The tests are
 built with `-DNATIVE`, which makes their file names concrete (`CNCR_FILE=N`
 sets the names' length; `SYM_FILE` is not allowed). A failed
-`__assume` or `__assert` is reported by its position in the test, e.g.
-`__assert #2 does not hold`.
+`__assume` or `__sra_assert` is reported by its position in the test, e.g.
+`__sra_assert #2 does not hold`.
 
 Run it as a normal user: root bypasses file permissions, so the permission
 tests would fail.

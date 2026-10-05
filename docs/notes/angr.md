@@ -10,7 +10,7 @@
 
 4. `open` ignores `O_EXCL`: `O_CREAT | O_EXCL` on an existing file succeeds. (Open 15)
 
-5. A symbolic file name is concretized to one value (`solver.eval`) without binding it, so each use of the name can pick a different value and mean a different file: two `open(fname)` on the same symbolic `fname` opened `" "` and `"\x10"`. With symbolic names, `__assume(exists(fname))` therefore checks an arbitrary name that was never created, and fails. (106 tests)
+5. A symbolic file name is concretized to one value (`solver.eval`) without binding it, so each use of the name can pick a different value and mean a different file: two `open(fname)` on the same symbolic `fname` opened `" "` and `"\x10"`. With symbolic names, `__assume(exists(fname))` therefore checks an arbitrary name that was never created, and fails. (103 tests)
 
 6. There is no `lseek` summary: it returns an unconstrained value and leaves the offset unchanged, so data written and then read back after `lseek(fd, 0, SEEK_SET)` does not match. (Lseek 01-15, and 13 other tests that seek)
 
@@ -29,18 +29,6 @@
 13. angr has no file permissions: a file keeps no mode, and `open` never checks one, so opening a `0444` file for writing succeeds. Nor can a program read a mode back: libc's `fstat` has no summary, so it returns an unconstrained value and leaves the `stat` buffer unchanged. (Open 10-12)
 
 14. angr ignores the descriptor limit: there is no `setrlimit` summary, and descriptors are numbered up to a fixed 8192 (`max_fds`) whatever `RLIMIT_NOFILE` is. So after limiting a program to 32 descriptors, a further `open` and `dup2(fd, 32)` succeed instead of failing with `EMFILE` and `EBADF`. (Open 47, Dup 06)
-
-## Test results
-
-The suite on angr's native file system, with each kind of file name:
-
-| | Symbolic names (`sym-fname-1`) | Concrete names (`cncr-fname-1`) |
-|---|---|---|
-| Pass | 17 | 74 |
-| Fail at a precondition | 106 (bug 5) | 0 |
-| Fail at an assertion | 10 | 59 |
-
-With concrete names every test reaches what it tests, and each of the 59 failures is an angr bug: bug 6 (28), bug 10 (18), bugs 1, 3, 4, 9 and 12 (8), bug 13 (3) and bug 14 (2). Run natively on Linux (`make run FS=native`), all 133 tests pass.
 
 ## Notes
 
