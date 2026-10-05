@@ -14,7 +14,7 @@
 
 ## Notes
 
-- KLEE cannot actually create files. All files are created when launching the tool based on the CLI options (the fork's `__file_create` adds them at run time). An `open` just assigns an `fd` to a filename.
+- Base KLEE cannot actually create files. All files are created when launching the tool based on the CLI options (the fork's `__file_create` adds them at run time). An `open` just assigns an `fd` to a filename.
 
 - KLEE's symbolic files only have `1` character, named by position (`A`, `B`, ...). For instance, an `open` on a symbolic string "assumes" it is `A`.
 
@@ -31,5 +31,3 @@
   | `__file_flags(fd)` | The flags `open` was given. KLEE's descriptors keep only the access mode, so `open` also records them, in `open_flags`; nothing else reads it. |
   | `__file_mode` / `__file_set_mode` | The file's `st_mode` |
   | `__sra_assert(c)` | `klee_assert(c)`. Not `__assert`, which uClibc defines. |
-
-- The suite judges a KLEE run like summbv: an `__sra_assert` must hold on every path (the suite's `scripts/verdict.sh`).
