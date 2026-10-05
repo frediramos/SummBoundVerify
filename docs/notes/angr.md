@@ -26,6 +26,8 @@
 
 12. `read` and `write` ignore the access mode: reading a file opened `O_WRONLY`, or writing one opened `O_RDONLY`, succeeds instead of failing with `EBADF`. A descriptor's flags are only checked for `O_APPEND`. (Read 03, Write 03)
 
+13. angr has no file permissions: a file keeps no mode, and `open` never checks one, so opening a `0444` file for writing succeeds. Nor can a program read a mode back: libc's `fstat` has no summary, so it returns an unconstrained value and leaves the `stat` buffer unchanged.
+
 ## Test results
 
 The suite on angr's native file system, with each kind of file name:
@@ -55,8 +57,10 @@ With concrete names every test reaches what it tests, and each of the 59 failure
   | `__file_close(fd)` | `close` | `close` summary |
   | `__file_exists(name)` | `access(name, F_OK)` | `access` syscall summary |
   | `__file_flags(fd)` | `fcntl(fd, F_GETFL)` | the descriptor's `flags` |
-  | `__file_create(name)` | `open(name, O_WRONLY \| O_CREAT \| O_EXCL)`, then `close` | `posix.open`, with the file-exists check that `O_EXCL` should do (see 4) |
+  | `__file_create(name)` | `open(name, O_WRONLY \| O_CREAT \| O_EXCL, 0644)`, then `close` | `posix.open`, with the file-exists check that `O_EXCL` should do (see 4); records the mode `0644` (see 13) |
   | `__file_set_size(fd, size)` | `ftruncate` | sets `SimFile._size` (see 7) |
+  | `__file_set_mode(fd, mode)` | `fchmod` | records the mode in the state's globals; only `__file_mode` reads it (see 13) |
+  | `__file_mode(fd, &mode)` | `fstat`'s `st_mode` | the recorded mode, as a regular file; for other files, `posix.fstat`: a new symbolic `st_mode` (see 13) |
 
   All of them load names as `fopen` does, so a symbolic name is concretized (see 5).
 

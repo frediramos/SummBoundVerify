@@ -1,3 +1,4 @@
+import stat
 import angr
 import claripy
 
@@ -9,7 +10,12 @@ from angr.procedures.libc.fopen import mode_to_flag
 
 from summboundverify.api import api
 from summboundverify.validation_tool.se.api import CSummary, ValidationCTX
-from summboundverify.exceptions import InvalidSizeError, NotImplementedApiError
+from summboundverify.exceptions import (
+    InvalidModeError,
+    InvalidPointerError,
+    InvalidSizeError,
+    NotImplementedApiError,
+)
 
 
 # angr's native file system, reached through the Symbolic Reflection API.
@@ -32,12 +38,19 @@ class AngrFileSummary(CSummary, ABC):
     def run(self):
         pass
 
-    def load_size(self, size_bv) -> int:
-        """The concrete value of `size_bv`, which the API requires."""
+    def load_concrete(self, value_bv, error) -> int:
+        """The concrete value of `value_bv`, which the API requires: raises
+        `error` if it has more than one."""
         try:
-            return self.state.solver.eval_one(size_bv, cast_to=int)
+            return self.state.solver.eval_one(value_bv, cast_to=int)
         except Exception:
-            raise InvalidSizeError(api(type(self).__name__), size_bv)
+            raise error(api(type(self).__name__), value_bv)
+
+    def load_size(self, size_bv) -> int:
+        return self.load_concrete(size_bv, InvalidSizeError)
+
+    def load_mode(self, mode_bv) -> int:
+        return self.load_concrete(mode_bv, InvalidModeError)
 
     def load_path(self, addr) -> bytes:
         """The string at `addr`, loaded as angr's fopen summary loads names.
@@ -57,6 +70,26 @@ class AngrFileSummary(CSummary, ABC):
         
         return self.state.solver.eval(expr, cast_to=bytes)
 
+    def load_pointer(self, ptr_bv) -> int:
+        return self.load_concrete(ptr_bv, InvalidPointerError)
+
+    # BUG #13: angr keeps no file modes, so the API keeps them itself, in the
+    # state's globals, keyed by file name. Not on the SimFile: SimFile.copy
+    # drops attributes it does not know, so they would be lost when the state
+    # splits. Nothing in angr reads them.
+    FILE_MODES = "file_modes"
+
+    def recorded_mode(self, simfile: SimFile) -> int | None:
+        return self.state.globals.get(self.FILE_MODES, {}).get(simfile.name)  # type: ignore
+
+    def record_mode(self, simfile: SimFile, mode: int):
+        # Replace the dict rather than update it: the globals are copied
+        # shallowly when the state splits, so a dict updated in place would
+        # be shared by every path
+        modes = dict(self.state.globals.get(self.FILE_MODES, {}))  # type: ignore
+        modes[simfile.name] = mode & 0o7777
+        self.state.globals[self.FILE_MODES] = modes  # type: ignore
+
     def get_simfile(self, fd_bv) -> SimFile | None:
         """The file open on `fd_bv`, or None if it is not an open file."""
         simfd = self.state.posix.get_fd(fd_bv)
@@ -66,7 +99,7 @@ class AngrFileSummary(CSummary, ABC):
 
 
 class file_create(AngrFileSummary):
-    """Create the file `name`, as open(name, O_WRONLY | O_CREAT | O_EXCL)
+    """Create the file `name`, as open(name, O_WRONLY | O_CREAT | O_EXCL, 0644)
     followed by close.
 
     angr has no summary for creating a file, so this uses posix.open, the
@@ -92,6 +125,9 @@ class file_create(AngrFileSummary):
         # Give this one an end of file, as a regular file has.
         simfile = self.state.posix.get_fd(fd).file  # type: ignore
         simfile.has_end = True
+
+        # BUG #13: posix.open ignores the mode, so the API records it
+        self.record_mode(simfile, 0o644)
 
         # Creating a file must not hold a descriptor
         self.state.posix.close(fd)
@@ -226,13 +262,51 @@ class file_dup2(AngrFileSummary):
 
 
 class file_mode(AngrFileSummary):
+    """fstat(fd), storing st_mode in *mode; returns 1 or -1.
+
+    BUG #13: angr keeps no file modes. For a file whose mode the API
+    recorded (__file_create, __file_set_mode), this is that mode, as a
+    regular file. For any other file, e.g. one angr's open created, it is
+    what angr's own fstat reports (posix.fstat): a new symbolic st_mode.
+    """
+
     def run(self, fd_bv, mode_ptr_bv):
-        raise NotImplementedApiError("file_mode")
+        mode_ptr = self.load_pointer(mode_ptr_bv)
+
+        simfile = self.get_simfile(fd_bv)
+        if simfile is None:
+            return -1
+
+        recorded = self.recorded_mode(simfile)
+        if recorded is not None:
+            mode = claripy.BVV(stat.S_IFREG | recorded, 32)
+        else:
+            mode = self.state.posix.fstat(fd_bv).st_mode
+
+        self.state.memory.store(mode_ptr, mode, endness=self.state.arch.memory_endness)
+        return 1
 
 
 class file_set_mode(AngrFileSummary):
+    """fchmod(fd, mode), returning 1 or -1.
+
+    BUG #13: angr has no file permissions: a SimFile keeps no mode, and open
+    never checks one. Nor can a program read a mode back: libc's fstat has
+    no summary, so it returns an unconstrained value and leaves the stat
+    buffer as it was. So this only records the mode (see record_mode), for
+    __file_mode; nothing in angr reads it. A test that sets 0444 and then
+    opens the file for writing sees the open succeed.
+    """
+
     def run(self, fd_bv, mode_bv):
-        raise NotImplementedApiError("file_set_mode")
+        mode = self.load_mode(mode_bv)
+
+        simfile = self.get_simfile(fd_bv)
+        if simfile is None:
+            return -1
+
+        self.record_mode(simfile, mode)
+        return 1
 
 
 class file_flags(AngrFileSummary):
