@@ -42,17 +42,21 @@ These can be combined, e.g. `make run FS=angr SUITE=dup SYM_FILE=3`.
 | `TEST=name`  | Run one test and show summbv's output.                              |
 | `LOG=dir`    | Save the logs to `dir` instead of `logs` (see [Logs](#logs)). `LOG=` saves none. |
 | `SYM_FILE=N` | Make the tests' file names `N` symbolic bytes followed by `'\0'`. The first byte is non-null; the others are unconstrained, so a name has 1 to `N` characters. Default: 1 byte. |
+| `CNCR_FILE=N` | Make the tests' file names `N` concrete characters instead: a test's first name is `"AA..."`, its second `"BB..."`. Cannot be combined with `SYM_FILE`. |
 
-`SYM_FILE=N` builds into `bins/sym-file-N/`, so it never reuses binaries
-built with another value or without it. The KLEE build does not use it.
+`SYM_FILE=N` and `CNCR_FILE=N` build into `bins/sym-file-N/` and
+`bins/cncr-file-N/`, so they never reuse binaries built another way. The
+KLEE build uses neither.
 
 ## Logs
 
-`run` saves each test's summbv output to
-`logs/<fs>/sym-file-<N>/<test>.log`.
+`run` saves each test's summbv output to `logs/<fs>/<kind>/<test>.log`,
+where `<kind>` is the kind of file names the run used: `sym-file-<N>` or
+`cncr-file-<N>`.
 
-`N` is the `SYM_FILE` value, 1 by default, so a plain `make run FS=angr`
-saves `logs/angr/sym-file-1/open/test_01.log`.
+A plain `make run FS=angr` uses 1 symbolic byte, so it saves
+`logs/angr/sym-file-1/open/test_01.log`. `make run FS=angr CNCR_FILE=1`
+saves `logs/angr/cncr-file-1/open/test_01.log`.
 
 A test's log is from the last run that included it, so a `TEST=` or `SUITE=` run update only those tests' logs. 
 
