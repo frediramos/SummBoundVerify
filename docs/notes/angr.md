@@ -30,13 +30,13 @@
 
 The suite on angr's native file system, with each kind of file name:
 
-| | Symbolic names (`sym-file-1`) | Concrete names (`cncr-file-1`) |
+| | Symbolic names (`sym-fname-1`) | Concrete names (`cncr-fname-1`) |
 |---|---|---|
 | Pass | 17 | 74 |
 | Fail at a precondition | 106 (bug 5) | 0 |
 | Fail at an assertion | 10 | 59 |
 
-With concrete names every test reaches what it tests, and each of the 59 failures has a cause: bug 6 (28), bug 10 (18), bugs 1, 3, 4, 9 and 12 (8), and 5 tests that assume KLEE's behaviour rather than POSIX's:
+With concrete names every test reaches what it tests, and each of the 59 failures has a cause: bug 6 (28), bug 10 (18), bugs 1, 3, 4, 9 and 12 (8), and 5 tests that assume KLEE's behaviour rather than POSIX's (they also fail when run natively, `make run FS=native`):
 
 - Open 10-12 expect permission errors without setting any permissions; they rely on KLEE creating files with a symbolic `st_mode`.
 - Open 47 and Dup 06 assume KLEE's limit of 32 descriptors; on Linux the `open` and `dup2` they expect to fail succeed.

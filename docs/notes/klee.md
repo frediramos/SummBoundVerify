@@ -2,7 +2,7 @@
 
 ## Bugs
 
-1. Could write to a file opened as read-only. (Test 11/13)
+1. Could write to a file opened as read-only.
 
 2. Could read from a file opened as write-only.
 
@@ -33,3 +33,9 @@ Changes the KLEE fork (dino-fan777/klee, branch `api_klee`) needs so the test su
 - [ ] Add `__sym_var_array(name, index, size)`, used for symbolic file names.
 - [ ] Decide how a test is judged. The KLEE runner fails a test when `completed paths = 0`; summbv fails it when an `__assert` fails.
 - [ ] Record results for Open 52-57, added after the first 127 tests were run.
+- [ ] Fix the 9 tests that expect KLEE's behaviour rather than POSIX's, which fail when run natively on Linux (`make run FS=native` in the test runner):
+  - Open 10-12 expect permission errors without setting permissions (KLEE's symbolic `st_mode`).
+  - Open 47 and Dup 06 assume KLEE's limit of 32 descriptors.
+  - Dup 11 asserts that `dup`'d descriptors do not share the offset; POSIX requires them to.
+  - Open 44 expects `open(O_RDONLY)` on a `0222` file to succeed.
+  - Open 45/46 expect `open`'s mode to overwrite an existing file's `st_mode` (KLEE bug 4 above).

@@ -19,6 +19,7 @@ Python environment where summbv is installed.
 ```bash
 make run                       # all tests, on our file system
 make run FS=angr               # all tests, on angr's native file system
+make run FS=native             # all tests, run natively on Linux, as the reference
 make run-all                   # both, one after the other
 make run SUITE=open            # only the open() tests
 make run TEST=open/test_01     # one test, with summbv's output shown
@@ -38,25 +39,43 @@ These can be combined, e.g. `make run FS=angr SUITE=dup SYM_FILE=3`.
 | Option       | Effect                                                              |
 |--------------|---------------------------------------------------------------------|
 | `FS=angr`    | Use angr's native file system (`summbv -angr-fs`). Default: ours.   |
+| `FS=native`  | Run the tests natively on Linux, without summbv (see [Native reference](#native-reference)). |
 | `SUITE=name` | Run only the tests for one system call.                             |
 | `TEST=name`  | Run one test and show summbv's output.                              |
 | `LOG=dir`    | Save the logs to `dir` instead of `logs` (see [Logs](#logs)). `LOG=` saves none. |
 | `SYM_FILE=N` | Make the tests' file names `N` symbolic bytes followed by `'\0'`. The first byte is non-null; the others are unconstrained, so a name has 1 to `N` characters. Default: 1 byte. |
 | `CNCR_FILE=N` | Make the tests' file names `N` concrete characters instead: a test's first name is `"AA..."`, its second `"BB..."`. Cannot be combined with `SYM_FILE`. |
 
-`SYM_FILE=N` and `CNCR_FILE=N` build into `bins/sym-file-N/` and
-`bins/cncr-file-N/`, so they never reuse binaries built another way. The
+`SYM_FILE=N` and `CNCR_FILE=N` build into `bins/sym-fname-N/` and
+`bins/cncr-fname-N/`, so they never reuse binaries built another way. The
 KLEE build uses neither.
+
+## Native reference
+
+`make run FS=native` builds the tests against `native/sra_native.c`, an
+implementation of the API that does the real Linux operation in each
+function, and runs each one natively in a fresh temporary directory. It takes
+a few seconds.
+
+The kernel is the reference: a test that fails natively expects something
+other than POSIX behaviour, so it cannot test any engine fairly. The tests are
+built with `-DNATIVE`, which makes their file names and flags concrete
+(`CNCR_FILE=N` sets the names' length; `SYM_FILE` is not allowed). A failed
+`__assume` or `__assert` is reported by its position in the test, e.g.
+`__assert #2 does not hold`.
+
+Run it as a normal user: root bypasses file permissions, so the permission
+tests would fail.
 
 ## Logs
 
 `run` saves each test's summbv output to `logs/<fs>/<kind>/<test>.log`,
-where `<kind>` is the kind of file names the run used: `sym-file-<N>` or
-`cncr-file-<N>`.
+where `<kind>` is the kind of file names the run used: `sym-fname-<N>` or
+`cncr-fname-<N>`.
 
 A plain `make run FS=angr` uses 1 symbolic byte, so it saves
-`logs/angr/sym-file-1/open/test_01.log`. `make run FS=angr CNCR_FILE=1`
-saves `logs/angr/cncr-file-1/open/test_01.log`.
+`logs/angr/sym-fname-1/open/test_01.log`. `make run FS=angr CNCR_FILE=1`
+saves `logs/angr/cncr-fname-1/open/test_01.log`.
 
 A test's log is from the last run that included it, so a `TEST=` or `SUITE=` run update only those tests' logs. 
 
@@ -68,8 +87,8 @@ which explains the logs:
 ```bash
 make run FS=angr
 ./report.py                                   # every run in logs/
-./report.py logs/angr/sym-file-1              # one run: every test, then the failures by reason
-./report.py logs/angr/sym-file-1 --failed     # failed tests only
+./report.py logs/angr/sym-fname-1              # one run: every test, then the failures by reason
+./report.py logs/angr/sym-fname-1 --failed     # failed tests only
 ```
 
 It lists each suite with how many of its tests passed, then each test: its
