@@ -19,6 +19,7 @@ Python environment where summbv is installed.
 ```bash
 make run                       # all tests, on our file system
 make run FS=angr               # all tests, on angr's native file system
+make run FS=klee               # all tests, on KLEE (in Docker; see below)
 make run FS=native             # all tests, run natively on Linux, as the reference
 make run-all                   # ours, then angr (not native)
 make run SUITE=open            # only the open() tests
@@ -41,6 +42,7 @@ These can be combined, e.g. `make run FS=angr SUITE=dup SYM_FILE=3`.
 | Option       | Effect                                                              |
 |--------------|---------------------------------------------------------------------|
 | `FS=angr`    | Use angr's native file system (`summbv -angr-fs`). Default: ours.   |
+| `FS=klee`    | Run the tests on KLEE, in Docker (see [KLEE](#klee)). |
 | `FS=native`  | Run the tests natively on Linux, without summbv (see [Native reference](#native-reference)). |
 | `SUITE=name` | Run only the tests for one system call.                             |
 | `TEST=name`  | Run one test and show summbv's output.                              |
@@ -51,6 +53,21 @@ These can be combined, e.g. `make run FS=angr SUITE=dup SYM_FILE=3`.
 `SYM_FILE=N` and `CNCR_FILE=N` build into `bins/sym-fname-N/` and
 `bins/cncr-fname-N/`, so they never reuse binaries built another way. The
 KLEE build uses neither.
+
+## KLEE
+
+`make run FS=klee` runs each test on KLEE, in a Docker image, through the
+suite's own KLEE runner. The image, `klee-testsuite-fork`, is KLEE built with
+the fork in `klee-fork/` (a git submodule), which implements the API. Build it
+once first:
+
+```bash
+make klee-image
+```
+
+After changing the fork, run `make klee-image` again: Docker's cache keeps it
+to recompiling what changed. KLEE builds the tests itself, so `SYM_FILE` and
+`CNCR_FILE` do not apply.
 
 ## Native reference
 

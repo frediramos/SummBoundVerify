@@ -37,6 +37,10 @@ VERDICT_LINES = {
 # summboundverify.exceptions.exceptions.UnsatConstraintError: Unsatisfiable ...
 ERROR_LINE = re.compile(r"^(?:[\w.]+\.)?(\w+(?:Error|Exception)): (.*)$")
 
+# An error KLEE reports for a path, e.g.
+# KLEE: ERROR: klee_src/runtime/POSIX/file_api.c:250: ASSERTION FAIL: expr
+KLEE_ERROR = re.compile(r"^KLEE: ERROR: \S+: (.*)$")
+
 # angr spells out sign extension bit by bit: x sign-extended is
 # (x[31:31] .. x[31:31] .. ... .. x), and a slice x[23:16] sign-extended is
 # (x[23:23] .. ... .. x[23:16])
@@ -109,8 +113,32 @@ def readable(constraint: str) -> str:
     return m.group(1) if m else constraint
 
 
+def explain_klee(output: list[str]) -> str | None:
+    """Why a test failed on KLEE (FS=klee), by the rule of the suite's
+    scripts/verdict.sh, or None if the output is not KLEE's."""
+    errors = [m.group(1) for line in output if (m := KLEE_ERROR.match(line))]
+    if not errors and not any(line.startswith("KLEE: done:") for line in output):
+        return None
+
+    # A provably false __assume only excludes its path
+    errors = [e for e in errors if e != "invalid klee_assume call (provably false)"]
+    if errors:
+        if errors[0].startswith("ASSERTION FAIL"):
+            return "assertion failed: an __sra_assert fails on some path"
+        return f"KLEE error: {errors[0]}"
+
+    if "KLEE: done: completed paths = 0" in output:
+        return "precondition failed: no path completes"
+
+    return None
+
+
 def explain(output: list[str]) -> str:
-    """Why a test failed, in words, from summbv's output."""
+    """Why a test failed, in words, from its output."""
+    klee = explain_klee(output)
+    if klee:
+        return klee
+
     error = last_error(output)
 
     if error is None:

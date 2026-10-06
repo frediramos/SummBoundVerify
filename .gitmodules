@@ -2,3 +2,7 @@
 	path = tests/files/testsuite/klee-testsuite
 	url = git@github.com:joaorsmatos02/klee-tests.git
 	branch = main
+[submodule "tests/files/testsuite/klee-fork"]
+	path = tests/files/testsuite/klee-fork
+	url = git@github.com:dino-fan777/klee.git
+	branch = shared-testsuite
