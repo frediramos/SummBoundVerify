@@ -4,7 +4,7 @@ The 133 tests in `klee-testsuite/`, run on each file system. Bug numbers refer t
 [docs/notes/angr.md](../../../docs/notes/angr.md) and
 [docs/notes/klee.md](../../../docs/notes/klee.md).
 
-| Suite | Native | Ours | angr (symb fnames)| angr (symb fnames) | KLEE |
+| Suite | Native | Ours | angr (symb fnames)| angr (cncrt fnames) | KLEE |
 |---|---|---|---|---|---|
 | `open` | 57/57 | 6/57 | 10/57 | 39/57 | 18/57 |
 | `close` | 10/10 | 2/10 | 2/10 | 9/10 | 8/10 |
