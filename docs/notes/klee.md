@@ -20,7 +20,7 @@
 
 - There is a mismatch between concrete and symbolic files. File descriptors opened with a real `open` cannot be passed to KLEE summaries.
 
-- The test suite runs on the fork ([dino-fan777/klee](https://github.com/dino-fan777/klee), branch `shared-testsuite`), which implements the suite's shared API (`sra.h`) in `klee/file_api.h`. It follows the same rule as angr: the API uses KLEE's own code, and leaves KLEE's limitations and bugs for the tests to find.
+- The test suite runs on the fork ([dino-fan777/klee](https://github.com/dino-fan777/klee), branch `shared-testsuite`; a submodule at `tests/files/testsuite/klee-fork`), which implements the suite's shared API (`sra.h`) in `klee/file_api.h`. It follows the same rule as angr: the API uses KLEE's own code, and leaves KLEE's limitations and bugs for the tests to find.
 
   | API function | On KLEE |
   |---|---|

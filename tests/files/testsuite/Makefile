@@ -8,8 +8,9 @@ RESET   := \033[0m
 
 FLAGS  := -Wno-int-conversion -Wno-pointer-to-int-cast
 
-# FS=ours (default), FS=angr for angr's native file system, or FS=native to
-# run the tests natively on Linux, as the reference (see native/sra_native.c)
+# FS=ours (default), FS=angr for angr's native file system, FS=klee for KLEE
+# (in Docker, see klee/run.sh), or FS=native to run the tests natively on
+# Linux, as the reference (see native/sra_native.c)
 FS ?= ours
 
 ifeq ($(FS),angr)
@@ -54,6 +55,16 @@ BINS  := bins/native/cncr-fname-$(or $(CNCR_FILE),1)
 LIB   := native/sra_native.c -I$(LIB_PATH)
 endif
 
+# KLEE runs each test in the image "make klee-image" builds from the fork in
+# klee-fork/, through the suite's own KLEE runner, which compiles the tests
+KLEE_IMAGE := klee-testsuite-fork
+
+ifeq ($(FS),klee)
+ifneq ($(SYM_FILE)$(CNCR_FILE),)
+$(error FS=klee takes neither SYM_FILE nor CNCR_FILE: the suite's KLEE runner builds the tests)
+endif
+endif
+
 # The kind of file names a run uses, which keeps its logs apart
 ifeq ($(FS),native)
 FNAME_KIND := cncr-fname-$(or $(CNCR_FILE),1)
@@ -90,7 +101,16 @@ ifdef SUITE
 TESTS := $(filter $(SUITE)/%,$(TESTS))
 endif
 
-.PHONY: sra compile run run-all clean clean-logs
+# How the run loop builds and runs a test. KLEE does both in Docker.
+ifeq ($(FS),klee)
+BUILD_TEST = true
+RUN_TEST   = KLEE_IMAGE=$(KLEE_IMAGE) klee/run.sh $$test
+else
+BUILD_TEST = $(MAKE) -s $(BINS)/$$test.test
+RUN_TEST   = $(SUMMBV) $(BINS)/$$test.test
+endif
+
+.PHONY: sra compile run run-all clean clean-logs klee-image
 
 sra:
 	../sra.py $(LIB_PATH)
@@ -109,7 +129,7 @@ run:
 	for test in $(TESTS); do \
 		echo -e -n "$(YELLOW)->$(RESET) $(MAGENTA)$$test$(RESET)  "; \
 		$(if $(LOG),mkdir -p $$(dirname $(LOG_FILE));) \
-		if $(MAKE) -s $(BINS)/$$test.test && $(SUMMBV) $(BINS)/$$test.test $(OUTPUT); then \
+		if $(BUILD_TEST) && $(RUN_TEST) $(OUTPUT); then \
 			passed=$$((passed + 1)); \
 			echo -e "$(GREEN)Passed!$(RESET)"; \
 			$(if $(LOG),echo "== PASSED" >> $(LOG_FILE);) \
@@ -126,6 +146,10 @@ run:
 run-all:
 	@$(MAKE) -s run FS=ours; ours=$$?; \
 	$(MAKE) -s run FS=angr && [ $$ours -eq 0 ]
+
+# The image FS=klee runs in: KLEE built with the fork in klee-fork/
+klee-image:
+	docker build -t $(KLEE_IMAGE) --build-context fork=klee-fork klee-testsuite
 
 clean:
 	$(RM) -r $(BINS)/*.test $(BINS)/*/

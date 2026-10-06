@@ -23,7 +23,7 @@ How each column was run:
 | Ours | `make run` |
 | angr, symbolic names | `make run FS=angr` |
 | angr, concrete names | `make run FS=angr CNCR_FILE=1` |
-| KLEE | the suite's own runner, `make json_all`, on the fork (see [klee.md](../../../docs/notes/klee.md)) |
+| KLEE | `make run FS=klee`, after `make klee-image` (see [README](README.md#klee)) |
 
 ## Native
 
