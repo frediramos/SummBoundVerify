@@ -18,16 +18,19 @@ typedef int mode_t;
 typedef void *FILE;
 
 FILE *__FILE_from_fd(int fd) { return 0; }
+cnstr_t _EQ_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _NEQ_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t _OR_(cnstr_t cnstr1, cnstr_t cnstr2) { return 0; }
 cnstr_t _ULE_(symbolic var1, symbolic var2) { return 0; }
 cnstr_t __get_cnstr(symbolic var, size_t size) { return 0; }
 int __file_create(const char *name) { return 0; }
+int __file_flags(int fd) { return 0; }
 int __file_open(const char *name, const char *flags) { return 0; }
-int __is_symbolic(symbolic var) { return 0; }
+long __concretize(symbolic var) { return 0; }
 long __maximize(symbolic var) { return 0; }
 result_t __check_implications(char *summ, char *cncrt) { return 0; }
 ssize_t __file_set_offset(int fd, size_t offset) { return 0; }
+ssize_t __file_size(int fd) { return 0; }
 ssize_t __file_write(int fd, const void *buffer, size_t count) { return 0; }
 state_t __save_current_state(void) { return 0; }
 symbolic __sym_var_array(char *name, size_t index, size_t size) { return 0; }
@@ -45,16 +48,21 @@ void __store_cnstr(char *name, cnstr_t constraint) { }
 
 ssize_t summ_write(int fd, const void *buf, size_t count)
 {
-  if (!__is_symbolic(count))
-    return __file_write(fd, buf, count);
-  size_t max = __maximize(count);
-  for (size_t n = 0; n < max; n++)
+  int flags = __file_flags(fd);
+  if ((flags == (-1)) || ((flags & 0003) == 0))
+    return -1;
+  size_t n = __maximize(count);
+  __assume(_EQ_(count, n));
+  if ((flags & 02000) && (n > 0))
   {
-    if (count == n)
-      return __file_write(fd, buf, n);
-  }
+    ssize_t size = __file_size(fd);
+    ssize_t end = __concretize(size);
+    while (size != end)
+      end = __concretize(size);
 
-  return __file_write(fd, buf, max);
+    __file_set_offset(fd, end);
+  }
+  return __file_write(fd, buf, n);
 }
 
 void test_1()
