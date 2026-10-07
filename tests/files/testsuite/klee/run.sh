@@ -13,6 +13,11 @@ suites=$(cd "$(dirname "$0")/../klee-testsuite" && pwd)
 suite=${1%%/*}
 n=${1##*/test_}
 
+if ! docker info >/dev/null 2>&1; then
+    echo "klee/run.sh: Docker is not running" >&2
+    exit 1
+fi
+
 if ! docker image inspect "$image" >/dev/null 2>&1; then
     echo "klee/run.sh: no image $image; build it with: make klee-image" >&2
     exit 1

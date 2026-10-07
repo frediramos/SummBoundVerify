@@ -50,9 +50,11 @@ These can be combined, e.g. `make run FS=angr SUITE=dup SYM_FILE=3`.
 | `SYM_FILE=N` | Make the tests' file names `N` symbolic bytes followed by `'\0'`. The first byte is non-null; the others are unconstrained, so a name has 1 to `N` characters. Default: 1 byte. |
 | `CNCR_FILE=N` | Make the tests' file names `N` concrete characters instead: a test's first name is `"AA..."`, its second `"BB..."`. Cannot be combined with `SYM_FILE`. |
 
-`SYM_FILE=N` and `CNCR_FILE=N` build into `bins/sym-fname-N/` and
-`bins/cncr-fname-N/`, so they never reuse binaries built another way. The
-KLEE build uses neither.
+Each kind of file names builds into its own directory, `bins/sym-fname-N/` or
+`bins/cncr-fname-N/` (native runs: `bins/native/...`), so builds never mix.
+`FS=klee` builds nothing here: KLEE compiles the tests itself, inside its
+container, always with 1 symbolic byte, so `SYM_FILE` and `CNCR_FILE` do not
+apply to it.
 
 ## KLEE
 
