@@ -1,3 +1,9 @@
+# Runs the file-system test suite in klee-testsuite/ on one file system, and
+# saves each test's output as a log. See README.md.
+#
+#   make run [FS=ours|angr|klee|native] [SUITE=open | TEST=open/test_01]
+#            [SYM_FILE=N | CNCR_FILE=N] [LOG=dir]
+
 SHELL := /bin/bash
 
 GREEN   := \033[0;32m
@@ -6,120 +12,118 @@ YELLOW  := \033[33m
 MAGENTA := \033[35m
 RESET   := \033[0m
 
-FLAGS  := -Wno-int-conversion -Wno-pointer-to-int-cast
 
-# FS=ours (default), FS=angr for angr's native file system, FS=klee for KLEE
-# (in Docker, see klee/run.sh), or FS=native to run the tests natively on
-# Linux, as the reference (see native/sra_native.c)
+# ── Options ───────────────────────────────────────────────────────────────
+
+# The file system: ours (default), angr (angr's native one), klee (KLEE, in
+# Docker) or native (Linux itself, as the reference)
 FS ?= ours
 
-ifeq ($(FS),angr)
-SUMMBV := summbv -angr-fs -run --binary
-else ifeq ($(FS),native)
-SUMMBV := native/run.sh
-else
-SUMMBV := summbv -run --binary
-endif
+# Where the logs go: $(LOG)/<fs>/<kind of file names>/<test>.log. LOG= keeps none.
+LOG ?= logs
 
-BINS  	 := bins
 
-# SYM_FILE=N makes the tests' file names N symbolic bytes and a '\0'
-# (default 1). Its binaries go to their own directory, so builds never mix.
-ifdef SYM_FILE
-FLAGS += -DFNAME_BYTES=$(SYM_FILE)
-BINS  := bins/sym-fname-$(SYM_FILE)
-endif
+# ── File names ────────────────────────────────────────────────────────────
 
-# CNCR_FILE=N makes them N concrete characters and a '\0' instead: a test's
-# first name is "AA...", its second "BB...", and so on.
-ifdef CNCR_FILE
-ifdef SYM_FILE
+# The tests' file names: N symbolic bytes and a '\0' (SYM_FILE=N, default 1),
+# or N concrete characters, "AA...", "BB...", ... (CNCR_FILE=N). Native runs
+# have no symbolic values, so their names are always concrete.
+ifneq ($(and $(SYM_FILE),$(CNCR_FILE)),)
 $(error SYM_FILE and CNCR_FILE cannot be used together)
 endif
-FLAGS += -DFNAME_BYTES=$(CNCR_FILE) -DCONCRETE_FNAME
-BINS  := bins/cncr-fname-$(CNCR_FILE)
-endif
-
-LIB_PATH := lib
-
-LIB := $(LIB_PATH)/sra.c -I$(LIB_PATH)
-
-# Native runs have no symbolic values: their file names are concrete
-# (CNCR_FILE=N sets their length), and they link the native API
-ifeq ($(FS),native)
-ifdef SYM_FILE
+ifeq ($(FS)-$(if $(SYM_FILE),sym),native-sym)
 $(error FS=native has no symbolic file names: use CNCR_FILE)
 endif
-FLAGS += -DNATIVE
-BINS  := bins/native/cncr-fname-$(or $(CNCR_FILE),1)
-LIB   := native/sra_native.c -I$(LIB_PATH)
-endif
-
-# KLEE runs each test in the image "make klee-image" builds from the fork in
-# klee-fork/, through the suite's own KLEE runner, which compiles the tests
-KLEE_IMAGE := klee-testsuite-fork
-
 ifeq ($(FS),klee)
 ifneq ($(SYM_FILE)$(CNCR_FILE),)
 $(error FS=klee takes neither SYM_FILE nor CNCR_FILE: the suite's KLEE runner builds the tests)
 endif
 endif
 
-# The kind of file names a run uses, which keeps its logs apart
-ifeq ($(FS),native)
-FNAME_KIND := cncr-fname-$(or $(CNCR_FILE),1)
+ifneq ($(CNCR_FILE),)
+FNAME_KIND := cncr-fname-$(CNCR_FILE)
+else ifeq ($(FS),native)
+FNAME_KIND := cncr-fname-1
 else
-FNAME_KIND := $(if $(CNCR_FILE),cncr-fname-$(CNCR_FILE),sym-fname-$(or $(SYM_FILE),1))
+FNAME_KIND := sym-fname-$(or $(SYM_FILE),1)
 endif
 
-# KLEE test suite (submodule), written against the API in lib/sra.h
-KLEE_DIR := klee-testsuite/individual-tests
-KLEE_INC := -Iklee-testsuite/include
+
+# ── How each file system builds and runs a test ───────────────────────────
+
+FLAGS := -Wno-int-conversion -Wno-pointer-to-int-cast \
+         -DFNAME_BYTES=$(lastword $(subst -, ,$(FNAME_KIND)))
+ifneq ($(filter cncr-%,$(FNAME_KIND)),)
+FLAGS += -DCONCRETE_FNAME
+endif
+
+# summbv (angr & ours) runs tests built against the API stubs in lib/ hooks
+LIB  := lib/sra.c -Ilib
+BINS := bins/$(FNAME_KIND)
+
+
+# Our symbolic FS
+ifeq ($(FS),ours)
+BUILD_TEST = $(MAKE) -s $(BINS)/$$test.test
+RUN_TEST   = summbv -run --binary $(BINS)/$$test.test
+
+# angr's FS 
+else ifeq ($(FS),angr)
+BUILD_TEST = $(MAKE) -s $(BINS)/$$test.test
+RUN_TEST   = summbv -angr-fs -run --binary $(BINS)/$$test.test
+
+else ifeq ($(FS),native)
+# Built against the API done with real Linux calls, and run directly
+FLAGS      += -DNATIVE
+LIB        := native/sra_native.c -Ilib
+BINS       := bins/native/$(FNAME_KIND)
+BUILD_TEST = $(MAKE) -s $(BINS)/$$test.test
+RUN_TEST   = native/run.sh $(BINS)/$$test.test
+
+else ifeq ($(FS),klee)
+KLEE_IMAGE := klee-testsuite-fork
+
+# Built and run by the suite's own KLEE runner, in the image klee-image builds
+BUILD_TEST = true
+RUN_TEST   = KLEE_IMAGE=$(KLEE_IMAGE) klee/run.sh $$test
+
+else
+$(error Unknown FS=$(FS): use ours, angr, klee or native)
+endif
+
+
+# ── Tests ─────────────────────────────────────────────────────────────────
+
+SUITE_DIR := klee-testsuite/individual-tests
 
 # Tests are named by their path without .c: open/test_01, ...
-TESTS := $(patsubst $(KLEE_DIR)/%.c,%,$(wildcard $(KLEE_DIR)/*/test_*.c))
+TESTS := $(patsubst $(SUITE_DIR)/%.c,%,$(wildcard $(SUITE_DIR)/*/test_*.c))
 
-# TEST=open/test_01 runs one test with its output shown
-# SUITE=open runs one suite
+# SUITE=open runs one suite; TEST=open/test_01 one test, with its output shown
+ifdef SUITE
+TESTS := $(filter $(SUITE)/%,$(TESTS))
+endif
+ifdef TEST
+TESTS := $(TEST:.c=)
+endif
 
-# Each test's output is saved to $(LOG_DIR)/<test>.log, ending in "== PASSED"
-# or "== FAILED"; ./report.py explains them. LOG=dir saves elsewhere, LOG=
-# saves nothing. Runs are kept apart by file system and kind of file names:
-# logs/<fs>/sym-fname-<N>/ or logs/<fs>/cncr-fname-<N>/.
-LOG ?= logs
-LOG_DIR := $(LOG)/$(FS)/$(FNAME_KIND)
-LOG_FILE := $(LOG_DIR)/$$test.log
+
+# ── Logs ──────────────────────────────────────────────────────────────────
+
+# Each test's output goes to its log, which run then ends with "== PASSED" or
+# "== FAILED" for report.py. With TEST=, it is shown as well.
+LOG_FILE := $(LOG)/$(FS)/$(FNAME_KIND)/$$test.log
 
 ifdef TEST
-TESTS  := $(TEST:.c=)
 OUTPUT := $(if $(LOG),2>&1 | tee $(LOG_FILE))
 else
 OUTPUT := $(if $(LOG),> $(LOG_FILE),> /dev/null) 2>&1
 endif
 
-ifdef SUITE
-TESTS := $(filter $(SUITE)/%,$(TESTS))
-endif
 
-# How the run loop builds and runs a test. KLEE does both in Docker.
-ifeq ($(FS),klee)
-BUILD_TEST = true
-RUN_TEST   = KLEE_IMAGE=$(KLEE_IMAGE) klee/run.sh $$test
-else
-BUILD_TEST = $(MAKE) -s $(BINS)/$$test.test
-RUN_TEST   = $(SUMMBV) $(BINS)/$$test.test
-endif
+# ── Targets ───────────────────────────────────────────────────────────────
 
-.PHONY: sra compile run run-all clean clean-logs klee-image
-
-sra:
-	../sra.py $(LIB_PATH)
-
-$(BINS)/%.test: $(KLEE_DIR)/%.c klee-testsuite/include/test_helper.h
-	@mkdir -p $(@D)
-	$(CC) $(FLAGS) $(KLEE_INC) $< $(LIB) -o $@
-
-compile: sra $(TESTS:%=$(BINS)/%.test)
+.PHONY: run run-all compile sra klee-image clean clean-logs
 
 run:
 	@set -o pipefail; \
@@ -143,16 +147,28 @@ run:
 	echo -e "$(RED)Failed:$(RESET) $$failed"; \
 	[ $$failed -eq 0 ]
 
+# Our file system, then angr's
 run-all:
 	@$(MAKE) -s run FS=ours; ours=$$?; \
 	$(MAKE) -s run FS=angr && [ $$ours -eq 0 ]
+
+# Regenerates lib/ from the API, then builds every test
+compile: sra $(TESTS:%=$(BINS)/%.test)
+
+sra:
+	../sra.py lib
+
+$(BINS)/%.test: $(SUITE_DIR)/%.c klee-testsuite/include/test_helper.h
+	@mkdir -p $(@D)
+	$(CC) $(FLAGS) -Iklee-testsuite/include $< $(LIB) -o $@
 
 # The image FS=klee runs in: KLEE built with the fork in klee-fork/
 klee-image:
 	docker build -t $(KLEE_IMAGE) --build-context fork=klee-fork klee-testsuite
 
+# Removes every build (bins/ keeps its README)
 clean:
-	$(RM) -r $(BINS)/*.test $(BINS)/*/
+	$(RM) -r bins/*/
 
 clean-logs:
-	$(RM) -r $(LOG)/**/
+	$(RM) -r $(LOG)/*/
