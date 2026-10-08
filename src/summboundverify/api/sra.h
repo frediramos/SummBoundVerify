@@ -322,8 +322,11 @@ size_t __allocd(void *ptr, size_t n);
  *
  * Descriptors are concrete or `ite(cond, fd, -1)` with `fd` concrete; any
  * other form raises an error. On `ite(cond, fd, -1)` an operation applies to
- * `fd` and returns `ite(cond, <result>, <error>)`. `FILE*` values follow the
- * same rule with `NULL` for `-1`. A concrete fd may refer to several possible
+ * `fd` and returns `ite(cond, <result>, <error>)`. Functions that only look a
+ * descriptor up (`__file_size`, `__file_offset`, `__file_flags`,
+ * `__FILE_from_fd`, `__fd_from_FILE`) also accept nested `ite`s over several
+ * descriptors, as long as one case is `-1`. `FILE*` values follow the same
+ * rules with `NULL` for `-1`. A concrete fd may refer to several possible
  * files (one per match of a symbolic name), so sizes, offsets and reads may
  * be symbolic. A descriptor that is not open makes a function fail with its
  * error value (`-1`, or `NULL` for `__FILE_from_fd`).
