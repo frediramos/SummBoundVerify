@@ -200,10 +200,16 @@ class FuncCallsVisitor(NodeVisitor):
         self.visit(node.stmt)
         return node
 
+    def visit_DeclList(self, node):
+        for decl in node.decls:
+            self.visit(decl)
+        return node
+
     def visit_For(self, node):
         self.visit(node.init)
         self.visit(node.stmt)
         self.visit(node.cond)
+        self.visit(node.next)
         return node
 
     def visit_TernaryOp(self, node):

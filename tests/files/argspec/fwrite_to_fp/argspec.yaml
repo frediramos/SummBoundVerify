@@ -1,0 +1,15 @@
+fp:
+  type: FILE*
+  semantic: file
+  file:
+    type: pointer
+    fname:
+      symbolic: true
+      size: 5
+
+data:
+  type: void*
+  semantic: memory
+  memory:
+    type: read
+    size: 4

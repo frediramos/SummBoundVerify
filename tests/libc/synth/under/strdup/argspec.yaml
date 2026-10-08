@@ -1,0 +1,6 @@
+str:
+  type: char*
+  semantic: memory
+  memory:
+    type: read
+    size: 3

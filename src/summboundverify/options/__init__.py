@@ -5,28 +5,45 @@ from .options import (
     OptionTypes
 )
 
-from .parser import (
-    eval_ast,
-    parse_config_file
-)
+from .parser import parse_config_file
 
 
 def parse_input_args(input=None):
 
-    # Parse command line args
     args = parse_cmdline_args(input)
-    complex = [OptionTypes.NESTED, OptionTypes.DICT]
 
-    # Convert complex options string to Python ast
-    for opt in filter(lambda a: a[2] in complex, Options):
-        parsed = eval_ast(getattr(args, opt[1]))
-        setattr(args, opt[1], parsed)
-
-    # Parse config file and override cmd args
     config_file = args.config
     if config_file:
         config = parse_config_file(config_file)
         for c in config.keys():
             setattr(args, c, config[c])
 
+    resolve_libc(args)
+
     return args
+
+
+def resolve_libc(args):
+    """Point ``funcname`` at the libc function selected by ``--libc``.
+
+    ``--libc`` alone reuses the summary name; ``--libc name`` names the
+    libc function explicitly. The function is resolved at link time, so
+    it cannot be combined with ``-func``.
+    """
+
+    if not args.libc:
+        return
+
+    if args.func:
+        raise ValueError("--libc and -func are mutually exclusive")
+
+    name = args.libc if isinstance(args.libc, str) else args.summname
+    if not name:
+        raise ValueError("--libc needs a function name or --summname")
+
+    if args.funcname and args.funcname != name:
+        raise ValueError(
+            f"--libc '{name}' conflicts with --funcname '{args.funcname}'"
+        )
+
+    args.funcname = name

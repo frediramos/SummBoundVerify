@@ -4,9 +4,12 @@ from angr import SimProcedure
 
 from claripy.ast.bv import BV as BitVector
 
+from summboundverify.api import api
+
 from summboundverify.exceptions import (
     InvalidSymbolicVariableSizeError,
     InvalidArchVariableSizeError,
+    AssertConstraintError,
     UnsatConstraintError,
     ReportError,
 )
@@ -124,7 +127,7 @@ class CSummary(SimProcedure):
 
     def assume(self, cnstr):
         if not self.state.solver.satisfiable(extra_constraints=(cnstr,)):
-            raise UnsatConstraintError("assume", cnstr)
+            raise UnsatConstraintError(api("assume"), cnstr)
         self.state.solver.add(cnstr)
 
     def is_certain(self, cnstr):
@@ -136,7 +139,7 @@ class CSummary(SimProcedure):
 
     def assert_constraint(self, cnstr):
         if not self.is_certain(cnstr):
-            raise UnsatConstraintError("_assert", cnstr)
+            raise AssertConstraintError(cnstr)
 
     def push_pc(self):
         c = self.state.solver._solver.constraints

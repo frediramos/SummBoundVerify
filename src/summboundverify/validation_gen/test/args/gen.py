@@ -40,11 +40,13 @@ class SymbolicArgGen:
         null_bytes: list[Any] | None = None,
         max_macro: Any = None,
         max_args: list[Any] | None = None,
+        skip: set[str] | None = None,
     ) -> None:
         self._args = args or []
 
         self._max_macro = max_macro
         self._max_args = max_args or []
+        self._skip = skip or set()
 
         self._size_values = self._iterator(size_macro)
         self._null_values = self._iterator(null_bytes)
@@ -53,6 +55,7 @@ class SymbolicArgGen:
         self._call_args: list[str] = []
         self._types: list[Any] = []
         self._arg_types: dict[str, Any] = {}
+        self._sizes: dict[str, Any] = {}
 
     @staticmethod
     def _iterator(values: Any) -> Iterator[Any]:
@@ -109,6 +112,10 @@ class SymbolicArgGen:
             argname = visitor.argname
             assert argname is not None
 
+            if argname in self._skip:
+                self._call_args.append(argname)
+                continue
+
             if default_value == "&":
                 argname = f"&{argname}"
 
@@ -118,6 +125,7 @@ class SymbolicArgGen:
             self._code.extend(visitor.gen_code())
             self._types.extend(arg_type)
             self._arg_types[argname] = arg_type
+            self._sizes[argname] = size_macro
 
         return self._code
 
@@ -133,6 +141,15 @@ class SymbolicArgGen:
     def call_args(self) -> list[str]:
         """Return the generated function call arguments."""
         return self._call_args
+
+    @property
+    def sizes(self) -> dict[str, Any]:
+        """The size macro each argument was generated with, by name.
+
+        None where no size was given, in which case an array argument was
+        declared with POINTER_SIZE.
+        """
+        return self._sizes
 
     @property
     def pointer_args(self) -> list[str]:

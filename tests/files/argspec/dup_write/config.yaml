@@ -1,0 +1,5 @@
+func: concrete.c
+summ: dup_write.c
+summname: dup_write
+compile: x86
+argspec: argspec.yaml

@@ -117,7 +117,7 @@ def candidates(formula: BoolRef) -> dict[str, list[int]]:
 
         # `Ret` is an output; pinning it would be asking the fuzzer to produce
         # a result rather than to try an input.
-        if name == 'Ret' or name.startswith('mem_'):
+        if name == 'Ret' or name.startswith('mem_') or name.startswith('file_'):
             continue
 
         limit = (1 << var.size()) - 1
@@ -327,6 +327,7 @@ def assignments(formula: BoolRef, limit: int = MAX_SEEDS) -> list[dict]:
             if isinstance(model[d], BitVecNumRef)
             and d.name() != 'Ret'
             and not d.name().startswith('mem_')
+            and not d.name().startswith('file_')
         }
 
         if not assignment:

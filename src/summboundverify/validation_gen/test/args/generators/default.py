@@ -1,11 +1,8 @@
 from pycparser.c_ast import BinaryOp, Constant, ExprList, FuncCall, ID, NodeVisitor
 
 from summboundverify.api import api_map
-from summboundverify.validation_gen.utils import (
-    ARRAY_SIZE_MACRO,
-    FUEL_MACRO,
-    POINTER_SIZE_MACRO,
-)
+from summboundverify.validation_gen.utils import Macros
+
 
 
 class DefaultGen(NodeVisitor):
@@ -22,11 +19,12 @@ class DefaultGen(NodeVisitor):
         self.vartype = vartype  # C type name
 
         self.size_macros = {
-            "array": ID(ARRAY_SIZE_MACRO),
-            "ptr": ID(POINTER_SIZE_MACRO),
+            "array": ID(Macros.ARRAY_SIZE),
+            "fname": ID(Macros.FNAME_SIZE),
+            "ptr": ID(Macros.POINTER_SIZE)
         }
 
-        self.fuel = ID(FUEL_MACRO)
+        self.fuel = ID(Macros.FUEL)
 
     def init_struct_rvalue(self, vartype):
         """Build a call that initializes a symbolic struct value.

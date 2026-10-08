@@ -58,7 +58,7 @@ long __concretize(symbolic var) { return 0; }
 long __maximize(symbolic var) { return 0; }
 long __minimize(symbolic var) { return 0; }
 result_t __check_implications(char *summ, char *cncrt) { return 0; }
-size_t __allocd(void *ptr) { return 0; }
+size_t __allocd(void *ptr, size_t n) { return 0; }
 size_t __lst_len(list_t lst) { return 0; }
 size_t __n_allocd(void *ptr) { return 0; }
 ssize_t __file_offset(int fd) { return 0; }
@@ -76,6 +76,7 @@ void *__mem_alloc(size_t nbytes) { return 0; }
 void __assert(cnstr_t cnstr) { }
 void __assume(cnstr_t cnstr) { }
 void __cond_write(void *ptr, symbolic c, cnstr_t pc) { }
+void __file_addr(char *name, const char *path) { }
 void __halt_all(state_t state) { }
 void __mem_addr(char *name, void *addr, size_t n) { }
 void __mem_free(void *ptr) { }
@@ -85,9 +86,8 @@ void __push_pc(void) { }
 void __report_error(const char *filename, unsigned int line, const char *message) { }
 void __store_cnstr(char *name, cnstr_t constraint) { }
 
-#define POINTER_SIZE 5
-#define FUEL 5
-#define ARRAY_SIZE_1 5
+#define ARRAY_SIZE_1_VAR1 5
+#define ARRAY_SIZE_1_VAR2 5
 #define MAX_NUM_1 5
 
 void *concrete_memcpy(void *dest, void *src, size_t n)
@@ -105,26 +105,26 @@ void *concrete_memcpy(void *dest, void *src, size_t n)
 
 void test_1()
 {
-  char dest[ARRAY_SIZE_1];
-  for (int dest_idx_1 = 0; dest_idx_1 < ARRAY_SIZE_1; dest_idx_1++)
+  char dest[ARRAY_SIZE_1_VAR1];
+  for (int dest_idx_1 = 0; dest_idx_1 < ARRAY_SIZE_1_VAR1; dest_idx_1++)
   {
     dest[dest_idx_1] = __sym_var_array("dest", dest_idx_1, sizeof(char) * 8);
   }
 
-  dest[ARRAY_SIZE_1 - 1] = '\0';
-  char src[ARRAY_SIZE_1];
-  for (int src_idx_1 = 0; src_idx_1 < ARRAY_SIZE_1; src_idx_1++)
+  dest[ARRAY_SIZE_1_VAR1 - 1] = '\0';
+  char src[ARRAY_SIZE_1_VAR2];
+  for (int src_idx_1 = 0; src_idx_1 < ARRAY_SIZE_1_VAR2; src_idx_1++)
   {
     src[src_idx_1] = __sym_var_array("src", src_idx_1, sizeof(char) * 8);
   }
 
-  src[ARRAY_SIZE_1 - 1] = '\0';
+  src[ARRAY_SIZE_1_VAR2 - 1] = '\0';
   size_t n = __sym_var_named("n", sizeof(size_t) * 8);
   size_t max_1 = MAX_NUM_1;
   __assume(_ULE_(n, max_1));
   state_t initial_state = __save_current_state();
-  __mem_addr("dest", dest, ARRAY_SIZE_1);
-  __mem_addr("src", src, ARRAY_SIZE_1);
+  __mem_addr("dest", dest, ARRAY_SIZE_1_VAR1);
+  __mem_addr("src", src, ARRAY_SIZE_1_VAR2);
   void * ret1 = concrete_memcpy(dest, src, n);
   cnstr_t cnstr1 = __get_cnstr(&ret1, sizeof(void *) * 8);
   __store_cnstr("cnctr_test1", cnstr1);

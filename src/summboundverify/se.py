@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from argparse import Namespace
 
+from summboundverify.argspec import load_argspec, extract_constraints
 from summboundverify.validation_gen import (
     Arch,
     CCompiler,
@@ -37,8 +38,8 @@ def generate_test(args: Namespace, outputfile: Path | None = None) -> Path:
     if not concrete_function and not args.funcname:
         raise ValueError(
             "No concrete function code or name provided\n"
-            "INFO: In the absence of the code, a name must be "
-            "specified in order to call the function"
+            "INFO: pass -func <file>, or --libc to compare against "
+            "a libc function"
         )
 
     if not target_summary and not args.summname:
@@ -48,20 +49,23 @@ def generate_test(args: Namespace, outputfile: Path | None = None) -> Path:
             "specified in order to call the summary"
         )
 
+    argspec = load_argspec(getattr(args, 'argspec', None))
+    constraints = extract_constraints(argspec)
+
     generator = SymbolicValidationGenerator(
         concrete_function,
         target_summary,
         outputfile,
-        arraysize=args.arraysize,
-        nullbytes=args.nullbytes,
-        maxnum=args.maxvalue,
-        maxnames=args.maxnames,
-        default=args.defaultvalues,
-        concrete_arrays=args.concretearray,
-        memory=args.memory,
+        arraysize=constraints.get('arraysize', [5]),
+        nullbytes=constraints.get('nullbytes', []),
+        maxnum=constraints.get('maxnum', []),
+        maxnames=constraints.get('maxnames', []),
+        default=constraints.get('defaults', {}),
+        concrete_arrays=constraints.get('concrete_arrays', {}),
         no_api=args.noapi,
         cncrt_name=args.funcname,
         summ_name=args.summname,
+        argspec=argspec,
     )
 
     generator.gen()

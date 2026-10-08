@@ -1,0 +1,15 @@
+fd:
+  type: int
+  semantic: file
+  file:
+    type: descriptor
+    fname:
+      symbolic: true
+      size: 5
+
+data:
+  type: void*
+  semantic: memory
+  memory:
+    type: read
+    size: 4
