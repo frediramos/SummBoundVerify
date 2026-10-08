@@ -1,0 +1,7 @@
+summ: read.c
+summname: summ_read
+libc: read
+compile: x86
+argspec: argspec.yaml
+engine: [fuzz]
+execs: 2000
