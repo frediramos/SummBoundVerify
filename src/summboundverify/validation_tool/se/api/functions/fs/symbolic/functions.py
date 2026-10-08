@@ -37,6 +37,11 @@ class FileSummary(CSummary, ABC):
         bits = v.size()
         return value - (1 << bits) if value >> (bits - 1) else value
 
+    def ssize_t(self, v: BitVector):
+        """`v` as an ssize_t: sign-extended to the architecture's width, so
+        a -1 stays -1 once the caller reads all of it"""
+        return claripy.SignExt(self.state.arch.bits - v.size(), v)
+
     def load_numeric(self, v: BitVector):
         if not self.is_symbolic(v):
             return self.state.solver.eval(v)
@@ -144,7 +149,7 @@ class file_write(FileSummary):
         count = self.load_numeric(count_bv)
         f = self.fs.write_file
         n = self.call_fds(f, fd, buffer, count)
-        return n
+        return self.ssize_t(n)
 
 
 class file_read(FileSummary):
@@ -153,7 +158,7 @@ class file_read(FileSummary):
         count = self.load_numeric(count_bv)
         f = self.fs.read_file
         n = self.call_fds(f, fd, buffer, count)
-        return n
+        return self.ssize_t(n)
 
 
 class FILE_from_fd(FileSummary):
@@ -177,7 +182,7 @@ class file_offset(FileSummary):
         fd = self.load_int(fd_bv)
         f = self.fs.file_offset
         offset = self.call_fds(f, fd)
-        return offset
+        return self.ssize_t(offset)
 
 
 class file_set_offset(FileSummary):
@@ -186,7 +191,7 @@ class file_set_offset(FileSummary):
         offset = self.load_numeric(offset_bv)
         f = self.fs.file_set_offset
         offset = self.call_fds(f, fd, offset)
-        return offset
+        return self.ssize_t(offset)
 
 
 class file_size(FileSummary):
@@ -194,7 +199,7 @@ class file_size(FileSummary):
         fd = self.load_int(fd_bv)
         f = self.fs.file_size
         offset = self.call_fds(f, fd)
-        return offset
+        return self.ssize_t(offset)
 
 
 class file_set_size(FileSummary):
@@ -203,7 +208,7 @@ class file_set_size(FileSummary):
         size = self.load_numeric(size_bv)
         f = self.fs.file_set_size
         size = self.call_fds(f, fd, size)
-        return size
+        return self.ssize_t(size)
 
 
 class file_dup(FileSummary):
