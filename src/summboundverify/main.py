@@ -187,16 +187,12 @@ def main(argv=None):
 
         if Engine.FUZZ in engines:
             section(Engine.FUZZ.desc)
-
-            results[Engine.FUZZ] = fuzzing.run(
-                args,
-                constraints,
-            )
+            results[Engine.FUZZ] = fuzzing.run(args, constraints)
 
         if len(engines) > 1 and args.run:
             print_summary(
                 results.get(Engine.SE),
-                results.get(Engine.FUZZ),
+                results.get(Engine.FUZZ)
             )
 
     except Exception:
