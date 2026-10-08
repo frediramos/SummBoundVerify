@@ -2,6 +2,7 @@ import claripy
 
 from abc import ABC, abstractmethod
 
+from angr.errors import SimValueError
 from claripy.ast.bv import BV as BitVector
 
 from summboundverify.exceptions import (
@@ -29,11 +30,24 @@ class FileSummary(CSummary, ABC):
     def int_size(self):
         return self.state.arch.sizeof["int"]
 
+    def _single_valued(self, v: BitVector):
+        if not v.symbolic:
+            return True
+        try:
+            self.state.solver.eval_one(v)
+            return True
+        except SimValueError:
+            return False
+
     def _signed(self, v: int | BitVector):
+        """`v` as a signed int, or `v` itself if it has more than one value
+        (the FS then rejects it)"""
         if isinstance(v, int):
             return v
         assert isinstance(v, BitVector)
-        value = v.concrete_value
+        if not self._single_valued(v):
+            return v
+        value = self.state.solver.eval_one(v, cast_to=int)
         bits = v.size()
         return value - (1 << bits) if value >> (bits - 1) else value
 
@@ -60,34 +74,74 @@ class FileSummary(CSummary, ABC):
             raise SymbolicPointerError(caller, addr)
         return super().load_string(addr, include_null)
 
-    def unfold_fds(self, ite, invalid=-1):
+    def unfold_read_fds(self, ite, invalid=-1):
         cases = list(claripy.reverse_ite_cases(ite))
 
         # Fds are either concrete or have the form: ite(cond, fd, invalid)
         if len(cases) == 1:
             return cases
 
-        if (
-            len(cases) > 2 or
-            not any(self._signed(v) == invalid for _, v in cases)
-        ):
+        if not all(self._single_valued(v) for _, v in cases):
+            raise InvalidIteFileDescriptor(ite)
+
+        if not any(self._signed(v) == invalid for _, v in cases):
             raise InvalidIteFileDescriptor(ite)
 
         return cases
 
-    def call_fds(self, func, ite, *args, signed=True, default=-1, invalid=-1):
+    def unfold_write_fds(self, ite, invalid=-1):
+        cases = list(claripy.reverse_ite_cases(ite))
+
+        # Fds are either concrete or have the form: ite(cond, fd, invalid)
+        if len(cases) == 1:
+            return cases
+
+        if len(cases) > 2:
+            raise InvalidIteFileDescriptor(ite)
+
+        if not all(self._single_valued(v) for _, v in cases):
+            raise InvalidIteFileDescriptor(ite)
+
+        if not any(self._signed(v) == invalid for _, v in cases):
+            raise InvalidIteFileDescriptor(ite)
+
+        return cases
+
+    def _call_fds(self, func, unfold, ite, args, signed=True, default=-1, invalid=-1):
         default = claripy.BVV(default, self.int_size)
-        cases = self.unfold_fds(ite, invalid)
+        cases = unfold(ite, invalid)
         ret = [
             (cond, func(self._signed(v) if signed else v, *args))
             for cond, v in cases
         ]
         return claripy.ite_cases(ret, default)
 
+    def call_read_op_fds(self, func, ite, *args, signed=True, default=-1, invalid=-1):
+        return self._call_fds(
+            func,
+            self.unfold_read_fds,
+            ite,
+            args,
+            signed,
+            default,
+            invalid,
+        )
+
+    def call_write_op_fds(self, func, ite, *args, signed=True, default=-1, invalid=-1):
+        return self._call_fds(
+            func,
+            self.unfold_write_fds,
+            ite,
+            args,
+            signed,
+            default,
+            invalid,
+        )
+
     def call_fds_nested(self, func, ite1, ite2, *args, signed=True, default=-1):
         default = claripy.BVV(default, self.int_size)
-        cases1 = self.unfold_fds(ite1)
-        cases2 = self.unfold_fds(ite2)
+        cases1 = self.unfold_write_fds(ite1)
+        cases2 = self.unfold_write_fds(ite2)
 
         ret_cases = []
         for cond1, v1 in cases1:
@@ -138,7 +192,7 @@ class file_close(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.close_file
-        status = self.call_fds(f, fd)
+        status = self.call_write_op_fds(f, fd)
         return status
 
 
@@ -148,7 +202,7 @@ class file_write(FileSummary):
         buffer = self.load_string(buffer_addr, include_null=True)
         count = self.load_numeric(count_bv)
         f = self.fs.write_file
-        n = self.call_fds(f, fd, buffer, count)
+        n = self.call_write_op_fds(f, fd, buffer, count)
         return self.ssize_t(n)
 
 
@@ -157,7 +211,7 @@ class file_read(FileSummary):
         fd = self.load_int(fd_bv)
         count = self.load_numeric(count_bv)
         f = self.fs.read_file
-        n = self.call_fds(f, fd, buffer, count)
+        n = self.call_write_op_fds(f, fd, buffer, count)
         return self.ssize_t(n)
 
 
@@ -165,7 +219,7 @@ class FILE_from_fd(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.FILE_from_fd
-        fp = self.call_fds(f, fd, default=0)
+        fp = self.call_read_op_fds(f, fd, default=0)
         return fp
 
 
@@ -173,7 +227,7 @@ class fd_from_FILE(FileSummary):
     def run(self, fp_bv):
         fp = self.load_int(fp_bv)
         f = self.fs.fd_from_FILE
-        fd = self.call_fds(f, fp, signed=False, invalid=0)
+        fd = self.call_read_op_fds(f, fp, signed=False, invalid=0)
         return fd
 
 
@@ -181,7 +235,7 @@ class file_offset(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.file_offset
-        offset = self.call_fds(f, fd)
+        offset = self.call_read_op_fds(f, fd)
         return self.ssize_t(offset)
 
 
@@ -190,7 +244,7 @@ class file_set_offset(FileSummary):
         fd = self.load_int(fd_bv)
         offset = self.load_numeric(offset_bv)
         f = self.fs.file_set_offset
-        offset = self.call_fds(f, fd, offset)
+        offset = self.call_write_op_fds(f, fd, offset)
         return self.ssize_t(offset)
 
 
@@ -198,7 +252,7 @@ class file_size(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.file_size
-        offset = self.call_fds(f, fd)
+        offset = self.call_read_op_fds(f, fd)
         return self.ssize_t(offset)
 
 
@@ -207,7 +261,7 @@ class file_set_size(FileSummary):
         fd = self.load_int(fd_bv)
         size = self.load_numeric(size_bv)
         f = self.fs.file_set_size
-        size = self.call_fds(f, fd, size)
+        size = self.call_write_op_fds(f, fd, size)
         return self.ssize_t(size)
 
 
@@ -215,7 +269,7 @@ class file_dup(FileSummary):
     def run(self, fd_bv):
         fd1 = self.load_int(fd_bv)
         f = self.fs.file_dup
-        fd2 = self.call_fds(f, fd1)
+        fd2 = self.call_write_op_fds(f, fd1)
         return fd2
 
 
@@ -233,7 +287,7 @@ class file_mode(FileSummary):
         fd = self.load_int(fd_bv)
         mode_ptr = self.load_numeric(mode_ptr_bv)
         f = self.fs.file_mode
-        status = self.call_fds(f, fd, mode_ptr)
+        status = self.call_write_op_fds(f, fd, mode_ptr)
         return status
 
 
@@ -242,7 +296,7 @@ class file_set_mode(FileSummary):
         fd = self.load_int(fd_bv)
         mode = self.load_numeric(mode_bv)
         f = self.fs.file_set_mode
-        status = self.call_fds(f, fd, mode)
+        status = self.call_write_op_fds(f, fd, mode)
         return status
 
 
@@ -250,7 +304,7 @@ class file_flags(FileSummary):
     def run(self, fd_bv):
         fd = self.load_int(fd_bv)
         f = self.fs.file_flags
-        flags = self.call_fds(f, fd)
+        flags = self.call_read_op_fds(f, fd)
         return flags
 
 
