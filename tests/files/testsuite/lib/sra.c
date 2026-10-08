@@ -1,7 +1,6 @@
 #include "sra.h"
 
 long __concretize(symbolic var) { return 0; }
-void __sra_assert(cnstr_t cnstr) { }
 void __report_error(const char *filename, unsigned int line, const char *message) { }
 long __maximize(symbolic var) { return 0; }
 long __minimize(symbolic var) { return 0; }
@@ -12,6 +11,7 @@ int __is_symbolic(symbolic var) { return 0; }
 int __is_sat(cnstr_t cnstr) { return 0; }
 int __is_certain(cnstr_t cnstr) { return 0; }
 void __assume(cnstr_t cnstr) { }
+void __sra_assert(cnstr_t cnstr) { }
 void __push_pc(void) { }
 void __pop_pc(void) { }
 cnstr_t _NOT_(cnstr_t cnstr) { return 0; }

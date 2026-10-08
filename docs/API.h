@@ -14,14 +14,6 @@
 long __concretize(symbolic var);
 
 /**
- * Asserts that `cnstr` holds.
- *
- * If `cnstr` is unsatisfiable, reports an assertion failure and terminates
- * execution.
- */
-void __sra_assert(cnstr_t cnstr);
-
-/**
  * Reports an error originating from `filename` at line `line` with the
  * message `message`.
  *

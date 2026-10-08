@@ -18,12 +18,12 @@ int main(){
 
   // fd = ite(valid, 3, -1)
   int fd = __file_open(s1, "r");
-  __assert((fd == 3) | (fd == -1));
+  __sra_assert((fd == 3) | (fd == -1));
 
   // fp = ite(valid, fp, NULL)
   FILE* fp = __FILE_from_fd(fd);
-  __assert((fd == -1) == (fp == NULL));
+  __sra_assert((fd == -1) == (fp == NULL));
 
   int fd2 = __fd_from_FILE(fp);
-  __assert(fd == fd2);
+  __sra_assert(fd == fd2);
 }
