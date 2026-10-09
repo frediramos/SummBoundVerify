@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Tables of the generation runs in results/, for the paper.
+"""
+Tables of the generation runs in results/, for the paper.
 
-    ./report.py                 every run, then the median per function
+    ./report.py                 every run
     ./report.py read            one function's runs
-    ./report.py --attempts      one row per attempt instead of per run
-    ./report.py --csv           raw values as CSV, e.g. for plots
+    ./report.py -attempts       one row per attempt instead of per run
+    ./report.py -csv            raw values as CSV, e.g. for plots
 
 Columns:
-    attempts    claude -p calls (the attempt's number, with --attempts)
+    attempts    claude -p calls (the attempt's number, with -attempts)
     model time  the model's time (duration_api_ms)
     wall time   the claude calls' time, tools included; fuzzing excluded
     input       input tokens: uncached + written to cache + read from cache
@@ -24,6 +25,7 @@ from typing import Callable
 
 from pathlib import Path
 from statistics import median
+from tabulate import tabulate
 from dataclasses import dataclass
 
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
@@ -79,27 +81,20 @@ COLUMNS = [
 
 
 def print_table(rows: list[dict]):
-    cells = [[col.header for col in COLUMNS]]
-
-    for row in rows:
-        cells.append([
+    cells = [
+        [
             col.fmt(row[col.key]) if col.numeric else str(row[col.key])
             for col in COLUMNS
-        ])
-
-    widths = [
-        max(len(line[c]) for line in cells)
-        for c in range(len(COLUMNS))
-    ]
-
-    for n, line in enumerate(cells):
-        aligned = [
-            cell.rjust(w) if col.numeric else cell.ljust(w)
-            for cell, w, col in zip(line, widths, COLUMNS)
         ]
-        print("  ".join(aligned).rstrip())
-        if n == 0:
-            print("  ".join("-" * w for w in widths))
+        for row in rows
+    ]
+    table = tabulate(
+        cells,
+        headers=[col.header for col in COLUMNS],
+        colalign=["right" if col.numeric else "left" for col in COLUMNS],
+        disable_numparse=True
+    )
+    print(table)
 
 
 # ── Results ─────────────────────────────────────────────────────────────────
@@ -171,6 +166,7 @@ def attempt_rows(runs) -> list[dict]:
 
 
 def median_rows(rows: list[dict]) -> list[dict]:
+    """The median of each column per function. Not shown for now."""
     medians = []
     for fn in sorted({r["function"] for r in rows}):
         runs = [r for r in rows if r["function"] == fn]
@@ -189,7 +185,7 @@ def median_rows(rows: list[dict]) -> list[dict]:
 
 # ── Main ────────────────────────────────────────────────────────────────────
 
-def main():
+def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument(
         "functions",
@@ -197,34 +193,37 @@ def main():
         help="only these functions (default: all)"
     )
     ap.add_argument(
-        "--attempts",
+        "-attempts",
         action="store_true",
         help="one row per attempt instead of per run"
     )
     ap.add_argument(
-        "--csv",
+        "-csv",
         action="store_true",
         help="print raw values as CSV"
     )
-    args = ap.parse_args()
+    return ap.parse_args()
+
+
+def print_csv(rows: list[dict]):
+    writer = csv.DictWriter(sys.stdout, [col.key for col in COLUMNS])
+    writer.writeheader()
+    writer.writerows(rows)
+
+
+def main():
+    args = parse_args()
 
     runs = list(load_runs(args.functions))
-
     if not runs:
         sys.exit("report.py: no runs in results/")
 
     rows = attempt_rows(runs) if args.attempts else run_rows(runs)
 
     if args.csv:
-        writer = csv.DictWriter(sys.stdout, [col.key for col in COLUMNS])
-        writer.writeheader()
-        writer.writerows(rows)
-        return
-
-    print_table(rows)
-    if not args.attempts:
-        print("\nMedian per function\n")
-        print_table(median_rows(rows))
+        print_csv(rows)
+    else:
+        print_table(rows)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ workon sbv                     # summbv's virtualenv
 | `--effort` | `high` |
 | `--max-iters` | `10` |
 | `--commit` | none: Claude works on the working tree as it is on disk; with a commit, on that commit |
-| `--keep-work` | off (keeps Claude's working copy, to inspect it) |
+| `-keep-work` | off (keeps Claude's working copy, to inspect it) |
 
 ## Inputs
 
