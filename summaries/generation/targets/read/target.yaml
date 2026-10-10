@@ -1,6 +1,5 @@
 function: read
-summname: summ_read
+summname: read
 manual: man.txt
 output: read.c
 fuzzer: summbv -config config.yaml -run
-testsuite: #TODO

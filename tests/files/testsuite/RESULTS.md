@@ -12,7 +12,8 @@ The 133 tests in `klee-testsuite/`, run on each file system. Bug numbers refer t
 | `write` | 13/13 | 1/13 | 2/13 | 8/13 | 2/13 |
 | `lseek` | 15/15 | 0/15 | 0/15 | 0/15 | 12/15 |
 | `chmod` | 13/13 | 0/13 | 0/13 | 0/13 | 1/13 |
-| `dup` | 13/13 | 2/13 | 2/13 | 10/13 | 11/13 |
+| `dup` | 7/7 | 1/7 | 1/7 | 5/7 | 5/7 |
+| `dup2` | 6/6 | 1/6 | 1/6 | 5/6 | 6/6 |
 | **Total** | **133** | **12** | **18** | **74** | **59** |
 
 How each column was run:
@@ -66,7 +67,8 @@ All 74 failures are `__sra_assert` failures, for these reasons:
 - **The rewritten tests find KLEE bugs:**
   - Open 12, 44: `O_RDONLY` skips the read-permission check (bug 3)
   - Open 45, 46: `open` overwrites the file's mode (bug 4)
-  - Dup 11: `dup`'d descriptors don't share the offset (bug 5)
+  - Dup 05: `dup`'d descriptors don't share the offset (bug 5)
 
-Open 47 and Dup 06 pass only by coincidence: KLEE ignores `setrlimit`, but its
-fixed table of 32 descriptors matches the limit they set.
+Open 47 and Dup2 03 set a limit of 32 descriptors through
+`__file_set_max_fds`, which the KLEE fork applies. Its descriptor table has 32
+entries, so it cannot take a higher limit.

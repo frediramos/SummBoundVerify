@@ -24,11 +24,12 @@ make run FS=native             # all tests, run natively on Linux, as the refere
 make run-all                   # ours, then angr (not native)
 make run SUITE=open            # only the open() tests
 make run TEST=open/test_01     # one test, with summbv's output shown
+make run -j4                   # 4 tests at a time
 ```
 
 Tests are named by their path without `.c`: `open/test_01` for
 `klee-testsuite/individual-tests/open/test_01.c`. The suites are `open`,
-`close`, `read`, `write`, `lseek`, `chmod` and `dup`.
+`close`, `read`, `write`, `lseek`, `chmod`, `dup` and `dup2`.
 
 A test passes when summbv exits with status 0 (natively, when the test itself
 does). `run` prints a line per test and the totals, and exits non-zero if any
@@ -49,6 +50,7 @@ These can be combined, e.g. `make run FS=angr SUITE=dup SYM_FILE=3`.
 | `LOG=dir`    | Save the logs to `dir` instead of `logs` (see [Logs](#logs)). `LOG=` saves none. |
 | `SYM_FILE=N` | Make the tests' file names `N` symbolic bytes followed by `'\0'`. The first byte is non-null; the others are unconstrained, so a name has 1 to `N` characters. Default: 1 byte. |
 | `CNCR_FILE=N` | Make the tests' file names `N` concrete characters instead: a test's first name is `"AA..."`, its second `"BB..."`. Cannot be combined with `SYM_FILE`. |
+| `SUMMARIES=dir` | Link every summary `dir/*/*.c` into the tests, so the libc function each one is named after (e.g. `read`) runs the summary. Needs `FS=ours`. The tests are then built for 32 bits, as the fuzzer builds summaries, into `bins/summaries/`, and logged to `logs/ours-summaries/`. |
 
 Each kind of file names builds into its own directory, `bins/sym-fname-N/` or
 `bins/cncr-fname-N/` (native runs: `bins/native/...`), so builds never mix.

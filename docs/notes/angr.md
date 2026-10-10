@@ -28,7 +28,7 @@
 
 13. angr has no file permissions: a file keeps no mode, and `open` never checks one, so opening a `0444` file for writing succeeds. Nor can a program read a mode back: libc's `fstat` has no summary, so it returns an unconstrained value and leaves the `stat` buffer unchanged. (Open 10-12)
 
-14. angr has no descriptor limit: descriptors go up to a fixed 8192 (`max_fds`, a module constant), and there is no `setrlimit` summary, so `__file_set_max_fds` returns `-1`. Changing `max_fds` would not help: `open` past it raises an error instead of failing with `EMFILE`, `dup` ignores it, and `dup2` has its own limit, 4096. So with a limit of 32 descriptors, a further `open` and `dup2(fd, 32)` succeed instead of failing. (Open 47, Dup 06)
+14. angr has no descriptor limit: descriptors go up to a fixed 8192 (`max_fds`, a module constant), and there is no `setrlimit` summary, so `__file_set_max_fds` returns `-1`. Changing `max_fds` would not help: `open` past it raises an error instead of failing with `EMFILE`, `dup` ignores it, and `dup2` has its own limit, 4096. So with a limit of 32 descriptors, a further `open` and `dup2(fd, 32)` succeed instead of failing. (Open 47, Dup2 03)
 
 ## Notes
 

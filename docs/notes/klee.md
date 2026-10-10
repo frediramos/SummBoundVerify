@@ -10,7 +10,7 @@
 
 4. `open` changes the file permissions (POSIX permissions, e.g. `0666`). ([issue](https://github.com/klee/klee/issues/1815) + [PR](https://github.com/klee/klee/pull/1825)) (Open 45, 46; it also fires in the tests' setup: see `tests/files/testsuite/RESULTS.md`)
 
-5. `dup` copies the file struct instead of sharing it, so the offset is not propagated. (Dup 11)
+5. `dup` copies the file struct instead of sharing it, so the offset is not propagated. (Dup 05)
 
 ## Notes
 

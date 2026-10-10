@@ -1,8 +1,8 @@
 # Runs the file-system test suite in klee-testsuite/ on one file system, and
 # saves each test's output as a log. See README.md.
 #
-#   make run [FS=ours|angr|klee|native] [SUITE=open | TEST=open/test_01]
-#            [SYM_FILE=N | CNCR_FILE=N] [LOG=dir]
+#   make run [-jN] [FS=ours|angr|klee|native] [SUITE=open | TEST=open/test_01]
+#            [SYM_FILE=N | CNCR_FILE=N] [LOG=dir] [SUMMARIES=dir]
 
 SHELL := /bin/bash
 
@@ -13,7 +13,7 @@ MAGENTA := \033[35m
 RESET   := \033[0m
 
 
-# ── Options ───────────────────────────────────────────────────────────────
+# -- Options ---------------------------------------------------------------
 
 # The file system: ours (default), angr (angr's native one), klee (KLEE, in
 # Docker) or native (Linux itself, as the reference)
@@ -23,7 +23,7 @@ FS ?= ours
 LOG ?= logs
 
 
-# ── File names ────────────────────────────────────────────────────────────
+# -- File names ------------------------------------------------------------
 
 # The tests' file names: N symbolic bytes and a '\0' (SYM_FILE=N, default 1),
 # or N concrete characters, "AA...", "BB...", ... (CNCR_FILE=N). Native runs
@@ -49,7 +49,7 @@ FNAME_KIND := sym-fname-$(or $(SYM_FILE),1)
 endif
 
 
-# ── How each file system builds and runs a test ───────────────────────────
+# -- How each file system builds and runs a test ---------------------------
 
 FLAGS := -Wno-int-conversion -Wno-pointer-to-int-cast \
          -DFNAME_BYTES=$(lastword $(subst -, ,$(FNAME_KIND)))
@@ -93,7 +93,28 @@ $(error Unknown FS=$(FS): use ours, angr, klee or native)
 endif
 
 
-# ── Tests ─────────────────────────────────────────────────────────────────
+# -- Summaries -------------------------------------------------------------
+
+# SUMMARIES=dir links every dir/*/*.c into the tests, so that the libc
+# functions the summaries are named after (read, ...) run the summaries. They
+# are written for 32 bits, as the fuzzer builds them, so the tests are too.
+ifdef SUMMARIES
+ifneq ($(FS),ours)
+$(error SUMMARIES needs FS=ours)
+endif
+
+SUMMARY_SRCS := $(wildcard $(SUMMARIES)/*/*.c)
+ifeq ($(SUMMARY_SRCS),)
+$(error No summaries in $(SUMMARIES)/*/*.c)
+endif
+
+FLAGS += -m32 -Wno-implicit-function-declaration
+LIB   += $(SUMMARY_SRCS)
+BINS  := bins/summaries/$(FNAME_KIND)
+endif
+
+
+# -- Tests -----------------------------------------------------------------
 
 SUITE_DIR := klee-testsuite/individual-tests
 
@@ -109,11 +130,12 @@ TESTS := $(TEST:.c=)
 endif
 
 
-# ── Logs ──────────────────────────────────────────────────────────────────
+# -- Logs ------------------------------------------------------------------
 
 # Each test's output goes to its log, which run then ends with "== PASSED" or
 # "== FAILED" for report.py. With TEST=, it is shown as well.
-LOG_FILE := $(LOG)/$(FS)/$(FNAME_KIND)/$$test.log
+RUN_KIND := $(FS)$(if $(SUMMARIES),-summaries)/$(FNAME_KIND)
+LOG_FILE := $(LOG)/$(RUN_KIND)/$$test.log
 
 ifdef TEST
 OUTPUT := $(if $(LOG),2>&1 | tee $(LOG_FILE))
@@ -121,32 +143,41 @@ else
 OUTPUT := $(if $(LOG),> $(LOG_FILE),> /dev/null) 2>&1
 endif
 
+# Each test's verdict, PASSED or FAILED, for run to count
+VERDICTS := bins/.verdicts/$(RUN_KIND)
 
-# ── Targets ───────────────────────────────────────────────────────────────
+
+# -- Targets ---------------------------------------------------------------
 
 .PHONY: run run-all compile sra klee-image clean clean-logs
 
+# Runs every test, in parallel with -jN, then counts the verdicts
 run:
-	@set -o pipefail; \
-	echo -e "$(YELLOW)== File system: $(FS) ==$(RESET)"; \
-	passed=0; \
-	failed=0; \
-	for test in $(TESTS); do \
-		echo -e -n "$(YELLOW)->$(RESET) $(MAGENTA)$$test$(RESET)  "; \
-		$(if $(LOG),mkdir -p $$(dirname $(LOG_FILE));) \
-		if $(BUILD_TEST) && $(RUN_TEST) $(OUTPUT); then \
-			passed=$$((passed + 1)); \
-			echo -e "$(GREEN)Passed!$(RESET)"; \
-			$(if $(LOG),echo "== PASSED" >> $(LOG_FILE);) \
-		else \
-			failed=$$((failed + 1)); \
-			echo -e "$(RED)Failed!$(RESET)"; \
-			$(if $(LOG),echo "== FAILED" >> $(LOG_FILE);) \
-		fi; \
-	done; \
+	@echo -e "$(YELLOW)== File system: $(FS) ==$(RESET)"
+	@$(RM) -r $(VERDICTS)
+	@$(MAKE) --no-print-directory -k $(TESTS:%=run/%) || true
+	@passed=$$(grep -lx PASSED $(VERDICTS)/*/* 2>/dev/null | wc -l); \
+	failed=$$(grep -lx FAILED $(VERDICTS)/*/* 2>/dev/null | wc -l); \
 	echo -e "$(GREEN)Passed:$(RESET) $$passed"; \
 	echo -e "$(RED)Failed:$(RESET) $$failed"; \
-	[ $$failed -eq 0 ]
+	[ $$failed -eq 0 ] && [ $$passed -eq $(words $(TESTS)) ]
+
+# One test: builds it, runs it, and saves its log and its verdict
+run/%:
+	@set -o pipefail; \
+	test=$*; \
+	mkdir -p $(VERDICTS)/$$(dirname $$test); \
+	$(if $(LOG),mkdir -p $$(dirname $(LOG_FILE));) \
+	if $(BUILD_TEST) && $(RUN_TEST) $(OUTPUT); then \
+		verdict=PASSED; \
+		line="$(GREEN)Passed!$(RESET)"; \
+	else \
+		verdict=FAILED; \
+		line="$(RED)Failed!$(RESET)"; \
+	fi; \
+	echo $$verdict > $(VERDICTS)/$$test; \
+	$(if $(LOG),echo "== $$verdict" >> $(LOG_FILE);) \
+	echo -e "$(YELLOW)->$(RESET) $(MAGENTA)$$test$(RESET)  $$line"
 
 # Our file system, then angr's
 run-all:
@@ -159,7 +190,7 @@ compile: sra $(TESTS:%=$(BINS)/%.test)
 sra:
 	../sra.py lib
 
-$(BINS)/%.test: $(SUITE_DIR)/%.c klee-testsuite/include/test_helper.h
+$(BINS)/%.test: $(SUITE_DIR)/%.c klee-testsuite/include/test_helper.h $(SUMMARY_SRCS)
 	@mkdir -p $(@D)
 	$(CC) $(FLAGS) -Iklee-testsuite/include $< $(LIB) -o $@
 

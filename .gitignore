@@ -46,6 +46,9 @@ output[0-9_]*.c
 /**/*_validation.c
 /**/*_validation.test_result.json
 
+# The testsuite's per-test verdicts, which make run counts
+tests/files/testsuite/bins/.verdicts/
+
 # Ast
 ast.txt
 
