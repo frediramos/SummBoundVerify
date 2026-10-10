@@ -61,6 +61,9 @@ endif
 LIB  := lib/sra.c -Ilib
 BINS := bins/$(FNAME_KIND)
 
+# The image FS=klee runs in, built by klee-image
+KLEE_IMAGE := klee-testsuite-fork
+
 
 # Our symbolic FS
 ifeq ($(FS),ours)
@@ -81,8 +84,6 @@ BUILD_TEST = $(MAKE) -s $(BINS)/$$test.test
 RUN_TEST   = native/run.sh $(BINS)/$$test.test
 
 else ifeq ($(FS),klee)
-KLEE_IMAGE := klee-testsuite-fork
-
 # Built and run by the suite's own KLEE runner, in the image klee-image builds
 BUILD_TEST = true
 RUN_TEST   = KLEE_IMAGE=$(KLEE_IMAGE) klee/run.sh $$test
