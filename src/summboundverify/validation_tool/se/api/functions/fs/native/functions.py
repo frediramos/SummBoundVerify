@@ -323,6 +323,20 @@ class file_flags(AngrFileSummary):
         return simfd.flags
 
 
+class file_set_max_fds(AngrFileSummary):
+    """setrlimit(RLIMIT_NOFILE, n): returns -1, as angr has no limit to set.
+
+    BUG #14: angr's descriptor table has a fixed size (max_fds, a module
+    constant), and nothing that sets it per state. Changing that constant
+    would not give angr a limit either: open past it raises an error instead
+    of failing with EMFILE, dup ignores it, and dup2 has its own fixed limit,
+    4096.
+    """
+
+    def run(self, limit_bv):
+        return -1
+
+
 class fs_to_constraint(AngrFileSummary):
     def run(self):
         raise NotImplementedApiError("fs_to_constraint")

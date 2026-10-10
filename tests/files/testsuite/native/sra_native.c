@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <sys/stat.h>
+#include <sys/resource.h>
 
 #include "sra.h"
 
@@ -285,6 +286,13 @@ int __file_dup2(int oldfd, int newfd) {
             record(fd, opened_flags[oldfd]);
     }
     return fd;
+}
+
+int __file_set_max_fds(int n) {
+    if (n < 0)
+        return -1;
+    struct rlimit limit = { n, n };
+    return setrlimit(RLIMIT_NOFILE, &limit) == 0 ? 1 : -1;
 }
 
 FILE *__FILE_from_fd(int fd) {

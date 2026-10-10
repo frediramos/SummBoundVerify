@@ -58,5 +58,6 @@ int __file_mode(int fd, mode_t *mode) { return 0; }
 int __file_flags(int fd) { return 0; }
 int __file_dup(int oldfd) { return 0; }
 int __file_dup2(int oldfd, int newfd) { return 0; }
+int __file_set_max_fds(int n) { return 0; }
 FILE *__FILE_from_fd(int fd) { return 0; }
 int __fd_from_FILE(FILE *fp) { return 0; }

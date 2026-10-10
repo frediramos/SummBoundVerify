@@ -200,6 +200,10 @@ class InvalidFlagsError(InvalidArgumentError):
     argument = "open flags"
 
 
+class InvalidLimitError(InvalidArgumentError):
+    argument = "descriptor limit"
+
+
 # -----------------------------------------------------------------------------------
 # Generation Exceptions
 # -----------------------------------------------------------------------------------

@@ -437,17 +437,17 @@ ssize_t __file_set_size(int fd, size_t size);
 ssize_t __file_set_offset(int fd, size_t offset);
 
 /**
- * Sets the permission bits of `fd` to `mode & ~022`. The mode belongs to the
- * descriptor and its duplicates, not the file: reopening the file gives the
- * default mode.
+ * Sets the permission bits of the file `fd` refers to, to `mode`, as chmod
+ * does: no umask is applied. The mode belongs to the file: every descriptor of
+ * it sees the change, and the mode outlives them.
  *
  * Returns `1` on success and `-1` on failure.
  */
 int __file_set_mode(int fd, mode_t mode);
 
 /**
- * Stores the permission bits of `fd` in `*mode`: `0644` by default, with no
- * file-type bits (e.g., `S_IFREG`).
+ * Stores the permission bits of the file `fd` refers to in `*mode`: `0644`
+ * for a new file, with no file-type bits (e.g., `S_IFREG`).
  *
  * Returns `1` on success and `-1` on failure.
  */
@@ -480,6 +480,16 @@ int __file_dup(int oldfd);
  * Returns `newfd`, or `-1` on failure.
  */
 int __file_dup2(int oldfd, int newfd);
+
+/**
+ * Limits descriptors to `0` to `n - 1`, as setrlimit(RLIMIT_NOFILE) does:
+ * past the limit, `__file_open` and `__file_dup` fail (EMFILE), and
+ * `__file_dup2` fails for `newfd >= n` (EBADF). Descriptors already open stay
+ * open. The default limit is 1024. `n` must be concrete.
+ *
+ * Returns `1` on success, or `-1` if `n` is negative.
+ */
+int __file_set_max_fds(int n);
 
 /**
  * Returns the `FILE*` of `fd`, or `NULL` on error.

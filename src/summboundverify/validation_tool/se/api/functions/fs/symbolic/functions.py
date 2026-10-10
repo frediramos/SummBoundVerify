@@ -308,6 +308,12 @@ class file_flags(FileSummary):
         return flags
 
 
+class file_set_max_fds(FileSummary):
+    def run(self, limit_bv):
+        limit = self._signed(self.load_int(limit_bv))
+        return self.fs.set_max_fds(limit)
+
+
 class fs_to_constraint(FileSummary):
     def run(self):
         c = self.fs.to_constraint()

@@ -17,5 +17,6 @@ int main(){
   __file_set_mode(fd, 0777);
   __file_mode(fd, &mode);
 
-  __sra_assert(mode == 0755);
+  // As chmod: the mode as given, no umask
+  __sra_assert(mode == 0777);
 }

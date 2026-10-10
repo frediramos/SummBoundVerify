@@ -28,7 +28,7 @@
 
 13. angr has no file permissions: a file keeps no mode, and `open` never checks one, so opening a `0444` file for writing succeeds. Nor can a program read a mode back: libc's `fstat` has no summary, so it returns an unconstrained value and leaves the `stat` buffer unchanged. (Open 10-12)
 
-14. angr ignores the descriptor limit: there is no `setrlimit` summary, and descriptors are numbered up to a fixed 8192 (`max_fds`) whatever `RLIMIT_NOFILE` is. So after limiting a program to 32 descriptors, a further `open` and `dup2(fd, 32)` succeed instead of failing with `EMFILE` and `EBADF`. (Open 47, Dup 06)
+14. angr has no descriptor limit: descriptors go up to a fixed 8192 (`max_fds`, a module constant), and there is no `setrlimit` summary, so `__file_set_max_fds` returns `-1`. Changing `max_fds` would not help: `open` past it raises an error instead of failing with `EMFILE`, `dup` ignores it, and `dup2` has its own limit, 4096. So with a limit of 32 descriptors, a further `open` and `dup2(fd, 32)` succeed instead of failing. (Open 47, Dup 06)
 
 ## Notes
 
@@ -47,6 +47,7 @@
   | `__file_create(name)` | `open(name, O_WRONLY \| O_CREAT \| O_EXCL, 0644)`, then `close` | `posix.open`, with the file-exists check that `O_EXCL` should do (see 4); records the mode `0644` (see 13) |
   | `__file_set_size(fd, size)` | `ftruncate` | sets `SimFile._size` (see 7) |
   | `__file_set_mode(fd, mode)` | `fchmod` | records the mode in the state's globals; only `__file_mode` reads it (see 13) |
+  | `__file_set_max_fds(n)` | `setrlimit(RLIMIT_NOFILE)` | returns `-1`: there is no limit to set (see 14) |
   | `__file_mode(fd, &mode)` | `fstat`'s `st_mode` | the recorded mode, as a regular file; for other files, `posix.fstat`: a new symbolic `st_mode` (see 13) |
 
   All of them load names as `fopen` does, so a symbolic name is concretized (see 5).
