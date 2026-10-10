@@ -791,7 +791,7 @@ class SymbolicFS(angr.SimStatePlugin):
         """Create a concrete file."""
 
         def append_new():
-            entry = {filename: File()}
+            entry: FileNameEntry = {filename: File()}
             self.fnames.append(entry)
 
         if not filename:
@@ -846,7 +846,7 @@ class SymbolicFS(angr.SimStatePlugin):
         """Delete a concrete file and return 1 on success or -1 on failure."""
 
         def append_new():
-            entry = {filename: False}
+            entry: FileNameEntry = {filename: False}
             self.fnames.append(entry)
 
         if self.is_fnames_emtpy():
