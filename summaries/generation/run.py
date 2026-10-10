@@ -120,7 +120,9 @@ def start_run(args: argparse.Namespace) -> tuple[Run, list[Target]]:
     if not shutil.which("summbv"):
         fail("summbv not on PATH; activate its virtualenv")
 
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    # When the run started, in UTC, e.g. 2026-10-12_09-15-00: readable, and
+    # sorted by time, so that the latest run is the last one
+    run_id = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
     run = Run(
         claude=Claude.find(args.model, args.effort),
         run_id=run_id,

@@ -1,10 +1,10 @@
 """
 Tables of a generation run in results/, for the paper.
 
-    ./run.py report                     the latest run: its three tables
-    ./run.py report 20261012T091500Z    a given run
-    ./run.py report --table step2       one table: step1, step2 or summary
-    ./run.py report -csv                raw values as CSV, e.g. for plots
+    ./run.py report                        the latest run: its three tables
+    ./run.py report 2026-10-12_09-15-00    a given run
+    ./run.py report --table step2          one table: step1, step2 or summary
+    ./run.py report -csv                   raw values as CSV, e.g. for plots
 
 The tables:
     step1    one row per function: the attempts until the fuzzer accepted
@@ -337,7 +337,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     ap.add_argument(
         "run",
         nargs="?",
-        help="a run id in results/ (default: the latest)"
+        help="a run in results/, e.g. 2026-10-12_09-15-00 "
+             "(default: the latest)"
     )
     ap.add_argument(
         "--table",

@@ -104,6 +104,9 @@ copy. Step 2 only runs if the fuzzer accepted every summary.
 
 ## Results
 
+Each run is saved to its own folder in `results/`, named after the time it
+started, in UTC: e.g. `results/2026-10-12_09-15-00/`.
+
 ```
 results/<run id>/
     meta.json                   model, effort, versions, source, commit, input hashes
