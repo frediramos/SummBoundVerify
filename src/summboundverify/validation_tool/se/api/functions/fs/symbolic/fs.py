@@ -376,6 +376,10 @@ class SymbolicFS(angr.SimStatePlugin):
 
         self.shared[id_].discard(fd)
 
+        # No descriptor left 
+        if not self.shared[id_]:
+            del self.shared[id_]
+
     def add_fd(self, fd: int, fde: FdEntries):
         """Install `fde` as descriptor `fd`, marking its files as shared."""
         self.fds[fd] = fde
