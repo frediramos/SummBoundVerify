@@ -11,7 +11,7 @@ from pycparser.c_ast import (
     IdentifierType,
 )
 
-from summboundverify.api import api_map
+from summboundverify.api import api, api_map
 
 
 def save_current_state(name=None):
@@ -180,6 +180,12 @@ def file_write(fd_var, buf_var, count):
             Constant('int', str(count)),
         ]),
     )
+
+
+def file_close(fd_var):
+    # Not required: only the tests that close a file call it, and get its stub
+    call = ID(api("file_close"))
+    return FuncCall(call, ExprList([ID(fd_var)]))
 
 
 def file_set_offset(fd_var, offset=0):

@@ -76,6 +76,7 @@ class SymbolicTestGen(TestGen):
             body.extend(self._tag_memory(sym_args, mem_args))
 
         body.extend(self._gen_name_file_constraints(use_api=True))
+        body.extend(self._gen_name_file_setup())
         body.extend(self._tag_files())
 
         body.extend(self._body(call_args, test_id))

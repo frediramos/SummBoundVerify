@@ -126,10 +126,14 @@ fildes:
   but the fd is converted via `__FILE_from_fd(fd)` before the call.
 
 - **`name`** — The function receives a `const char*` file path. The test
-  creates a symbolic file name array and passes it directly. No open/write
-  setup is generated. The generated test automatically constrains the
-  symbolic path to exclude invalid filenames (empty string, `"."`, `".."`,
-  and any byte containing `'/'`).
+  creates a symbolic file name array and passes it directly. The generated
+  test automatically constrains the symbolic path to exclude invalid
+  filenames (empty string, `"."`, `".."`, and any byte containing `'/'`).
+  Without a `data` block, no file of that name exists before the call. With
+  one, the file exists: as for a descriptor, the test calls
+  `__file_create()` + `__file_open()`, writes the initial data with
+  `__file_write()`, then closes it with `__file_close()`, before passing the
+  name.
 
 **`fname` and `data` sub-blocks:**
 

@@ -165,6 +165,7 @@ int sbv_fclose(struct _IO_FILE *fp);
 int __file_create(const char *name);
 int __file_open(const char *name, const char *flags);
 ssize_t __file_write(int fd, const void *buf, size_t count);
+int __file_close(int fd);
 ssize_t __file_set_offset(int fd, size_t offset);
 struct _IO_FILE *__FILE_from_fd(int fd);
 

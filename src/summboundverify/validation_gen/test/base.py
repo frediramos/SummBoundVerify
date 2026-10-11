@@ -30,6 +30,7 @@ from ..api import (
     file_create,
     file_open,
     file_write,
+    file_close,
     file_set_offset,
     FILE_from_fd,
 )
@@ -327,27 +328,7 @@ class TestGen(ABC):
 
             # Optional initial data
             if data_spec:
-                data_size = data_spec.get('size', 5)
-                data_symbolic = data_spec.get('symbolic', False)
-                data_var = f"__data_{name}"
-
-                if data_symbolic:
-                    # Allocate size+1 so the null terminator doesn't eat a data byte
-                    alloc_size = data_size + 1
-                    data_gen = ArrayTypeGen(
-                        ID(data_var), "char", [str(alloc_size)])
-                    setup.extend(data_gen.gen())
-                else:
-                    # Concrete zero-filled array (declaration only, no symbolic init)
-                    data_gen = ArrayTypeGen(
-                        ID(data_var),
-                        "char",
-                        [str(data_size)]
-                    )
-
-                    setup.extend(data_gen.gen(const=0))
-
-                setup.append(file_write(fd_var, data_var, data_size))
+                setup.extend(self._file_data(name, fd_var, data_spec))
                 setup.append(file_set_offset(fd_var, 0))
 
             if ftype == 'pointer':
@@ -355,6 +336,59 @@ class TestGen(ABC):
                 setup.append(FILE_from_fd(name, fd_var))
 
         return setup, skip
+
+    @staticmethod
+    def _file_data(name: str, fd_var: str, data_spec: dict) -> list[Node]:
+        """Writes a file's initial data, from its `data` block, to `fd_var`."""
+        data_size = data_spec.get('size', 5)
+        data_symbolic = data_spec.get('symbolic', False)
+        data_var = f"__data_{name}"
+        setup: list[Node] = []
+
+        if data_symbolic:
+            # Allocate size+1 so the null terminator doesn't eat a data byte
+            alloc_size = data_size + 1
+            data_gen = ArrayTypeGen(
+                ID(data_var), "char", [str(alloc_size)])
+            setup.extend(data_gen.gen())
+        else:
+            # Concrete zero-filled array (declaration only, no symbolic init)
+            data_gen = ArrayTypeGen(
+                ID(data_var),
+                "char",
+                [str(data_size)]
+            )
+
+            setup.extend(data_gen.gen(const=0))
+
+        setup.append(file_write(fd_var, data_var, data_size))
+        return setup
+
+    def _gen_name_file_setup(self) -> list[Node]:
+        """
+        Generate file setup code for name-type file args with a `data` block.
+
+        As for descriptor args, the file is created and its initial data
+        written, but then it is closed: the function receives its name. A
+        name arg without a `data` block names a file that does not exist.
+        """
+        setup: list[Node] = []
+        for name, spec in self.argspec.items():
+            if spec.get('semantic') != 'file':
+                continue
+
+            fblock = spec.get('file', {})
+            data_spec = fblock.get('data')
+            if fblock.get('type') != 'name' or not data_spec:
+                continue
+
+            fd_var = f"__fd_{name}"
+            setup.append(file_create(name))
+            setup.append(file_open(fd_var, name, "w"))
+            setup.extend(self._file_data(name, fd_var, data_spec))
+            setup.append(file_close(fd_var))
+
+        return setup
 
     def _create_args(
         self,

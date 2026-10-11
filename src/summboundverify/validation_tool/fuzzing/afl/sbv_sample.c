@@ -384,6 +384,12 @@ ssize_t __file_write(int fd, const void *buf, size_t count) {
     return write(fd, buf, count);
 }
 
+/* Through sbv_close, so the descriptor is no longer tracked: closed, it no
+ * longer exists, as on the symbolic side. */
+int __file_close(int fd) {
+    return sbv_close(fd) == 0 ? 0 : -1;
+}
+
 ssize_t __file_set_offset(int fd, size_t offset) {
     off_t r = lseek(fd, (off_t)offset, SEEK_SET);
 
