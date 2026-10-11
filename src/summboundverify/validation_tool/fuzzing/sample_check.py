@@ -164,7 +164,7 @@ def _pin_memory(pins: Pins, sample) -> None:
 
 
 def _pin_files(pins: Pins, sample) -> bool:
-    """The tagged file paths: existence and content bytes.
+    """The tagged file paths: existence, mode, size and content bytes.
 
     Returns True when the concrete side recorded content for a file but the
     formula declares no `file_<name>_byte_*` variables for it -- typically
@@ -174,6 +174,8 @@ def _pin_files(pins: Pins, sample) -> bool:
 
     for name, fv in sample.files.items():
         pins.pin(f'file_{name}_exists', 1 if fv.exists else 0)
+        pins.pin(f'file_{name}_mode', fv.mode)
+        pins.pin(f'file_{name}_size', fv.size)
 
         before = len(pins.values)
         for index, byte in enumerate(fv.raw):

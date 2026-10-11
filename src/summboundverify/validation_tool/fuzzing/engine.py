@@ -121,14 +121,21 @@ class Value:
 
 @dataclass
 class FileValue:
-    """One tagged file's post-call state: existence and content bytes."""
+    """
+    One tagged file's post-call state: existence, permission bits, size and
+    content bytes. Mode and size are 0 for a file that does not exist.
+    """
 
     exists: bool
+    mode: int
+    size: int
     raw: bytes
 
     def as_dict(self) -> dict:
         return {
             'exists': self.exists,
+            'mode': self.mode,
+            'size': self.size,
             'bytes': self.raw.hex(),
         }
 
@@ -526,11 +533,13 @@ class AflEngine():
                     int(nbytes) * 8, bytes.fromhex(raw)
                 )
 
-            elif kind == 'F' and len(parts) >= 3:
-                name, exists_str, nbytes_str = parts[0], parts[1], parts[2]
-                raw = parts[3] if len(parts) > 3 else ''
+            elif kind == 'F' and len(parts) >= 4:
+                name, exists_str, mode_str, size_str = parts[:4]
+                raw = parts[4] if len(parts) > 4 else ''
                 current.files[name] = FileValue(
                     exists=int(exists_str) == 1,
+                    mode=int(mode_str),
+                    size=int(size_str),
                     raw=bytes.fromhex(raw) if raw else b'',
                 )
 

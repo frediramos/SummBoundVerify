@@ -376,7 +376,7 @@ class SymbolicFS(angr.SimStatePlugin):
 
         self.shared[id_].discard(fd)
 
-        # No descriptor left 
+        # No descriptor left
         if not self.shared[id_]:
             del self.shared[id_]
 
@@ -579,8 +579,27 @@ class SymbolicFS(angr.SimStatePlugin):
     # Constraints
     # ---------------------------------------------------------------------------
 
-    def to_constraint(self) -> Bool:
-        """Lifts the current state of the FS to a boolean constraint.
+    def to_constraint(
+        self,
+        tags: list[tuple[str, SymbString]] | None = None
+    ) -> Bool:
+        """
+        Lifts the current state of the FS to a boolean constraint: what can
+        be seen through its open descriptors, and the files named by `tags`,
+        the (tag, path) pairs of the file paths the test tagged.
+        """
+        constraint = claripy.And(self.lift_fds(), self.lift_files(tags or []))
+        constraint = claripy.simplify(constraint)
+
+        if not self.state.solver.satisfiable(extra_constraints=(constraint,)):
+            raise UnsatFSError()
+
+        return constraint
+
+    def lift_fds(self) -> Bool:
+        """
+        Lifts each open descriptor: its flags and offset, and the mode, size
+        and bytes of its file, as seen through it.
 
         Besides the per-fd variables, `file_open_fds` is a bit mask of the
         descriptors open at this point (bit N for fd N). It describes the
@@ -631,14 +650,64 @@ class SymbolicFS(angr.SimStatePlugin):
             fd_cases.append(claripy.ite_cases(file_cases, true()))
 
         open_fds = self.sym_var("file_open_fds", OPEN_FDS_BITS)
+        return claripy.And(open_fds == open_mask, *fd_cases)
 
-        constraint = claripy.And(open_fds == open_mask, *fd_cases)
-        constraint = claripy.simplify(constraint)
+    def lift_files(self, tags: list[tuple[str, SymbString]]) -> Bool:
+        """
+        Lifts the files the test tagged by name (with __file_addr): each
+        `tags` entry is a tag and the file path it names.
 
-        if not self.state.solver.satisfiable(extra_constraints=(constraint,)):
-            raise UnsatFSError()
+        For each tag, constrains these variables, which the fuzzer compares
+        with the real file after the call:
 
-        return constraint
+            file_<tag>_exists    1 if the file exists, 0 if not
+            file_<tag>_size      its size in bytes (0 if it does not exist)
+            file_<tag>_mode      its permission bits (0 if it does not exist)
+            file_<tag>_byte_<i>  its bytes
+
+        A symbolic path may be the name of several files. Then each file is
+        one case, which holds when the path is that file's name; the most
+        recently created file comes first.
+        """
+        int_size = self.state.arch.sizeof["int"]
+        char_size = 8
+        lifted = []
+
+        for tag, path in tags:
+            prefix = f"file_{tag}"
+            exists_var = self.sym_var(f"{prefix}_exists", int_size)
+            size = self.sym_var(f"{prefix}_size", int_size)
+            mode = self.sym_var(f"{prefix}_mode", int_size)
+
+            exists = self.exists_file(path)
+            if isinstance(exists, int):
+                exists = self.bvv_int(exists)
+
+            cases = []
+            for name, cond, file in self.possible_fnames(path):
+                values = [
+                    size == self.bvv_int(len(file.bytes)),
+                    mode == self.bvv_int(file.mode),
+                ]
+                for i, c in enumerate(file.bytes):
+                    byte = self.sym_var(f"{prefix}_byte_{i}", char_size)
+                    values.append(byte == self.bvv_char(c))
+
+                is_file = claripy.And(cond, eq_strings(path, name))
+                cases.append((is_file, claripy.And(*values)))
+
+            missing = claripy.And(
+                size == self.bvv_int(0),
+                mode == self.bvv_int(0)
+            )
+            state = claripy.If(
+                exists == self.bvv_int(1),
+                claripy.ite_cases(cases, missing),
+                missing
+            )
+            lifted.append(claripy.And(exists_var == exists, state))
+
+        return claripy.And(*lifted) if lifted else true()
 
     def open_bit(self, fd: int, fde: FdEntries) -> BV:
         """Bit `fd` of `file_open_fds`, set where `fd` is open.
@@ -982,10 +1051,13 @@ class SymbolicFS(angr.SimStatePlugin):
                 )
 
                 if can_add(cond):
-                    # A descriptor that certainly refers to this file shares
-                    # it. One that may refer to several gets a copy: writes
-                    # write every candidate, and cannot be made conditional.
-                    if not self.is_certain(cond):
+                    # A descriptor opened with this file's very name shares
+                    # it: if the name may be invalid, the file exists only
+                    # where it is valid, and so does the descriptor. One whose
+                    # name may name other files gets a copy: writes write
+                    # every candidate, and cannot be made conditional.
+                    same_name = eq_strings(filename, name)
+                    if not self.is_certain(same_name):
                         file = File(file.bytes.copy(), file.mode)
 
                     entry = FdEntry(name, cond, 0, file)

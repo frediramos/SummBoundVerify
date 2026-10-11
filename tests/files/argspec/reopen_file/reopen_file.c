@@ -17,5 +17,9 @@ int reopen_file(const char *path)
   }
   __file_write(fd, "abc", 3);
   __file_close(fd);
-  return __file_open(path, "w");
+
+  /* O_TRUNC: __file_open's "w" does not truncate */
+  fd = __file_open(path, "w");
+  __file_set_size(fd, 0);
+  return fd;
 }

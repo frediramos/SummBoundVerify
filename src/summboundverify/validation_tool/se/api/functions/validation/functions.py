@@ -107,18 +107,7 @@ class get_cnstr(CSummary):
         # function that leaves one open. A test that never touches it (every
         # libc string test) gets no file variables.
         if isinstance(fs, SymbolicFS) and (fs.fnames or fs.fds or self.ctx.FILE_TAGS):
-            constraints.append(fs.to_constraint())
-
-        if isinstance(fs, SymbolicFS) and self.ctx.FILE_TAGS:
-            int_size = self.state.arch.sizeof["int"]
-            for name, path in self.ctx.FILE_TAGS:
-                exists_val = fs.exists_file(path)
-                exists_var = self.state.solver.BVS(
-                    f"file_{name}_exists", int_size, explicit_name=True,
-                )
-                if isinstance(exists_val, int):
-                    exists_val = claripy.BVV(exists_val, int_size)
-                constraints.append(exists_var == exists_val)
+            constraints.append(fs.to_constraint(self.ctx.FILE_TAGS))
 
         return constraints
 

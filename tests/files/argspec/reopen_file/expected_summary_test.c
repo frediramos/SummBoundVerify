@@ -28,6 +28,7 @@ int __file_create(const char *name) { return 0; }
 int __file_open(const char *name, const char *flags) { return 0; }
 result_t __check_implications(char *summ, char *cncrt) { return 0; }
 ssize_t __file_set_offset(int fd, size_t offset) { return 0; }
+ssize_t __file_set_size(int fd, size_t size) { return 0; }
 ssize_t __file_write(int fd, const void *buffer, size_t count) { return 0; }
 state_t __save_current_state(void) { return 0; }
 symbolic __sym_var_array(char *name, size_t index, size_t size) { return 0; }
@@ -55,7 +56,9 @@ int reopen_file(const char *path)
   }
   __file_write(fd, "abc", 3);
   __file_close(fd);
-  return __file_open(path, "w");
+  fd = __file_open(path, "w");
+  __file_set_size(fd, 0);
+  return fd;
 }
 
 void test_1()

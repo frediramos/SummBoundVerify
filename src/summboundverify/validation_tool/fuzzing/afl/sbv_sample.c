@@ -6,7 +6,8 @@
  *   V <name> <index|-> <bits> <off> <len> <hex>   one per drawn input,
  *                                       where off/len locate it on the tape
  *   M <name> <nbytes> <hex>            one per tagged region, contents after
- *   F <name> <exists> <nbytes> <hex>   one per tagged file path
+ *   F <name> <exists> <mode> <size> <hex>   one per tagged file path
+ *                                       (mode and size 0 if it does not exist)
  *   D fd<N> <flags> <mode> <offset> <size> <hex>   one per open descriptor
  *   O <mask>                           the open descriptors, bit N for fd N
  *   R <bits> <is_pointer> <hex>        absent for a void function
@@ -625,15 +626,17 @@ static void emit_regions(void) {
 
 static void emit_files(void) {
     unsigned char buf[SBV_MAX_FILE_CONTENT];
+    struct stat st;
     size_t nbytes;
     int i, exists;
 
     for (i = 0; i < g_nfile_paths; i++) {
-        exists = access(g_file_paths[i].path, F_OK) == 0;
+        exists = stat(g_file_paths[i].path, &st) == 0;
         nbytes = exists ? read_path(g_file_paths[i].path, buf, sizeof(buf)) : 0;
 
-        printf("F %s %d %lu ", g_file_paths[i].name, exists,
-               (unsigned long)nbytes);
+        printf("F %s %d %d %lu ", g_file_paths[i].name, exists,
+               exists ? (int)(st.st_mode & 07777) : 0,
+               exists ? (unsigned long)st.st_size : 0UL);
         put_hex(buf, nbytes);
         putchar('\n');
     }
