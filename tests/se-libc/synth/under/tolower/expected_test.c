@@ -15,6 +15,7 @@ typedef unsigned int list_t;
 typedef unsigned int size_t;
 typedef int ssize_t;
 typedef int mode_t;
+typedef long off_t;
 typedef void *FILE;
 
 FILE *__FILE_from_fd(int fd) { return 0; }
@@ -45,6 +46,7 @@ int __file_exists(const char *name) { return 0; }
 int __file_flags(int fd) { return 0; }
 int __file_mode(int fd, mode_t *mode) { return 0; }
 int __file_open(const char *name, const char *flags) { return 0; }
+int __file_set_max_fds(int n) { return 0; }
 int __file_set_mode(int fd, mode_t mode) { return 0; }
 int __is_certain(cnstr_t cnstr) { return 0; }
 int __is_sat(cnstr_t cnstr) { return 0; }
