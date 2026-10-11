@@ -1,0 +1,7 @@
+summ: lseek.c
+summname: lseek
+libc: lseek
+compile: x86
+argspec: argspec.yaml
+engine: [fuzz]
+execs: 2000

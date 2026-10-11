@@ -1,0 +1,25 @@
+# off_t lseek(int fd, off_t offset, int whence)
+fd:
+  type: int
+  semantic: file
+  file:
+    type: descriptor
+    fname:
+      symbolic: true
+      size: 3
+    data:
+      symbolic: true
+      size: 4
+
+# Unbounded, so negative offsets are tried too: maxvalue is an unsigned
+# bound, and the generator takes only one per argspec
+offset:
+  type: off_t
+  semantic: scalar
+
+# SEEK_SET (0), SEEK_CUR (1), SEEK_END (2), and an invalid 3
+whence:
+  type: int
+  semantic: scalar
+  scalar:
+    maxvalue: 3

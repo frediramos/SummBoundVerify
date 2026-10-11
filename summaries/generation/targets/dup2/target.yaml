@@ -1,0 +1,5 @@
+function: dup2
+summname: dup2
+manual: man.txt
+output: dup2.c
+fuzzer: summbv -config config.yaml -run

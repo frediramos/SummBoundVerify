@@ -1,0 +1,27 @@
+# int open(const char *pathname, int flags, mode_t mode)
+#
+# A name argument's file does not exist before the call: the fuzzer only
+# checks opening a missing file, with or without O_CREAT. The testsuite
+# checks existing files.
+pathname:
+  type: char*
+  semantic: file
+  file:
+    type: name
+    fname:
+      symbolic: true
+      size: 3
+
+# Up to 07777, covering O_RDONLY/O_WRONLY/O_RDWR, O_CREAT, O_EXCL,
+# O_TRUNC, O_APPEND (02000) and O_NONBLOCK (04000)
+flags:
+  type: int
+  semantic: scalar
+  scalar:
+    maxvalue: 4095
+
+# Permission bits, used with O_CREAT. Unbounded: the generator takes only
+# one maxvalue per argspec
+mode:
+  type: mode_t
+  semantic: scalar

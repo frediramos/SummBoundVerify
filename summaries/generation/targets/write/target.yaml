@@ -1,0 +1,5 @@
+function: write
+summname: write
+manual: man.txt
+output: write.c
+fuzzer: summbv -config config.yaml -run

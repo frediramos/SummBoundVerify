@@ -1,0 +1,12 @@
+# int dup(int oldfd)
+oldfd:
+  type: int
+  semantic: file
+  file:
+    type: descriptor
+    fname:
+      symbolic: true
+      size: 3
+    data:
+      symbolic: true
+      size: 4

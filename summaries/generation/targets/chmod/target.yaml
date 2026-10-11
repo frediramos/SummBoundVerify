@@ -1,0 +1,5 @@
+function: chmod
+summname: chmod
+manual: man.txt
+output: chmod.c
+fuzzer: summbv -config config.yaml -run

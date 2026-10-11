@@ -1,0 +1,5 @@
+function: lseek
+summname: lseek
+manual: man.txt
+output: lseek.c
+fuzzer: summbv -config config.yaml -run

@@ -1,0 +1,5 @@
+function: open
+summname: open
+manual: man.txt
+output: open.c
+fuzzer: summbv -config config.yaml -run

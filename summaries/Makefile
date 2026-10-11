@@ -1,5 +1,6 @@
 DIR := $(notdir $(CURDIR))
-SUBDIRS := $(shell find * -maxdepth 0 -type d | sort -n)
+# The summaries: each folder with a Makefile (not generation/ or obtained/)
+SUBDIRS := $(sort $(patsubst %/Makefile,%,$(wildcard */Makefile)))
 
 RED     := \033[31m
 GREEN   := \033[32m
