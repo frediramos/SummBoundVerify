@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-Tables of a generation run in results/, for the paper.
+Tables of generation runs in results/, for the paper.
 
     ./run.py report                        the latest run: its three tables
     ./run.py report 2026-10-12_09-15-00    a given run
+    ./run.py report RUN RUN ...            several runs, pieced together:
+                                           e.g. step 1 done in parts
     ./run.py report --table step2          one table: step1, step2 or summary
     ./run.py report -csv                   raw values as CSV, e.g. for plots
 
@@ -181,8 +183,7 @@ def iterations(folder: Path) -> list[dict]:
 
 @dataclass
 class Results:
-    folder: Path
-    meta: dict
+    metas: list[dict]               # each run's meta.json
     step1: dict[str, dict]          # each function's summary.json
     step1_iters: dict[str, list]    # each function's iter-<n>.json
     step2: dict | None              # step 2's summary.json
@@ -218,14 +219,41 @@ class Results:
             ]
 
         return cls(
-            folder,
-            meta,
+            [meta],
             step1,
             step1_iters,
             step2,
             step2_runs,
             step2_iters
         )
+
+    @classmethod
+    def merge(cls, runs: list["Results"], prog: str) -> "Results":
+        """
+        Several runs as one, in the order given: a function's step 1 comes
+        from the last run that has it, and step 2 from the one run that has
+        it.
+        """
+        with_step2 = [r for r in runs if r.step2]
+        if len(with_step2) > 1:
+            ids = ", ".join(r.metas[0]["run_id"] for r in with_step2)
+            sys.exit(f"{prog}: more than one run has a step 2: {ids}")
+
+        merged = cls([], {}, {}, None, [], [])
+        for r in runs:
+            merged.metas += r.metas
+            merged.step1.update(r.step1)
+            merged.step1_iters.update(r.step1_iters)
+        for r in with_step2:
+            merged.step2 = r.step2
+            merged.step2_runs = r.step2_runs
+            merged.step2_iters = r.step2_iters
+        return merged
+
+    @property
+    def functions(self) -> list[str]:
+        """The functions the runs covered."""
+        return sorted({fn for m in self.metas for fn in m["functions"]})
 
 
 # -- The tables --------------------------------------------------------------
@@ -348,10 +376,11 @@ def parse_args(argv: list[str], prog: str) -> argparse.Namespace:
         description=__doc__.split("\n\n")[0]
     )
     ap.add_argument(
-        "run",
-        nargs="?",
-        help="a run in results/, e.g. 2026-10-12_09-15-00 "
-             "(default: the latest)"
+        "runs",
+        nargs="*",
+        metavar="run",
+        help="runs in results/, e.g. 2026-10-12_09-15-00, or the paths to "
+             "their folders, reported as one (default: the latest)"
     )
     ap.add_argument(
         "--table",
@@ -366,19 +395,25 @@ def parse_args(argv: list[str], prog: str) -> argparse.Namespace:
     return ap.parse_args(argv)
 
 
-def find_run(run: str | None, prog: str) -> Path:
+def find_runs(names: list[str], prog: str) -> list[Path]:
+    """The runs' folders, or the latest run's."""
     runs = sorted(p for p in RESULTS.glob("*") if (p / "meta.json").exists())
     if not runs:
         sys.exit(f"{prog}: no runs in results/")
-    if run is None:
-        return runs[-1]
-    if not (RESULTS / run / "meta.json").exists():
-        sys.exit(f"{prog}: no run {run} in results/")
-    return RESULTS / run
+    if not names:
+        return runs[-1:]
+
+    folders = []
+    for name in names:
+        # A run's name, or the path to its folder
+        folder = Path(name) if Path(name).is_dir() else RESULTS / name
+        if not (folder / "meta.json").exists():
+            sys.exit(f"{prog}: no run {name} in results/")
+        folders.append(folder)
+    return folders
 
 
-def print_header(r: Results):
-    meta = r.meta
+def print_run(meta: dict):
     source = meta["source"]
     if source == "commit" or not meta["uncommitted_sha256"]:
         source += f" @ {meta['commit'][:7]}"
@@ -387,8 +422,13 @@ def print_header(r: Results):
         f"effort {meta['effort']}, {source}"
     )
 
+
+def print_header(r: Results):
+    for meta in r.metas:
+        print_run(meta)
+
     accepted = sum(s["passed"] for s in r.step1.values())
-    result = f"the fuzzer accepted {accepted}/{len(meta['functions'])}"
+    result = f"the fuzzer accepted {accepted}/{len(r.functions)}"
     if r.step2:
         end = r.step2["end"]
         result += (
@@ -399,16 +439,18 @@ def print_header(r: Results):
         result += "; step 2 not run"
     print(f"Result: {result}")
 
-    sources = meta.get("step1_sources")
-    if sources:
-        runs = sorted({s["run"] for s in sources.values()})
-        print(f"Step 1 from: {', '.join(runs)}")
+    for meta in r.metas:
+        sources = meta.get("step1_sources")
+        if sources:
+            runs = sorted({s["run"] for s in sources.values()})
+            print(f"Step 1 of {meta['run_id']} from: {', '.join(runs)}")
     print()
 
 
 def main(argv: list[str], prog: str = "report.py"):
     args = parse_args(argv, prog)
-    r = Results.load(find_run(args.run, prog))
+    runs = [Results.load(f) for f in find_runs(args.runs, prog)]
+    r = Results.merge(runs, prog)
 
     tables = {
         "step1": lambda: step1_table(r),

@@ -6,7 +6,7 @@ testsuite passes with all of them (step 2).
 
     ./run.py [function ...] [--model M] [--effort E] [--max-iters N]
              [--commit C] [--jobs N] [-keep-work] [-step2]
-    ./run.py report [run] [--table T] [-csv]
+    ./run.py report [run ...] [--table T] [-csv]
 
 Without functions, every target in targets/ is generated, then step 2 runs
 if the fuzzer accepted every summary. With functions, only step 1 runs:
@@ -53,7 +53,7 @@ from lib.common import (
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(
         description=__doc__.split("\n\n")[0],
-        epilog="To print a run's tables instead: ./run.py report [run] "
+        epilog="To print runs' tables instead: ./run.py report [run ...] "
                "[--table T] [-csv] (see ./run.py report -h)"
     )
     ap.add_argument(
