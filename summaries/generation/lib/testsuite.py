@@ -28,6 +28,7 @@ from .common import (
     new_work,
     run_fuzzer,
     write_json,
+    check_claude,
     code_block,
     run_command,
     sum_metrics,
@@ -279,6 +280,7 @@ def attempt(
     before = snapshot(targets, work)
     result, wall = run.claude.ask(message, session, number == 1, work)
     write_json(out / f"claude-{number}.json", result)
+    check_claude(result)
 
     after = snapshot(targets, work)
     changed = [t for t in targets if after[t.function] != before[t.function]]
@@ -347,44 +349,46 @@ def fix(run: Run, targets: list[Target]) -> bool:
     session = str(uuid.uuid4())
     work = make_work(targets, run.commit)
 
-    save_summaries(targets, work, out / "summaries-0")
-    good = contents(targets, work)
-    start = run_testsuite(run, work, out, "testsuite-0")
-    write_json(out / "start.json", start.record())
-    print_tests("start", start)
+    try:
+        save_summaries(targets, work, out / "summaries-0")
+        good = contents(targets, work)
+        start = run_testsuite(run, work, out, "testsuite-0")
+        write_json(out / "start.json", start.record())
+        print_tests("start", start)
 
-    attempts = []
-    if not start.all_passed:
-        message = first_prompt(targets, start)
-        (out / "prompt.txt").write_text(message)
+        attempts = []
+        if not start.all_passed:
+            message = first_prompt(targets, start)
+            (out / "prompt.txt").write_text(message)
 
-        for number in range(1, run.max_iters + 1):
-            attempts.append(
-                attempt(run, targets, session, work, out, number, message)
-            )
-            print_tests(
-                f"attempt {number}",
-                attempts[-1].tests,
-                attempts[-1].changed
-            )
+            for number in range(1, run.max_iters + 1):
+                attempts.append(
+                    attempt(run, targets, session, work, out, number, message)
+                )
+                print_tests(
+                    f"attempt {number}",
+                    attempts[-1].tests,
+                    attempts[-1].changed
+                )
 
-            current = contents(targets, work)
-            for fn, check in attempts[-1].fuzz.items():
-                if check.passed:
-                    good[fn] = current[fn]
+                current = contents(targets, work)
+                for fn, check in attempts[-1].fuzz.items():
+                    if check.passed:
+                        good[fn] = current[fn]
 
-            if attempts[-1].passed:
-                break
-            message = feedback(targets, attempts[-1], out)
+                if attempts[-1].passed:
+                    break
+                message = feedback(targets, attempts[-1], out)
 
-        save_transcript(session, out)
+            save_transcript(session, out)
 
-    write_summary(start, attempts, out)
-    publish(targets, good)
+        write_summary(start, attempts, out)
+        publish(targets, good)
 
-    if run.keep_work:
-        print(f"    working copy kept in {work}")
-    else:
-        shutil.rmtree(work)
+    finally:
+        if run.keep_work:
+            print(f"    working copy kept in {work}")
+        else:
+            shutil.rmtree(work)
 
     return attempts[-1].passed if attempts else start.all_passed

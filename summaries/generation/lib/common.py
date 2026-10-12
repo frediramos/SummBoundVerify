@@ -322,6 +322,39 @@ class Run:
     keep_work: bool         # keep the working copies, to inspect them
 
 
+class ClaudeError(Exception):
+    """A `claude -p` call that failed before doing any work."""
+
+
+def claude_failure(result: dict) -> str | None:
+    """
+    Why a `claude -p` call failed outright, e.g. the API refused it, or None
+    if it ran. Such a call is not an attempt: the run stops.
+    """
+    if "stdout" in result:
+        # No JSON result: claude itself failed
+        output = (result.get("stderr") or result.get("stdout") or "").strip()
+        code = result.get("returncode")
+        return f"no result (exit status {code}): {output[-300:]}"
+
+    api_error = (
+        result.get("api_error_status")
+        or result.get("terminal_reason") == "api_error"
+    )
+    if result.get("is_error") and api_error:
+        status = result.get("api_error_status")
+        reason = result.get("result") or "API error"
+        return f"{reason} (HTTP {status})" if status else reason
+
+    return None
+
+
+def check_claude(result: dict):
+    """Raises ClaudeError if the call failed outright."""
+    if reason := claude_failure(result):
+        raise ClaudeError(reason)
+
+
 def claude_env() -> dict:
     """The environment Claude runs in: without summbv's virtualenv."""
     env = dict(os.environ)

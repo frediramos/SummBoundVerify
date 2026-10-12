@@ -37,6 +37,7 @@ from lib.common import (
     Run,
     Claude,
     Target,
+    ClaudeError,
     git,
     fail,
     now,
@@ -142,15 +143,52 @@ def start_run(args: argparse.Namespace) -> tuple[Run, list[Target]]:
     return run, targets
 
 
-def write_summary(run: Run, step1: dict[str, bool], step2: bool | None):
-    """summary.json: each step's outcome. The metrics are in each step's."""
+def write_summary(
+    run: Run,
+    step1: dict[str, bool],
+    step2: bool | None,
+    error: str | None = None
+):
+    """
+    summary.json: each step's outcome, and the error that stopped the run,
+    if any. The metrics are in each step's.
+    """
     write_json(run.out / "summary.json", {
         "run_id": run.run_id,
         "step1": step1,
         "step2": step2,
         "passed": bool(step2),
+        "error": error,
         "finished_at": now(),
     })
+
+
+def run_steps(
+    run: Run,
+    targets: list[Target],
+    step1: dict[str, bool]
+) -> bool | None:
+    """
+    Step 1 for each target, recording its outcome in `step1`, then step 2
+    if every target passed it. Returns step 2's outcome, or None if it did
+    not run.
+    """
+    print("step 1: fuzzer")
+    for target in targets:
+        step1[target.function] = fuzzing.generate(run, target)
+
+    rejected = [fn for fn, passed in step1.items() if not passed]
+    if rejected:
+        print(f"step 2 skipped: the fuzzer rejected {', '.join(rejected)}")
+        return None
+
+    missing = sorted(set(Target.all()) - set(step1))
+    if missing:
+        print(f"step 2 skipped: no summaries of {', '.join(missing)}")
+        return None
+
+    print("step 2: testsuite")
+    return testsuite.fix(run, targets)
 
 
 def generate() -> int:
@@ -167,24 +205,20 @@ def generate() -> int:
         f"({run.claude.model}, effort {run.claude.effort}, {source})"
     )
 
-    print("step 1: fuzzer")
-    step1 = {t.function: fuzzing.generate(run, t) for t in targets}
-
-    rejected = [fn for fn, passed in step1.items() if not passed]
-    if rejected:
-        write_summary(run, step1, None)
-        print(f"step 2 skipped: the fuzzer rejected {', '.join(rejected)}")
+    # A call to Claude that fails outright (e.g. no credit left) stops the
+    # run: it is not an attempt
+    step1: dict[str, bool] = {}
+    try:
+        step2 = run_steps(run, targets, step1)
+    except ClaudeError as e:
+        write_summary(run, step1, None, error=str(e))
+        print(f"run stopped, a call to claude failed: {e}")
         return 1
 
-    missing = sorted(set(Target.all()) - set(step1))
-    if missing:
-        write_summary(run, step1, None)
-        print(f"step 2 skipped: no summaries of {', '.join(missing)}")
-        return 0
-
-    print("step 2: testsuite")
-    step2 = testsuite.fix(run, targets)
     write_summary(run, step1, step2)
+
+    if step2 is None:
+        return 0 if all(step1.values()) else 1
 
     outcome = "passed" if step2 else "did not pass"
     print(f"testsuite {outcome}  ->  {run.out.relative_to(HERE)}")

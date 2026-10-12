@@ -25,6 +25,7 @@ from .common import (
     new_work,
     run_fuzzer,
     write_json,
+    check_claude,
     sum_metrics,
     claude_metrics,
     save_transcript,
@@ -133,6 +134,7 @@ def attempt(
     """
     result, wall = run.claude.ask(message, session, number == 1, work)
     write_json(out / f"claude-{number}.json", result)
+    check_claude(result)
 
     summary = work / target.summary
     written = summary.exists()
@@ -199,26 +201,28 @@ def generate(run: Run, target: Target) -> bool:
     message = first_prompt(target)
     (out / "prompt.txt").write_text(message)
 
-    attempts = []
-    for number in range(1, run.max_iters + 1):
-        attempts.append(
-            attempt(run, target, session, work, out, number, message)
-        )
-        print_attempt(attempts[-1])
-        if attempts[-1].passed:
-            break
-        message = feedback(target, attempts[-1], out)
+    try:
+        attempts = []
+        for number in range(1, run.max_iters + 1):
+            attempts.append(
+                attempt(run, target, session, work, out, number, message)
+            )
+            print_attempt(attempts[-1])
+            if attempts[-1].passed:
+                break
+            message = feedback(target, attempts[-1], out)
 
-    save_transcript(session, out)
-    write_summary(target, attempts, out)
+        save_transcript(session, out)
+        write_summary(target, attempts, out)
 
-    passed = attempts[-1].passed
-    if passed:
-        publish(target, work)
+        passed = attempts[-1].passed
+        if passed:
+            publish(target, work)
 
-    if run.keep_work:
-        print(f"    working copy kept in {work}")
-    else:
-        shutil.rmtree(work)
+    finally:
+        if run.keep_work:
+            print(f"    working copy kept in {work}")
+        else:
+            shutil.rmtree(work)
 
     return passed
