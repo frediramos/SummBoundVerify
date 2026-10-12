@@ -1,4 +1,9 @@
+import atexit
+import shutil
+import tempfile
+
 from pathlib import Path
+from functools import cache
 
 from pycparser import parse_file as pycparser_parse_file
 from pycparser.c_ast import (
@@ -44,26 +49,43 @@ def add_fake_include(file):
     return tmp
 
 
+@cache
+def api_include_dir() -> Path:
+    """
+    A folder with the API header, sra.h, so that a summary can
+    `#include "sra.h"`: it is parsed from a temporary copy, away from its
+    own folder. Written once per run, and removed at exit.
+    """
+    from summboundverify.api import make_lib
+
+    folder = Path(tempfile.mkdtemp(prefix="sbv-sra-"))
+    atexit.register(shutil.rmtree, folder, ignore_errors=True)
+    make_lib(folder, mkdir=False)
+    return folder
+
+
 def parse_c_file(file):
     """Parse a C source file the way the generator does.
 
     Anything that reads a *user-supplied* C file must go through this rather
     than `parse_file`, which assumes the file is already self-contained.
+    The file may include the API header, sra.h.
     """
     tmp = add_fake_include(file)
     try:
-        return parse_file(tmp)
+        return parse_file(tmp, include=[api_include_dir()])
     finally:
         tmp.unlink(missing_ok=True)
 
 
-def parse_file(file):
+def parse_file(file, include: list[Path] | None = None):
     try:
         fakelib = fake_libc_path()
+        includes = [f'-I{d}' for d in include or []]
         ast = pycparser_parse_file(
             file, use_cpp=True,
             cpp_path='gcc',
-            cpp_args=['-E', f'-I{fakelib}']  # type: ignore
+            cpp_args=['-E', f'-I{fakelib}', *includes]  # type: ignore
         )
         return ast
     except ParseError as e:

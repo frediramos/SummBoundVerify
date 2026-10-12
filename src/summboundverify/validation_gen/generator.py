@@ -272,9 +272,11 @@ class ValidationGenerator(ABC):
 
         functions = self.functions(parsed)
 
+        # Only the functions defined 
         function_defs = [
-            f.definition if f else None
+            f.definition
             for f in functions
+            if f and f.definition
         ]
 
         args = parsed.arguments
@@ -284,9 +286,6 @@ class ValidationGenerator(ABC):
             f.definition if f else None
             for f in parsed.functions
         ])
-
-        if None in function_defs:
-            function_defs.remove(None)
 
         main = create_function(
             name="main",
