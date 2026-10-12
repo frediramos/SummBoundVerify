@@ -1,0 +1,19 @@
+{
+  "function": "read",
+  "passed": true,
+  "iterations": 1,
+  "totals": {
+    "wall_s": 125.397,
+    "duration_ms": 122774,
+    "duration_api_ms": 117381,
+    "num_turns": 19,
+    "cost_usd": 0.6097434,
+    "input_tokens": 36,
+    "cache_creation_input_tokens": 36615,
+    "cache_read_input_tokens": 476197,
+    "output_tokens": 11072,
+    "permission_denials": 2,
+    "fuzzer_time_s": 45.898
+  },
+  "finished_at": "2026-10-12T20:21:32.922078+00:00"
+}

@@ -1,0 +1,10 @@
+{
+  "run_id": "2026-10-12_20-18-33",
+  "step1": {
+    "read": true
+  },
+  "step2": null,
+  "passed": false,
+  "error": null,
+  "finished_at": "2026-10-12T20:21:32.965436+00:00"
+}

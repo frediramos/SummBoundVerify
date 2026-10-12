@@ -1,0 +1,116 @@
+{
+  "duration_api_ms": 117381,
+  "stop_reason": "end_turn",
+  "session_id": "361cc54b-71ff-4ec2-afe6-b553fd6c816b",
+  "total_cost_usd": 0.6097434,
+  "usage": {
+    "input_tokens": 36,
+    "cache_creation_input_tokens": 36615,
+    "cache_read_input_tokens": 476197,
+    "output_tokens": 11072,
+    "output_tokens_details": {
+      "thinking_tokens": 6626
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 36615,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "not_available",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 587,
+        "cache_read_input_tokens": 41195,
+        "cache_creation_input_tokens": 195,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 195
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 36,
+      "outputTokens": 11072,
+      "cacheReadInputTokens": 476197,
+      "cacheCreationInputTokens": 36615,
+      "webSearchRequests": 0,
+      "costUSD": 0.6097434,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 6626,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [
+    {
+      "tool_name": "Bash",
+      "tool_use_id": "toolu_01Ro5LSob1m7hLsw5ThEgK6S",
+      "tool_input": {
+        "command": "cd /tmp/sbv-gen-read-h1rjuqst; for f in summaries/generation/context/templates/*.md summaries/generation/context/templates/file/*.md summaries/generation/context/examples/*.c; do echo \"=== $f\"; cat $f; done",
+        "description": "Read templates and examples"
+      }
+    },
+    {
+      "tool_name": "Bash",
+      "tool_use_id": "toolu_01BWHfJzsD2RYRfuJdkBVZV8",
+      "tool_input": {
+        "command": "cd /tmp/sbv-gen-read-h1rjuqst; sed -n 280,380p README.md; grep -n \"scripts\\|entry\\|\\[project.scripts\\]\" -A3 pyproject.toml | head; python3 -c \"import summboundverify\" 2>&1",
+        "description": "Read README run instructions"
+      }
+    }
+  ],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 19,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I wrote the summary to `summaries/obtained/read/read.c`. It compiles with the gcc command you gave, but I haven't validated it: the `summbv` validator isn't installed here and I didn't install it. To check it, run `summbv` with `summaries/obtained/read/config.yaml`, which uses the fuzz engine.\n\n**How it works:**\n\n1. **Bad or write-only descriptor (EBADF).** The API reads from write-only descriptors, so the summary checks `__file_flags` itself. A single `__is_certain` check returns -1 when the descriptor isn't open or is write-only, so it never forks. This covers a descriptor that may be either a real one or -1: the -1 case always fails, and the real one has fixed flags. As in Linux, this check happens before the count is looked at, so `count == 0` on a bad descriptor still fails.\n2. **Size cap.** Like Linux, `count` is capped at `0x7ffff000` bytes per call.\n3. **Count is a known value.** It goes straight to `__file_read`.\n4. **Count is symbolic.** `__file_read` needs a fixed count, so the summary starts from the template that tries each possible value. It adds one change to cut down on forking: any count at least as large as the bytes left before end of file (`__file_size - __file_offset`) reads exactly the same bytes. So the loop stops once that holds for certain and reads with the largest possible count instead. It only forks on values that would read less than what's left. If the offset is already at or past end of file, it doesn't fork at all.\n\n**Not modelled:** EFAULT, EISDIR, EAGAIN/EINTR/EIO and the device-specific errors, because the API has nothing to represent them. The comment at the top of the file says so.",
+  "ttft_ms": 3024,
+  "type": "result",
+  "duration_ms": 122774,
+  "uuid": "5c9d9b01-2b74-4fe9-8dc4-afc2020c5222",
+  "ttft_stream_ms": 1896,
+  "time_to_request_ms": 442,
+  "first_content_frame_ms": 1896,
+  "queued_turn_count": 0,
+  "result_index": 0
+}
