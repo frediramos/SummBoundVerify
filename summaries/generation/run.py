@@ -47,7 +47,11 @@ from lib.common import (
 
 
 def parse_args() -> argparse.Namespace:
-    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap = argparse.ArgumentParser(
+        description=__doc__.split("\n\n")[0],
+        epilog="To print a run's tables instead: ./run.py report [run] "
+               "[--table T] [-csv] (see ./run.py report -h)"
+    )
     ap.add_argument(
         "functions",
         nargs="*",
@@ -154,7 +158,9 @@ def generate() -> int:
     if isinstance(sys.stdout, io.TextIOWrapper):
         sys.stdout.reconfigure(line_buffering=True)
 
-    run, targets = start_run(parse_args())
+    args = parse_args()
+    run, targets = start_run(args)
+
     source = run.commit or "working tree"
     print(
         f"run {run.run_id}  "
@@ -187,7 +193,7 @@ def generate() -> int:
 
 def main() -> int:
     if sys.argv[1:2] == ["report"]:
-        report.main(sys.argv[2:])
+        report.main(sys.argv[2:], prog="run.py report")
         return 0
     return generate()
 

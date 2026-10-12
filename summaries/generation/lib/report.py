@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Tables of a generation run in results/, for the paper.
 
@@ -5,6 +6,8 @@ Tables of a generation run in results/, for the paper.
     ./run.py report 2026-10-12_09-15-00    a given run
     ./run.py report --table step2          one table: step1, step2 or summary
     ./run.py report -csv                   raw values as CSV, e.g. for plots
+
+`./lib/report.py` takes the same arguments.
 
 The tables:
     step1    one row per function: the attempts until the fuzzer accepted
@@ -329,9 +332,9 @@ def summary_table(r: Results) -> Table:
 
 # -- Main --------------------------------------------------------------------
 
-def parse_args(argv: list[str]) -> argparse.Namespace:
+def parse_args(argv: list[str], prog: str) -> argparse.Namespace:
     ap = argparse.ArgumentParser(
-        prog="run.py report",
+        prog=prog,
         description=__doc__.split("\n\n")[0]
     )
     ap.add_argument(
@@ -353,14 +356,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     return ap.parse_args(argv)
 
 
-def find_run(run: str | None) -> Path:
+def find_run(run: str | None, prog: str) -> Path:
     runs = sorted(p for p in RESULTS.glob("*") if (p / "meta.json").exists())
     if not runs:
-        sys.exit("run.py report: no runs in results/")
+        sys.exit(f"{prog}: no runs in results/")
     if run is None:
         return runs[-1]
     if not (RESULTS / run / "meta.json").exists():
-        sys.exit(f"run.py report: no run {run} in results/")
+        sys.exit(f"{prog}: no run {run} in results/")
     return RESULTS / run
 
 
@@ -388,9 +391,9 @@ def print_header(r: Results):
     print()
 
 
-def main(argv: list[str]):
-    args = parse_args(argv)
-    r = Results.load(find_run(args.run))
+def main(argv: list[str], prog: str = "report.py"):
+    args = parse_args(argv, prog)
+    r = Results.load(find_run(args.run, prog))
 
     tables = {
         "step1": lambda: step1_table(r),
@@ -412,3 +415,7 @@ def main(argv: list[str]):
             table.print_csv()
         else:
             table.print()
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
