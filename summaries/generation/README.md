@@ -19,6 +19,7 @@ workon sbv                     # summbv's virtualenv
 ./run.py read write            # only these: step 1 only
 ./run.py -step2                # step 2 only, on earlier runs' step 1
 ./run.py report                # the latest run's tables
+./run.py report RUN RUN        # several runs' tables, pieced together
 ```
 
 Step 2 runs only when a run covers every target, as the testsuite needs all

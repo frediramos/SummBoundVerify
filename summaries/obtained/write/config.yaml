@@ -1,0 +1,7 @@
+summ: write.c
+summname: write
+libc: write
+compile: x86
+argspec: argspec.yaml
+engine: [fuzz]
+execs: 2000

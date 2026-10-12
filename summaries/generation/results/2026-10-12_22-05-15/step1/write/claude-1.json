@@ -1,0 +1,116 @@
+{
+  "duration_api_ms": 141106,
+  "stop_reason": "end_turn",
+  "session_id": "ee2a7156-ab33-4771-8a3a-08be893aba65",
+  "total_cost_usd": 0.8280408,
+  "usage": {
+    "input_tokens": 30,
+    "cache_creation_input_tokens": 57255,
+    "cache_read_input_tokens": 510904,
+    "output_tokens": 13385,
+    "output_tokens_details": {
+      "thinking_tokens": 9067
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 57255,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "not_available",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 786,
+        "cache_read_input_tokens": 61067,
+        "cache_creation_input_tokens": 963,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 963
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 30,
+      "outputTokens": 13385,
+      "cacheReadInputTokens": 510904,
+      "cacheCreationInputTokens": 57255,
+      "webSearchRequests": 0,
+      "costUSD": 0.8280408,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 9067,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [
+    {
+      "tool_name": "Bash",
+      "tool_use_id": "toolu_015qsT2pfzKZA4YtK47qmHWc",
+      "tool_input": {
+        "command": "cd /tmp/sbv-gen-write-tc436lbd; for f in summaries/generation/context/examples/* summaries/generation/context/templates/*; do echo \"=== $f\"; cat $f; done; ls summaries/obtained summaries/obtained/* | head -50",
+        "description": "Read examples and templates"
+      }
+    },
+    {
+      "tool_name": "Bash",
+      "tool_use_id": "toolu_01F86t5wEaAv4wsedDrhGRB1",
+      "tool_input": {
+        "command": "cd /tmp/sbv-gen-write-tc436lbd; sed -n 20,90p README.md; ls ~/.local/bin 2>/dev/null | head; python3 -c \"import summboundverify\" 2>&1",
+        "description": "Read README run instructions"
+      }
+    }
+  ],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 17,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I wrote the summary to `summaries/obtained/write/write.c`. It compiles with the gcc command you gave, but I haven't validated it: SummBoundVerify isn't installed here, and I didn't run `install.sh` or Docker to set it up.\n\n**How it works:**\n- **Writes byte by byte.** `__file_write` reads its buffer as a C string and stops at the first concrete `'\\0'`, but `write` copies raw bytes. Your test setup always puts a concrete `'\\0'` at `buf[4]`, so a single call with `count == 5` would leave the file one byte short. Calling `__file_write(fd, buf + i, 1)` for each byte writes NUL bytes correctly.\n- **Handles a closed `fd` without a branch.** With a symbolic file name, `fd` is `ite(cond, fd, -1)`, so its flags are `ite(cond, flags, -1)`. `flags >> 31` turns that into \"-1 if not open, 0 otherwise\". The function then returns `closed | n`, which is -1 for a closed descriptor and `n` otherwise.\n- **Has three branches:**\n  - **Read-only `fd`:** returns -1 (EBADF). A closed `fd` never takes this branch, because -1 has every bit set.\n  - **`O_APPEND`:** the API's \"a\" mode doesn't actually append, so the summary moves the offset to the end of the file first. It unfolds the possibly-symbolic size, since `__file_set_offset` needs a concrete value. Masking with `~closed` means a closed `fd` doesn't split execution here.\n  - **Symbolic `count`:** the summary splits execution once per possible value, up to its maximum (0\u20135 under your argspec), because the API needs a concrete count.\n\n**Not modelled:** partial writes (the API never does them), the Linux cap of 0x7ffff000 bytes per call, `errno`, and the device- or socket-specific errors (EAGAIN, EPIPE, ENOSPC, and so on).\n\nTo validate it, install the tool (`./install.sh` in a virtualenv, or `./docker-run`) and run it with the existing `config.yaml`, which uses the fuzz engine with 2000 runs.",
+  "ttft_ms": 3064,
+  "type": "result",
+  "duration_ms": 144807,
+  "uuid": "ff7a2f2e-780f-49e2-a06f-0233b41f2531",
+  "ttft_stream_ms": 1908,
+  "time_to_request_ms": 417,
+  "first_content_frame_ms": 1909,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

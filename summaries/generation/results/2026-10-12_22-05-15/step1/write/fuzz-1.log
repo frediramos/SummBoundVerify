@@ -1,0 +1,287 @@
+
+
+===================
+  Fuzzing (AFL++)
+===================
+
+(Info) Compiling:
+ gcc -Wall -O0 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-unused-variable -fno-builtin -m32 test-summary.c -o test-summary.test
+(Info) 
+==> Summary Constraints (test_1, 6 path(s)):
+
+	[1] And(ULE(Extract(2, 0, count), 5),
+	        Extract(31, 3, count) == 0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 0)),
+	        ~(If(__fname_fd_0 == 0, 4294967295, 578) >> 31 |
+	          If(__fname_fd_0 == 0, 0, 4294966717) |
+	          4294966271) ==
+	        0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_1 == 46),
+	           Not(Extract(7, 7, __fname_fd_1) == 0)),
+	        Or(Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_0 == 47)),
+	        Or(Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 47)),
+	        count == 0,
+	        Ret == If(__fname_fd_0 == 0, 4294967295, 578) >> 31,
+	        mem_buf_0 == buf_0,
+	        mem_buf_1 == buf_1,
+	        mem_buf_2 == buf_2,
+	        mem_buf_3 == buf_3,
+	        mem_buf_4 == 0,
+	        file_open_fds == If(__fname_fd_0 == 0, 0, 8),
+	        Or(__fname_fd_0 == 0,
+	           And(file_fd3_flags == 578,
+	               file_fd3_mode == 420,
+	               file_fd3_offset == 0,
+	               file_fd3_size == 4,
+	               file_fd3_byte_0 == __data_fd_0,
+	               file_fd3_byte_1 == __data_fd_1,
+	               file_fd3_byte_2 == __data_fd_2,
+	               file_fd3_byte_3 == __data_fd_3)))
+
+	[2] And(ULE(Extract(2, 0, count), 5),
+	        Extract(31, 3, count) == 0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 0)),
+	        ~(If(__fname_fd_0 == 0, 4294967295, 578) >> 31 |
+	          If(__fname_fd_0 == 0, 0, 4294966717) |
+	          4294966271) ==
+	        0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_1 == 46),
+	           Not(Extract(7, 7, __fname_fd_1) == 0)),
+	        Or(Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_0 == 47)),
+	        Or(Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 47)),
+	        Not(count == 0),
+	        count == 1,
+	        Ret ==
+	        Concat(Extract(31,
+	                       1,
+	                       If(__fname_fd_0 == 0, 4294967295, 578) >>
+	                       31),
+	               1),
+	        mem_buf_0 == buf_0,
+	        mem_buf_1 == buf_1,
+	        mem_buf_2 == buf_2,
+	        mem_buf_3 == buf_3,
+	        mem_buf_4 == 0,
+	        file_open_fds == If(__fname_fd_0 == 0, 0, 8),
+	        Or(__fname_fd_0 == 0,
+	           And(file_fd3_flags == 578,
+	               file_fd3_mode == 420,
+	               file_fd3_offset == 1,
+	               file_fd3_size == 4,
+	               file_fd3_byte_0 == buf_0,
+	               file_fd3_byte_1 == __data_fd_1,
+	               file_fd3_byte_2 == __data_fd_2,
+	               file_fd3_byte_3 == __data_fd_3)))
+
+	[3] And(ULE(Extract(2, 0, count), 5),
+	        Extract(31, 3, count) == 0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 0)),
+	        ~(If(__fname_fd_0 == 0, 4294967295, 578) >> 31 |
+	          If(__fname_fd_0 == 0, 0, 4294966717) |
+	          4294966271) ==
+	        0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_1 == 46),
+	           Not(Extract(7, 7, __fname_fd_1) == 0)),
+	        Or(Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_0 == 47)),
+	        Or(Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 47)),
+	        Not(count == 0),
+	        Not(count == 1),
+	        count == 2,
+	        Ret ==
+	        Concat(Extract(31,
+	                       2,
+	                       If(__fname_fd_0 == 0, 4294967295, 578) >>
+	                       31),
+	               1,
+	               Extract(0,
+	                       0,
+	                       If(__fname_fd_0 == 0, 4294967295, 578) >>
+	                       31)),
+	        mem_buf_0 == buf_0,
+	        mem_buf_1 == buf_1,
+	        mem_buf_2 == buf_2,
+	        mem_buf_3 == buf_3,
+	        mem_buf_4 == 0,
+	        file_open_fds == If(__fname_fd_0 == 0, 0, 8),
+	        Or(__fname_fd_0 == 0,
+	           And(file_fd3_flags == 578,
+	               file_fd3_mode == 420,
+	               file_fd3_offset == 2,
+	               file_fd3_size == 4,
+	               file_fd3_byte_0 == buf_0,
+	               file_fd3_byte_1 == buf_1,
+	               file_fd3_byte_2 == __data_fd_2,
+	               file_fd3_byte_3 == __data_fd_3)))
+
+	[4] And(ULE(Extract(2, 0, count), 5),
+	        Extract(31, 3, count) == 0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 0)),
+	        ~(If(__fname_fd_0 == 0, 4294967295, 578) >> 31 |
+	          If(__fname_fd_0 == 0, 0, 4294966717) |
+	          4294966271) ==
+	        0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_1 == 46),
+	           Not(Extract(7, 7, __fname_fd_1) == 0)),
+	        Or(Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_0 == 47)),
+	        Or(Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 47)),
+	        Not(count == 0),
+	        Not(count == 1),
+	        Not(count == 2),
+	        count == 3,
+	        Ret ==
+	        Concat(Extract(31,
+	                       2,
+	                       If(__fname_fd_0 == 0, 4294967295, 578) >>
+	                       31),
+	               3),
+	        mem_buf_0 == buf_0,
+	        mem_buf_1 == buf_1,
+	        mem_buf_2 == buf_2,
+	        mem_buf_3 == buf_3,
+	        mem_buf_4 == 0,
+	        file_open_fds == If(__fname_fd_0 == 0, 0, 8),
+	        Or(__fname_fd_0 == 0,
+	           And(file_fd3_flags == 578,
+	               file_fd3_mode == 420,
+	               file_fd3_offset == 3,
+	               file_fd3_size == 4,
+	               file_fd3_byte_0 == buf_0,
+	               file_fd3_byte_1 == buf_1,
+	               file_fd3_byte_2 == buf_2,
+	               file_fd3_byte_3 == __data_fd_3)))
+
+	[5] And(ULE(Extract(2, 0, count), 5),
+	        Extract(31, 3, count) == 0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 0)),
+	        ~(If(__fname_fd_0 == 0, 4294967295, 578) >> 31 |
+	          If(__fname_fd_0 == 0, 0, 4294966717) |
+	          4294966271) ==
+	        0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_1 == 46),
+	           Not(Extract(7, 7, __fname_fd_1) == 0)),
+	        Or(Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_0 == 47)),
+	        Or(Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 47)),
+	        Not(count == 0),
+	        Not(count == 1),
+	        Not(count == 2),
+	        Not(count == 3),
+	        count == 4,
+	        Ret ==
+	        Concat(Extract(31,
+	                       3,
+	                       If(__fname_fd_0 == 0, 4294967295, 578) >>
+	                       31),
+	               1,
+	               Extract(1,
+	                       0,
+	                       If(__fname_fd_0 == 0, 4294967295, 578) >>
+	                       31)),
+	        mem_buf_0 == buf_0,
+	        mem_buf_1 == buf_1,
+	        mem_buf_2 == buf_2,
+	        mem_buf_3 == buf_3,
+	        mem_buf_4 == 0,
+	        file_open_fds == If(__fname_fd_0 == 0, 0, 8),
+	        Or(__fname_fd_0 == 0,
+	           And(file_fd3_flags == 578,
+	               file_fd3_mode == 420,
+	               file_fd3_offset == 4,
+	               file_fd3_size == 4,
+	               file_fd3_byte_0 == buf_0,
+	               file_fd3_byte_1 == buf_1,
+	               file_fd3_byte_2 == buf_2,
+	               file_fd3_byte_3 == buf_3)))
+
+	[6] And(ULE(Extract(2, 0, count), 5),
+	        Extract(31, 3, count) == 0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 0)),
+	        ~(If(__fname_fd_0 == 0, 4294967295, 578) >> 31 |
+	          If(__fname_fd_0 == 0, 0, 4294966717) |
+	          4294966271) ==
+	        0,
+	        Or(Not(__fname_fd_0 == 46),
+	           Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_1 == 46),
+	           Not(Extract(7, 7, __fname_fd_1) == 0)),
+	        Or(Not(Extract(7, 7, __fname_fd_0) == 0),
+	           Not(__fname_fd_0 == 47)),
+	        Or(Not(Extract(7, 7, __fname_fd_1) == 0),
+	           Not(__fname_fd_1 == 47)),
+	        Not(count == 0),
+	        Not(count == 1),
+	        Not(count == 2),
+	        Not(count == 3),
+	        Not(count == 4),
+	        Ret ==
+	        Concat(Extract(31,
+	                       3,
+	                       If(__fname_fd_0 == 0, 4294967295, 578) >>
+	                       31),
+	               1,
+	               Extract(1,
+	                       1,
+	                       If(__fname_fd_0 == 0, 4294967295, 578) >>
+	                       31),
+	               1),
+	        mem_buf_0 == buf_0,
+	        mem_buf_1 == buf_1,
+	        mem_buf_2 == buf_2,
+	        mem_buf_3 == buf_3,
+	        mem_buf_4 == 0,
+	        file_open_fds == If(__fname_fd_0 == 0, 0, 8),
+	        Or(__fname_fd_0 == 0,
+	           And(file_fd3_flags == 578,
+	               file_fd3_mode == 420,
+	               file_fd3_offset == 5,
+	               file_fd3_size == 5,
+	               file_fd3_byte_0 == buf_0,
+	               file_fd3_byte_1 == buf_1,
+	               file_fd3_byte_2 == buf_2,
+	               file_fd3_byte_3 == buf_3,
+	               file_fd3_byte_4 == 0)))
+(Info) Compiling sampling harness:
+ afl-clang-fast -O1 -g -I /tmp/sbv-gen-write-tc436lbd/src/summboundverify/validation_tool/fuzzing/afl -include /tmp/sbv-gen-write-tc436lbd/src/summboundverify/validation_tool/fuzzing/afl/sbv_sample.h -Dmain=sbv_run_tests -Dexit=sbv_exit -Dopen=sbv_open -Dcreat=sbv_creat -Dopenat=sbv_openat -Ddup=sbv_dup -Ddup2=sbv_dup2 -Dclose=sbv_close -Dfclose=sbv_fclose -Wno-int-conversion -Wno-unused-variable -fno-builtin -m32 -Wno-error=implicit-function-declaration test-concrete.c /tmp/sbv-gen-write-tc436lbd/src/summboundverify/validation_tool/fuzzing/afl/sbv_sample.c /tmp/sbv-gen-write-tc436lbd/src/summboundverify/validation_tool/fuzzing/afl/driver.c -o test-concrete.fuzz
+(Info) Seeded 64 input(s) from the summary's path conditions
+(Info) Running AFL++:
+ afl-fuzz -i /tmp/test-concrete_afl_k365gs0g/seeds -o /tmp/test-concrete_afl_k365gs0g/out -E 2000 -- /tmp/sbv-gen-write-tc436lbd/summaries/obtained/write/test-concrete.fuzz
+(Info) Recorded 83 sample(s), 71 usable, from 2000 execs -> test-concrete.fuzz_result.json
+(Info) test_1: 71 sample(s) admitted by the summary. Sampling cannot certify -- this says no sampled input contradicted it.
+(Info) Sample check written to test-concrete_check.json
