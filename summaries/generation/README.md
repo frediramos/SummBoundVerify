@@ -8,8 +8,8 @@ Claude writes the summaries of libc functions, in two steps:
    them, and its failures are sent back, until it passes or the attempts run
    out. Every summary changed here is fuzzed again, and must still pass.
 
-A run records how many times the tools checked each summary, and the time,
-tokens and cost of every attempt.
+A run records how many times the tools checked each summary, and the
+time, turns, tokens consumed and cost of every attempt.
 
 ## Usage
 
@@ -17,11 +17,13 @@ tokens and cost of every attempt.
 workon sbv                     # summbv's virtualenv
 ./run.py                       # every target in targets/: step 1, then step 2
 ./run.py read write            # only these: step 1 only
+./run.py -step2                # step 2 only, on earlier runs' step 1
 ./run.py report                # the latest run's tables
 ```
 
 Step 2 runs only when a run covers every target, as the testsuite needs all
-the summaries.
+the summaries. To run step 1 in parts, run the functions in several runs,
+then `-step2` (see below).
 
 `run.py` options:
 
@@ -33,6 +35,7 @@ the summaries.
 | `--commit` | none: Claude works on the working tree as it is on disk; with a commit, on that commit |
 | `--jobs` | one per CPU: testsuite tests run at a time |
 | `-keep-work` | off (keeps Claude's working copies, to inspect them) |
+| `-step2` | off (runs step 2 only, on the summaries in `summaries/obtained/`) |
 
 ## Inputs
 
@@ -102,6 +105,15 @@ copy. Step 2 only runs if the fuzzer accepted every summary.
 5. Each summary's latest version the fuzzer accepted is copied back to
    `summaries/obtained/<fn>/`.
 
+**Step 2 on its own** (`-step2`) runs on the summaries in
+`summaries/obtained/`, but only if each one is a summary the fuzzer
+accepted in step 1 of a run in `results/`: the latest such run is its
+source. The source runs must have used the same model, effort and inputs
+(prompts, context, the target's files) as this one, or the run stops; a
+different Claude Code version or commit only gives a warning. `meta.json`
+records each summary's source run, attempt and hash, and the report reads
+step 1's rows from those runs.
+
 ## Results
 
 Each run is saved to its own folder in `results/`, named after the time it
@@ -109,7 +121,8 @@ started, in UTC: e.g. `results/2026-10-12_09-15-00/`.
 
 ```
 results/<run id>/
-    meta.json                   model, effort, versions, source, commit, input hashes
+    meta.json                   model, effort, versions, source, commit, input hashes;
+                                with -step2, each summary's step 1 run (step1_sources)
     summary.json                each step's outcome
     step1/<fn>/
         prompt.txt              prompt as sent

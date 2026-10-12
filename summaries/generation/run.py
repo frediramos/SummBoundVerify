@@ -5,13 +5,15 @@ until the fuzzer accepts each one (step 1), then fixes them until the
 testsuite passes with all of them (step 2).
 
     ./run.py [function ...] [--model M] [--effort E] [--max-iters N]
-             [--commit C] [--jobs N] [-keep-work]
+             [--commit C] [--jobs N] [-keep-work] [-step2]
     ./run.py report [run] [--table T] [-csv]
 
 Without functions, every target in targets/ is generated, then step 2 runs
 if the fuzzer accepted every summary. With functions, only step 1 runs:
-the testsuite needs all the summaries. Everything is saved to
-results/<run id>/; `report` prints a run's tables. See README.md.
+the testsuite needs all the summaries. With -step2, only step 2 runs, on
+the summaries earlier runs' step 1 left in summaries/obtained/. Everything
+is saved to results/<run id>/; `report` prints a run's tables. See
+README.md.
 
 Run it from summbv's virtualenv.
 """
@@ -25,6 +27,7 @@ import argparse
 from datetime import datetime, timezone
 
 from lib import report
+from lib import sources
 from lib import fuzzing
 from lib import testsuite
 
@@ -82,10 +85,16 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="keep Claude's working copies, to inspect them"
     )
+    ap.add_argument(
+        "-step2",
+        action="store_true",
+        help="run step 2 only, on the summaries in summaries/obtained/, "
+             "which earlier runs' step 1 must have accepted"
+    )
     return ap.parse_args()
 
 
-def write_meta(run: Run, targets: list[Target]):
+def meta(run: Run, targets: list[Target]) -> dict:
     """meta.json: everything that defines the run, so runs can be compared."""
     prompts = sorted(PROMPTS.glob("*.md"))
     context = sorted(p for p in (HERE / "context").rglob("*") if p.is_file())
@@ -95,7 +104,7 @@ def write_meta(run: Run, targets: list[Target]):
     uncommitted = None if run.commit else uncommitted_sha256()
     generation_dirty = git("status", "--porcelain", "--", str(HERE)).strip()
 
-    write_json(run.out / "meta.json", {
+    return {
         "run_id": run.run_id,
         "functions": [t.function for t in targets],
         "source": "commit" if run.commit else "working tree",
@@ -114,11 +123,17 @@ def write_meta(run: Run, targets: list[Target]):
             str(p.relative_to(HERE)): sha256(p) for p in inputs
         },
         "started_at": now(),
-    })
+    }
 
 
 def start_run(args: argparse.Namespace) -> tuple[Run, list[Target]]:
-    """Checks the targets, then creates the results folder and meta.json."""
+    """
+    Checks the targets, and with -step2 where their summaries come from,
+    then creates the results folder and meta.json.
+    """
+    if args.step2 and args.functions:
+        fail("-step2 runs on every target: give no functions")
+
     functions = args.functions or Target.all()
     targets = [Target.load(fn) for fn in functions]
 
@@ -138,8 +153,12 @@ def start_run(args: argparse.Namespace) -> tuple[Run, list[Target]]:
         keep_work=args.keep_work
     )
 
+    record = meta(run, targets)
+    if args.step2:
+        record["step1_sources"] = sources.find(targets, record)
+
     run.out.mkdir(parents=True)
-    write_meta(run, targets)
+    write_json(run.out / "meta.json", record)
     return run, targets
 
 
@@ -191,6 +210,29 @@ def run_steps(
     return testsuite.fix(run, targets)
 
 
+def step2_only(
+    run: Run,
+    targets: list[Target],
+    step1: dict[str, bool]
+) -> bool:
+    """
+    Step 2, on the summaries earlier runs' step 1 accepted, as meta.json
+    records them.
+    """
+    found = sources.read(run.out / "meta.json")["step1_sources"]
+    print("step 1: from earlier runs")
+    for target in targets:
+        source = found[target.function]
+        print(
+            f"  {target.function:<10} run {source['run']}, "
+            f"attempt {source['attempt']}"
+        )
+        step1[target.function] = True
+
+    print("step 2: testsuite")
+    return testsuite.fix(run, targets)
+
+
 def generate() -> int:
     # Show progress line by line, also when the output goes to a file
     if isinstance(sys.stdout, io.TextIOWrapper):
@@ -209,7 +251,10 @@ def generate() -> int:
     # run: it is not an attempt
     step1: dict[str, bool] = {}
     try:
-        step2 = run_steps(run, targets, step1)
+        if args.step2:
+            step2 = step2_only(run, targets, step1)
+        else:
+            step2 = run_steps(run, targets, step1)
     except ClaudeError as e:
         write_summary(run, step1, None, error=str(e))
         print(f"run stopped, a call to claude failed: {e}")

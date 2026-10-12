@@ -18,11 +18,16 @@ The tables:
              in step 2) and its testsuite runs until its suite passed (-:
              never), with step 1's cost; then step 2's cost, and the total
 
+A -step2 run's step 1 rows come from the runs its summaries come from.
+
 Columns:
     model time  the model's time (duration_api_ms)
     wall time   the claude calls' time, tools included; checks excluded
-    input       input tokens: uncached + written to cache + read from cache
-    output      output tokens
+    turns       the model's requests, summed over the calls (num_turns)
+    tokens      tokens consumed: every request's new input (uncached and
+                written to cache) and output, thinking included; input read
+                from cache, i.e. resent, is left out
+    cost        what the calls cost (total_cost_usd)
 """
 
 import sys
@@ -93,8 +98,8 @@ class Column:
 COST = [
     Column("api_s", "model time", duration),
     Column("wall_s", "wall time", duration),
-    Column("input_tokens", "input", tokens),
-    Column("output_tokens", "output", tokens),
+    Column("turns", "turns"),
+    Column("tokens", "tokens", tokens),
     Column("cost_usd", "cost", dollars),
 ]
 
@@ -104,12 +109,12 @@ def cost(claude: dict) -> dict:
     return {
         "api_s": (claude["duration_api_ms"] or 0) / 1000,
         "wall_s": claude["wall_s"],
-        "input_tokens": (
+        "turns": int(claude["num_turns"] or 0),
+        "tokens": (
             claude["input_tokens"]
             + claude["cache_creation_input_tokens"]
-            + claude["cache_read_input_tokens"]
+            + claude["output_tokens"]
         ),
-        "output_tokens": claude["output_tokens"],
         "cost_usd": claude["cost_usd"] or 0,
     }
 
@@ -188,13 +193,18 @@ class Results:
     def load(cls, folder: Path) -> "Results":
         meta = read(folder / "meta.json")
         functions = meta["functions"]
+
+        # A -step2 run's step 1 is in the runs its summaries come from
+        sources = meta.get("step1_sources", {})
+
         step1 = {}
         step1_iters = {}
         for fn in functions:
-            summary = folder / "step1" / fn / "summary.json"
+            run = RESULTS / sources[fn]["run"] if fn in sources else folder
+            summary = run / "step1" / fn / "summary.json"
             if summary.exists():
                 step1[fn] = read(summary)
-                step1_iters[fn] = iterations(folder / "step1" / fn)
+                step1_iters[fn] = iterations(run / "step1" / fn)
 
         step2 = None
         step2_runs = []
@@ -388,6 +398,11 @@ def print_header(r: Results):
     else:
         result += "; step 2 not run"
     print(f"Result: {result}")
+
+    sources = meta.get("step1_sources")
+    if sources:
+        runs = sorted({s["run"] for s in sources.values()})
+        print(f"Step 1 from: {', '.join(runs)}")
     print()
 
 
