@@ -536,12 +536,22 @@ def remove(files):
             f.unlink()
 
 
+# The fuzzer's files that are kept, by the end of their name, and what they
+# are saved as
+FUZZER_FILES = {
+    "-summary_constraints.json": "constraints.json",
+    "-concrete.fuzz_result.json": "samples.json",
+    "-concrete_check.json": "check.json",
+}
+
+
 def run_fuzzer(target: Target, work: Path, out: Path, name: str) -> Check:
     """
     Runs the target's fuzzer on its summary in `work`, with the working
-    copy's summbv code, and saves its output as <name>.log and its report
-    as <name>.json in `out`. Passes when every test in the report is
-    `passed`.
+    copy's summbv code, and saves in `out`/<name>/ its output, fuzz.log, and
+    its FUZZER_FILES: the summary's constraints, the samples, and the check
+    of the samples against the constraints. Passes when every test in the
+    check is `passed`.
 
     Leaves nothing behind in the working copy, so Claude only sees what the
     feedback says.
@@ -551,15 +561,19 @@ def run_fuzzer(target: Target, work: Path, out: Path, name: str) -> Check:
     before = set(folder.iterdir())
 
     _, elapsed, log = run_command(target.fuzzer, folder, env)
-    (out / f"{name}.log").write_text(log)
+    saved = out / name
+    saved.mkdir()
+    (saved / "fuzz.log").write_text(log)
 
-    report = None
     created = set(folder.iterdir()) - before
     for f in created:
-        if f.name.endswith("-concrete_check.json"):
-            report = json.loads(f.read_text())
-            shutil.copy(f, out / f"{name}.json")
+        for end, copy in FUZZER_FILES.items():
+            if f.name.endswith(end):
+                shutil.copy(f, saved / copy)
     remove(created)
+
+    check = saved / "check.json"
+    report = json.loads(check.read_text()) if check.exists() else None
 
     passed = bool(report) and all(
         test.get("verdict") == "passed" for test in report.values()

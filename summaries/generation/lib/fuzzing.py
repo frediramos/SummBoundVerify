@@ -134,7 +134,7 @@ def attempt(
 ) -> Attempt:
     """
     Sends `message` to Claude, then runs the fuzzer on the summary it left.
-    Saves claude-<n>.json, summary-<n>.c, fuzz-<n>.* and iter-<n>.json.
+    Saves claude-<n>.json, summary-<n>.c, fuzz-<n>/ and iter-<n>.json.
     """
     start = time.monotonic()
     result, wall = run.claude.ask(message, session, number == 1, work)

@@ -279,7 +279,7 @@ def attempt(
     """
     Sends `message` to Claude, fuzzes each summary it changed, then runs
     the testsuite. Saves claude-<n>.json, summaries-<n>/,
-    fuzz-<n>-<function>.*, testsuite-<n>/ and iter-<n>.json.
+    fuzz-<n>-<function>/, testsuite-<n>/ and iter-<n>.json.
     """
     start = time.monotonic()
     before = snapshot(targets, work)

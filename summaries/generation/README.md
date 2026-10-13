@@ -130,7 +130,11 @@ results/<run id>/
         iter-<n>.json           metrics and fuzzer result of attempt n
         claude-<n>.json         raw claude -p output
         summary-<n>.c           summary after attempt n
-        fuzz-<n>.json/.log      fuzzer report and output
+        fuzz-<n>/               the fuzzer's run on summary n:
+            fuzz.log                its output
+            constraints.json        the summary's constraints, per path
+            samples.json            the samples of libc
+            check.json              the samples checked against the constraints
         feedback-<n>.txt        feedback sent after attempt n
         transcript.jsonl        the whole session
         summary.json            passed, attempts, totals
@@ -140,7 +144,7 @@ results/<run id>/
         summaries-<n>/          the summaries after attempt n (0: from step 1)
         iter-<n>.json           metrics, changes, fuzzer and testsuite results of attempt n
         claude-<n>.json         raw claude -p output
-        fuzz-<n>-<fn>.json/.log fuzzer report and output, for each changed summary
+        fuzz-<n>-<fn>/          the fuzzer's run on each changed summary, as in step 1
         feedback-<n>.txt        feedback sent after attempt n
         transcript.jsonl        the whole session
         summary.json            passed, attempts, testsuite before and after, totals
