@@ -8,7 +8,8 @@
  *   M <name> <nbytes> <hex>            one per tagged region, contents after
  *   F <name> <exists> <mode> <size> <hex>   one per tagged file path
  *                                       (mode and size 0 if it does not exist)
- *   D fd<N> <flags> <mode> <offset> <size> <hex>   one per open descriptor
+ *   D fd<N> <flags> <mode> <offset> <size> <hex>   one per open descriptor,
+ *                                       flags as kept (SBV_KEPT_FLAGS)
  *   O <mask>                           the open descriptors, bit N for fd N
  *   R <bits> <is_pointer> <hex>        absent for a void function
  *   E ok <test>                        closes the block and names it
@@ -49,6 +50,12 @@
 
 /* Width of the O line's mask; OPEN_FDS_BITS in fs.py must match. */
 #define SBV_OPEN_FDS_BITS 64
+
+/* The open flags a descriptor keeps, which the D line records: the access
+ * mode and O_APPEND. O_CREAT, O_EXCL and O_TRUNC only act during open(), and
+ * Linux does not keep them (F_GETFL never returns them). KEPT_FLAGS in fs.py
+ * must match. */
+#define SBV_KEPT_FLAGS (O_ACCMODE | O_APPEND)
 
 /* Input tape ------------------------------------------------------------ */
 
@@ -677,7 +684,7 @@ static void emit_fds(void) {
         offset = lseek(t->fd, 0, SEEK_CUR);
         nbytes = read_path(t->path, buf, sizeof(buf));
 
-        printf("D fd%d %d %d %lu %lu ", t->fd, t->flags,
+        printf("D fd%d %d %d %lu %lu ", t->fd, t->flags & SBV_KEPT_FLAGS,
                (int)(st.st_mode & 07777),
                (unsigned long)(offset < 0 ? 0 : offset),
                (unsigned long)st.st_size);

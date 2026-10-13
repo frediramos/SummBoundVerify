@@ -40,6 +40,11 @@ from summboundverify.validation_tool.se.api.utils import (
 # harness records the same mask (see sbv_sample.c), so the two must agree.
 OPEN_FDS_BITS = 64
 
+# The open flags a descriptor keeps, which are lifted: the access mode and
+# O_APPEND. O_CREAT, O_EXCL and O_TRUNC only act during open(), and Linux does
+# not keep them. The sampling harness records the same (SBV_KEPT_FLAGS).
+KEPT_FLAGS = Flags.O_ACCMODE | Flags.O_APPEND
+
 # The default descriptor limit, as Linux's soft RLIMIT_NOFILE
 DEFAULT_MAX_FDS = 1024
 
@@ -598,8 +603,9 @@ class SymbolicFS(angr.SimStatePlugin):
 
     def lift_fds(self) -> Bool:
         """
-        Lifts each open descriptor: its flags and offset, and the mode, size
-        and bytes of its file, as seen through it.
+        Lifts each open descriptor: its flags (those it keeps, KEPT_FLAGS)
+        and offset, and the mode, size and bytes of its file, as seen
+        through it.
 
         Besides the per-fd variables, `file_open_fds` is a bit mask of the
         descriptors open at this point (bit N for fd N). It describes the
@@ -619,7 +625,7 @@ class SymbolicFS(angr.SimStatePlugin):
             prefix = f"file_fd{fd}"
 
             flags = self.sym_var(f"{prefix}_flags", int_size)
-            metadata = flags == self.bvv_int(fde.flags)
+            metadata = flags == self.bvv_int(fde.flags & KEPT_FLAGS)
 
             file_cases = []
 
