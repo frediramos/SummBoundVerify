@@ -100,6 +100,25 @@ def format_constraints(constraints: dict) -> str:
     return '\n\n'.join(blocks)
 
 
+def constraints_report(constraints: dict) -> dict:
+    """
+    The summary's path conditions as JSON: per test, keyed like the check
+    report, each path's formula, numbered as `format_constraints` numbers
+    them.
+    """
+    return {
+        test_name(key): [
+            {
+                'path': index,
+                'formula': ' '.join(str(simplify(formula)).split()),
+            }
+            for index, formula in enumerate(formulas, start=1)
+        ]
+        for key, formulas in constraints.items()
+        if formulas
+    }
+
+
 def log_constraints(constraints: dict) -> None:
     """Show what the summary says, before anything is checked against it."""
     text = format_constraints(constraints)

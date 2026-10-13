@@ -145,6 +145,10 @@ def run(args: Namespace, constraints: dict | None = None) -> Path | None:
             results_dir=args.results,
         )
 
+    paths = Path(args.results) / f"{summary_test.stem}_constraints.json"
+    sampling.write_report(sampling.constraints_report(constraints), paths)
+    logger.info("Summary constraints written to %s", paths)
+
     generate_concrete_test(args, concrete_test)
 
     if not args.run:
