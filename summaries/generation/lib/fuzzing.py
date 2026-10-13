@@ -5,6 +5,7 @@ summaries/obtained/<function>/. Everything is saved to
 results/<run id>/step1/<function>/.
 """
 
+import time
 import uuid
 import shutil
 
@@ -27,6 +28,7 @@ from .common import (
     write_json,
     check_claude,
     sum_metrics,
+    previous_call,
     claude_metrics,
     save_transcript,
     copy_fuzzer_setup,
@@ -42,6 +44,7 @@ class Attempt:
     claude: dict            # time, tokens and cost of the call
     written: bool           # whether there was a summary to check
     fuzz: Check
+    time_s: float           # the whole attempt: the call, then the check
 
     @property
     def passed(self) -> bool:
@@ -55,6 +58,7 @@ class Attempt:
             "summary_written": self.written,
             "fuzzer": self.fuzz.record(),
             "passed": self.passed,
+            "time_s": self.time_s,
         }
 
 
@@ -132,6 +136,7 @@ def attempt(
     Sends `message` to Claude, then runs the fuzzer on the summary it left.
     Saves claude-<n>.json, summary-<n>.c, fuzz-<n>.* and iter-<n>.json.
     """
+    start = time.monotonic()
     result, wall = run.claude.ask(message, session, number == 1, work)
     write_json(out / f"claude-{number}.json", result)
     check_claude(result)
@@ -145,7 +150,9 @@ def attempt(
     else:
         fuzz = NO_CHECK
 
-    done = Attempt(number, claude_metrics(result, wall), written, fuzz)
+    metrics = claude_metrics(result, previous_call(out, number), wall)
+    elapsed = time.monotonic() - start
+    done = Attempt(number, metrics, written, fuzz, round(elapsed, 3))
     write_json(out / f"iter-{number}.json", done.record())
     return done
 
@@ -171,6 +178,7 @@ def write_summary(target: Target, attempts: list[Attempt], out: Path):
         "totals": {
             **sum_metrics([a.claude for a in attempts]),
             "fuzzer_time_s": sum(a.fuzz.time_s for a in attempts),
+            "time_s": sum(a.time_s for a in attempts),
         },
         "finished_at": now(),
     })

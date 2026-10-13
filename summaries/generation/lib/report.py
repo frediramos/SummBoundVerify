@@ -24,7 +24,8 @@ A -step2 run's step 1 rows come from the runs its summaries come from.
 
 Columns:
     model time  the model's time (duration_api_ms)
-    wall time   the claude calls' time, tools included; checks excluded
+    wall time   the attempts' whole time: the claude call, then the checks
+                (the fuzzer; in step 2, the testsuite too)
     turns       the model's requests, summed over the calls (num_turns)
     tokens      tokens consumed: every request's new input (uncached and
                 written to cache) and output, thinking included; input read
@@ -106,11 +107,35 @@ COST = [
 ]
 
 
-def cost(claude: dict) -> dict:
-    """A row's cost columns, from a call's metrics or summed ones."""
+def wall(record: dict, *parts: float) -> float:
+    """
+    An attempt's or a step's whole time. Runs from before it was recorded
+    give its parts instead: the claude calls' time, then the checks'.
+    """
+    return record.get("time_s", sum(parts))
+
+
+def step1_wall(totals: dict) -> float:
+    return wall(totals, totals["wall_s"], totals["fuzzer_time_s"])
+
+
+def step2_wall(totals: dict) -> float:
+    return wall(
+        totals,
+        totals["wall_s"],
+        totals["fuzzer_time_s"],
+        totals["testsuite_time_s"]
+    )
+
+
+def cost(claude: dict, wall_s: float) -> dict:
+    """
+    A row's cost columns, from a call's metrics or summed ones, and the
+    whole time.
+    """
     return {
         "api_s": (claude["duration_api_ms"] or 0) / 1000,
-        "wall_s": claude["wall_s"],
+        "wall_s": wall_s,
         "turns": int(claude["num_turns"] or 0),
         "tokens": (
             claude["input_tokens"]
@@ -264,7 +289,7 @@ def step1_table(r: Results) -> Table:
             "target": fn,
             "passed": "yes" if s["passed"] else "no",
             "attempts": s["iterations"],
-            **cost(s["totals"]),
+            **cost(s["totals"], step1_wall(s["totals"])),
         }
         for fn, s in r.step1.items()
     ]
@@ -296,10 +321,14 @@ def step2_table(r: Results) -> Table:
             "tests": run["passed"],
             **{f"suite_{s}": run["suites"][s][0] for s in suites},
         }
-        if number > 0:
+        if number == 0:
+            row["wall_s"] = run["time_s"]
+        else:
             it = r.step2_iters[number - 1]
+            fuzzer = sum(c["time_s"] for c in it["fuzzer"].values())
+            whole = wall(it, it["claude"]["wall_s"], fuzzer, run["time_s"])
             row["changed"] = ", ".join(it["changed"])
-            row.update(cost(it["claude"]))
+            row.update(cost(it["claude"], whole))
         rows.append(row)
 
     end = r.step2_runs[-1]
@@ -342,7 +371,7 @@ def summary_table(r: Results) -> Table:
             "target": fn,
             "fuzzer_runs": s["iterations"] + refuzzed,
             "testsuite_runs": testsuite_runs(r, fn) if r.step2 else None,
-            **cost(s["totals"]),
+            **cost(s["totals"], step1_wall(s["totals"])),
         })
 
     runs = len(r.step2_runs) or None
@@ -350,7 +379,7 @@ def summary_table(r: Results) -> Table:
         rows.append({
             "target": "testsuite",
             "testsuite_runs": runs,
-            **cost(r.step2["totals"]),
+            **cost(r.step2["totals"], step2_wall(r.step2["totals"])),
         })
 
     total = {

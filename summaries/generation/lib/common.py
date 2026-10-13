@@ -385,17 +385,63 @@ SUMMED = (
 )
 
 
-def claude_metrics(result: dict, wall: float) -> dict:
+# What `claude -p --resume` can report for the whole session so far, not for
+# the call alone
+SESSION_TOTALS = ("duration_api_ms", "total_cost_usd")
+
+
+def previous_call(out: Path, number: int) -> dict:
+    """
+    The session's previous `claude -p` result, saved as claude-<n - 1>.json,
+    or {} for the first call.
+    """
+    if number == 1:
+        return {}
+    return json.loads((out / f"claude-{number - 1}.json").read_text())
+
+
+def session_output(result: dict) -> int:
+    """The output tokens of `modelUsage`, summed over the models."""
+    models = result.get("modelUsage") or {}
+    return sum(m.get("outputTokens", 0) for m in models.values())
+
+
+def reports_session(result: dict, previous: dict) -> bool:
+    """
+    Whether `result` reports SESSION_TOTALS for the whole session: then so
+    does its `modelUsage`, whose output tokens add up the previous calls'
+    and this one's.
+    """
+    if not previous:
+        return False
+    call = (result.get("usage") or {}).get("output_tokens", 0)
+    return session_output(result) == session_output(previous) + call
+
+
+def call_only(result: dict, previous: dict, key: str) -> float | None:
+    """A session total of `result`, less what the previous calls used."""
+    if result.get(key) is None:
+        return None
+    return result[key] - (previous.get(key) or 0)
+
+
+def claude_metrics(result: dict, previous: dict, wall: float) -> dict:
+    """
+    A call's metrics. `previous` is the session's previous call's result,
+    to tell this call's model time and cost from the session's.
+    """
     usage = result.get("usage") or {}
     cache_creation = usage.get("cache_creation_input_tokens", 0)
     cache_read = usage.get("cache_read_input_tokens", 0)
+    before = previous if reports_session(result, previous) else {}
+    api_ms, cost = (call_only(result, before, k) for k in SESSION_TOTALS)
 
     return {
         "wall_s": round(wall, 3),
         "duration_ms": result.get("duration_ms"),
-        "duration_api_ms": result.get("duration_api_ms"),
+        "duration_api_ms": api_ms,
         "num_turns": result.get("num_turns"),
-        "cost_usd": result.get("total_cost_usd"),
+        "cost_usd": cost,
         "input_tokens": usage.get("input_tokens", 0),
         "cache_creation_input_tokens": cache_creation,
         "cache_read_input_tokens": cache_read,

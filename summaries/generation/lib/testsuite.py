@@ -7,6 +7,7 @@ saved to results/<run id>/step2/.
 """
 
 import os
+import time
 import uuid
 import shutil
 import subprocess
@@ -32,6 +33,7 @@ from .common import (
     code_block,
     run_command,
     sum_metrics,
+    previous_call,
     claude_metrics,
     save_transcript,
     copy_fuzzer_setup,
@@ -93,6 +95,7 @@ class Attempt:
     changed: list[str]          # the functions whose summary changed
     fuzz: dict[str, Check]      # the fuzzer's check of each changed one
     tests: TestRun
+    time_s: float               # the whole attempt: the call, then checks
 
     @property
     def passed(self) -> bool:
@@ -108,6 +111,7 @@ class Attempt:
             "fuzzer": {fn: c.record() for fn, c in self.fuzz.items()},
             "testsuite": self.tests.record(),
             "passed": self.passed,
+            "time_s": self.time_s,
         }
 
 
@@ -277,6 +281,7 @@ def attempt(
     the testsuite. Saves claude-<n>.json, summaries-<n>/,
     fuzz-<n>-<function>.*, testsuite-<n>/ and iter-<n>.json.
     """
+    start = time.monotonic()
     before = snapshot(targets, work)
     result, wall = run.claude.ask(message, session, number == 1, work)
     write_json(out / f"claude-{number}.json", result)
@@ -297,10 +302,11 @@ def attempt(
 
     done = Attempt(
         number,
-        claude_metrics(result, wall),
+        claude_metrics(result, previous_call(out, number), wall),
         [t.function for t in changed],
         fuzz,
-        tests
+        tests,
+        round(time.monotonic() - start, 3)
     )
     write_json(out / f"iter-{number}.json", done.record())
     return done
@@ -324,6 +330,7 @@ def write_summary(start: TestRun, attempts: list[Attempt], out: Path):
             "testsuite_time_s": start.time_s + sum(
                 a.tests.time_s for a in attempts
             ),
+            "time_s": start.time_s + sum(a.time_s for a in attempts),
         },
         "finished_at": now(),
     })
