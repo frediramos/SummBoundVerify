@@ -62,7 +62,13 @@ def parse_cmdline_args(input=None):
                             help='Path to a previously generated binary')
 
     validation.add_argument(flag(Options.timeout), metavar='sec', type=int,
-                            help='Execution Timeout in seconds (default: 1800sec, 30min)', default=30*60)
+                            help='Timeout of the whole run, in seconds (default: 1800sec, 30min)', default=30*60)
+
+    validation.add_argument(flag(Options.se_timeout), metavar='sec', type=int, default=None,
+                            help='Timeout of each symbolic execution, in seconds (default: what is left of --timeout)')
+
+    validation.add_argument(flag(Options.fuzz_timeout), metavar='sec', type=int, default=None,
+                            help='Timeout of each AFL++ campaign, in seconds (default: what is left of --timeout)')
 
     validation.add_argument(flag(Options.results), metavar='path', type=str,
                             help='Directory where JSON results should be saved (default: ./)', default='.')

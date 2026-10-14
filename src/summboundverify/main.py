@@ -7,6 +7,7 @@ from enum import Enum
 from pathlib import Path
 from argparse import Namespace
 
+from summboundverify import timeouts
 from summboundverify.exceptions import RunError
 from summboundverify.options import parse_input_args
 from summboundverify.logger import Colors, section, setup_logging
@@ -170,6 +171,7 @@ def main(argv=None):
     try:
         args = parse_input_args(argv)
         setup_logging(args.debug)
+        timeouts.start(args)
 
         # Run a given binary directly.
         if args.run and args.binary:

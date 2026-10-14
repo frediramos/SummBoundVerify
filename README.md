@@ -366,7 +366,9 @@ int size_t`, so the symbolic side is 32-bit whatever the host is, and only a
 ```
 --engine se | fuzz          // engine(s) to run; "se fuzz" runs both (default: se)
 --execs 10000               // inputs to try when sampling (default: 10000)
---timeout 1800              // seconds, per engine
+--timeout 1800              // seconds, the whole run
+--se-timeout 60             // seconds, each symbolic execution (default: what is left)
+--fuzz-timeout 60           // seconds, each AFL++ campaign (default: what is left)
 ```
 
 Symbolic execution is skipped automatically — *even when asked for
@@ -587,7 +589,9 @@ lib: lib.c                  # --lib            (Path to external files required 
 compile: x86                # --compile        (Compile the generated test)
 engine: [se, fuzz]          # --engine         (Validation engine(s); default: se)
 execs: 10000                # --execs          (Inputs to try when sampling)
-timeout: 1800               # -timeout         (Execution timeout, in seconds)
+timeout: 1800               # --timeout        (Timeout of the whole run, in seconds)
+se_timeout: 60              # --se-timeout     (Timeout of each symbolic execution, in seconds)
+fuzz_timeout: 60            # --fuzz-timeout   (Timeout of each AFL++ campaign, in seconds)
 ```
 
 > **Note:** Per-argument constraints (array size, max value, null bytes, default values, concrete arrays, etc.)

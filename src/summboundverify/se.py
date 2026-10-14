@@ -3,6 +3,8 @@ import logging
 from pathlib import Path
 from argparse import Namespace
 
+from summboundverify import timeouts
+
 from summboundverify.argspec import load_argspec, extract_constraints
 from summboundverify.validation_gen import (
     Arch,
@@ -80,7 +82,7 @@ def run_angr(binary: str | Path, args: Namespace) -> tuple[Path, dict]:
 
     engine = AngrEngine(
         binary,
-        timeout=args.timeout,
+        timeout=timeouts.stage(args, args.se_timeout),
         results_dir=args.results,
         stats_dir=args.stats,
         convert_ascii=args.ascii,

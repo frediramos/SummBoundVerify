@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from argparse import Namespace
 
+from summboundverify import timeouts
 from summboundverify.exceptions import RunError
 from summboundverify.validation_gen import (
     SummaryFuzzGenerator,
@@ -141,7 +142,7 @@ def run(args: Namespace, constraints: dict | None = None) -> Path | None:
             summary_test,
             libs=args.lib,
             arch=arch,
-            timeout=args.timeout,
+            timeout=timeouts.stage(args, args.se_timeout),
             results_dir=args.results,
         )
 
@@ -161,7 +162,7 @@ def run(args: Namespace, constraints: dict | None = None) -> Path | None:
             libs=sampler_libs(args),
             arch=arch,
             execs=args.execs,
-            timeout=args.timeout,
+            timeout=timeouts.stage(args, args.fuzz_timeout),
             results_dir=args.results,
         )
     except ValueError as exc:
