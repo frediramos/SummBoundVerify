@@ -1,0 +1,99 @@
+{
+  "duration_api_ms": 20031,
+  "stop_reason": "end_turn",
+  "session_id": "304430a3-a38a-4b24-80e9-3e23e36b6bb8",
+  "total_cost_usd": 0.16342220000000002,
+  "usage": {
+    "input_tokens": 12,
+    "cache_creation_input_tokens": 14273,
+    "cache_read_input_tokens": 80851,
+    "output_tokens": 1651,
+    "output_tokens_details": {
+      "thinking_tokens": 242
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 14273,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "not_available",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 331,
+        "cache_read_input_tokens": 18362,
+        "cache_creation_input_tokens": 686,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 686
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 12,
+      "outputTokens": 1651,
+      "cacheReadInputTokens": 80851,
+      "cacheCreationInputTokens": 14273,
+      "webSearchRequests": 0,
+      "costUSD": 0.16342220000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 242,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I wrote the summary to `summaries/obtained/close/close.c`. It compiles with the gcc command you gave; I didn't run the fuzz engine from `config.yaml` against it.\n\nThe summary has no branches. The function just returns `__file_close(fd)`:\n\n- **Bad descriptor (EBADF):** if `fd` isn't open, including a negative value, `__file_close` already returns `-1`.\n- **Descriptor from a symbolic name:** your `argspec.yaml` gives the descriptor a symbolic name, so `fd` arrives as `ite(cond, fd, -1)`. `__file_close` accepts that form as is and returns `ite(cond, 0, -1)`, so the failure case doesn't need a branch.\n- **Not modelled:** EINTR, EIO, ENOSPC and EDQUOT. They come from signals and storage, which the API doesn't represent, so the summary never fails for those reasons.\n\nThe function's comment explains these points, following the `layout.md` template.",
+  "ttft_ms": 4720,
+  "type": "result",
+  "duration_ms": 26680,
+  "uuid": "5d434097-a684-4a62-8a5e-4e071cb70e68",
+  "ttft_stream_ms": 3557,
+  "time_to_request_ms": 2264,
+  "first_content_frame_ms": 3558,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

@@ -1,0 +1,8 @@
+{
+  "test_1": [
+    {
+      "path": 1,
+      "formula": "And(Or(Not(And(__fname_fd_0 == 46, Extract(7, 7, __fname_fd_0) == 0)), Not(And(__fname_fd_1 == 0, Extract(7, 7, __fname_fd_1) == 0))), Or(Not(And(__fname_fd_0 == 46, Extract(7, 7, __fname_fd_0) == 0)), Not(And(__fname_fd_1 == 46, Extract(7, 7, __fname_fd_1) == 0))), Not(And(__fname_fd_0 == 47, Extract(7, 7, __fname_fd_0) == 0)), Not(And(__fname_fd_1 == 47, Extract(7, 7, __fname_fd_1) == 0)), Ret == If(__fname_fd_0 == 0, 4294967295, 0), file_open_fds == 0)"
+    }
+  ]
+}
