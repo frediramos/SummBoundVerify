@@ -1,0 +1,30 @@
+{
+  "iteration": 1,
+  "claude": {
+    "wall_s": 98.652,
+    "duration_ms": 90143,
+    "duration_api_ms": 83591,
+    "num_turns": 10,
+    "cost_usd": 0.37988619999999995,
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 23450,
+    "cache_read_input_tokens": 161071,
+    "output_tokens": 8000,
+    "permission_denials": 0,
+    "is_error": false
+  },
+  "summary_written": true,
+  "fuzzer": {
+    "passed": false,
+    "time_s": 266.194,
+    "counts": {
+      "test_1": {
+        "matched": 67,
+        "mismatched": 5,
+        "skipped": 12
+      }
+    }
+  },
+  "passed": false,
+  "time_s": 364.851
+}

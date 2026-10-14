@@ -1,0 +1,20 @@
+{
+  "function": "lseek",
+  "passed": true,
+  "iterations": 3,
+  "totals": {
+    "wall_s": 295.723,
+    "duration_ms": 273671,
+    "duration_api_ms": 259110,
+    "num_turns": 36,
+    "cost_usd": 1.1262523999999998,
+    "input_tokens": 56,
+    "cache_creation_input_tokens": 56974,
+    "cache_read_input_tokens": 976382,
+    "output_tokens": 23748,
+    "permission_denials": 2.0,
+    "fuzzer_time_s": 848.967,
+    "time_s": 1144.703
+  },
+  "finished_at": "2026-10-14T19:05:42.888981+00:00"
+}

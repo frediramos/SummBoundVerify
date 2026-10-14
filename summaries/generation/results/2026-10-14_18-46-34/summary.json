@@ -1,0 +1,10 @@
+{
+  "run_id": "2026-10-14_18-46-34",
+  "step1": {
+    "lseek": true
+  },
+  "step2": null,
+  "passed": false,
+  "error": null,
+  "finished_at": "2026-10-14T19:05:42.944491+00:00"
+}

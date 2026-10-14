@@ -1,0 +1,99 @@
+{
+  "duration_api_ms": 83591,
+  "stop_reason": "end_turn",
+  "session_id": "ad445ec3-20c9-49b8-97dc-7debb4ee8019",
+  "total_cost_usd": 0.37988619999999995,
+  "usage": {
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 23450,
+    "cache_read_input_tokens": 161071,
+    "output_tokens": 8000,
+    "output_tokens_details": {
+      "thinking_tokens": 5028
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 23450,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 850,
+        "cache_read_input_tokens": 26890,
+        "cache_creation_input_tokens": 1335,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1335
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 18,
+      "outputTokens": 8000,
+      "cacheReadInputTokens": 161071,
+      "cacheCreationInputTokens": 23450,
+      "webSearchRequests": 0,
+      "costUSD": 0.37988619999999995,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 5028,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 10,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I wrote the summary to `summaries/obtained/lseek/lseek.c`. It compiles with the command you gave, with no warnings even under `-Wall`. I haven't run it against the real `lseek` through the fuzzing setup in `config.yaml`, so its behaviour is untested.\n\n**How it works**\n- **`whence`:** each of `SEEK_SET`, `SEEK_CUR` and `SEEK_END` gets its own path, starting from 0, the current offset or the file size, plus `offset`. Any other value returns -1 (EINVAL).\n- **Negative position:** one `pos < 0` check returns -1 (EINVAL). Because `off_t` is 32-bit under `-m32` and the starting point is never negative, a sum that overflows wraps to a negative number. So the same check also covers EOVERFLOW without an extra branch.\n- **Bad descriptor:** there's no separate check. When `fd` isn't open, the file functions return -1 and `__file_set_offset` fails. A descriptor of the form `ite(cond, fd, -1)` is passed through unchanged, so its failure case ends up inside the result as `ite(cond, pos, -1)` without splitting the path.\n- **Concrete position:** `__file_set_offset` needs a concrete value, but `offset` has no bounds. So when the position is symbolic, I pick one possible value and add the constraint that it equals that value. As a result, each path tests only one offset.\n\n**A choice that differs from your config:** `argspec.yaml` calls `whence = 3` \"invalid\", but on Linux 3 is `SEEK_DATA` (and 4 is `SEEK_HOLE`). The real `lseek` will handle 3 as `SEEK_DATA`, so I modelled both instead of returning EINVAL:\n- If `offset` is negative or at or past the file size, they fail (ENXIO).\n- Otherwise `SEEK_DATA` stays at `offset` and `SEEK_HOLE` moves to the end of the file. This treats the file as having no holes except the implicit one at its end, which the man page allows.\n- The two bounds are joined with a bitwise `|` rather than `||`, so they make one branch instead of two.\n\nIf your test harness really expects 3 to be rejected, delete the `SEEK_DATA`/`SEEK_HOLE` block.",
+  "ttft_ms": 3302,
+  "type": "result",
+  "duration_ms": 90143,
+  "uuid": "026cfec0-18c1-48ec-8b6a-bab9dc462ec6",
+  "ttft_stream_ms": 2374,
+  "time_to_request_ms": 992,
+  "first_content_frame_ms": 2376,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

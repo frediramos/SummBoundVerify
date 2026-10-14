@@ -1,0 +1,99 @@
+{
+  "duration_api_ms": 259110,
+  "stop_reason": "end_turn",
+  "session_id": "ad445ec3-20c9-49b8-97dc-7debb4ee8019",
+  "total_cost_usd": 1.1262523999999998,
+  "usage": {
+    "input_tokens": 10,
+    "cache_creation_input_tokens": 10567,
+    "cache_read_input_tokens": 274275,
+    "output_tokens": 6456,
+    "output_tokens_details": {
+      "thinking_tokens": 3943
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 10567,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 945,
+        "cache_read_input_tokens": 60068,
+        "cache_creation_input_tokens": 1681,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1681
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 56,
+      "outputTokens": 23748,
+      "thinkingTokens": 15083,
+      "cacheReadInputTokens": 976382,
+      "cacheCreationInputTokens": 56974,
+      "webSearchRequests": 0,
+      "costUSD": 1.1262523999999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "This mismatch can't be fixed in the summary alone, so the next run will most likely fail the same way. I made the summary as exact as the API allows; it compiles, but I couldn't run the validator here.\n\n**Why it can't pass as configured:** the engine keeps each descriptor's file offset as a single fixed number on every path. `__file_set_offset` rejects an offset that can take more than one value, and `lift_fds` in `src/summboundverify/validation_tool/se/api/functions/fs/symbolic/fs.py:647` records `entry.offset` as a constant. So each path ends with one fixed file offset, and covering every offset would need one path per value. `argspec.yaml` leaves `offset` unbounded, so any open-descriptor sample with a different offset is rejected. Your sample (offset 0x2100, returning 0x2100) is one of those.\n\n**What I changed** in `summaries/obtained/lseek/lseek.c`:\n- **Few possible positions:** when the open descriptor can reach at most 65 positions (`MAX_FORKS` 64), the summary forks once per value, following the `fork_bounded` template. This is exact, so with a bounded `offset` it accepts every valid sample.\n- **More positions:** the summary falls back to the previous behaviour and picks one value. It still leaves `offset` free when the descriptor isn't open.\n- **Unopened descriptor:** a descriptor that is definitely not open now returns -1 straight away.\n\n**To get a pass, one of these has to change**, and both are your call:\n1. **Bound `offset` in `argspec.yaml`**, e.g. a small `maxvalue` such as 16. Per the comment in that file, this stops negative offsets from being tested, which is why it was left unbounded.\n2. **Let the engine keep a symbolic file offset.** `__file_set_offset` would need to accept a symbolic value and `lift_fds` would need to record it. The summary could then set the exact position and drop the forking.\n\nThe only summary-side workaround is the one I mentioned last time: return the exact position while setting the file to a different value. That would hide the mismatch only because the reported offset would be wrong, so I haven't done it.\n\nWhich do you want: should I bound the argspec, or would you rather change the engine?",
+  "ttft_ms": 8440,
+  "type": "result",
+  "duration_ms": 71053,
+  "uuid": "f090cc3f-d9c1-455d-be93-21983b9414fe",
+  "ttft_stream_ms": 1491,
+  "time_to_request_ms": 292,
+  "first_content_frame_ms": 1492,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

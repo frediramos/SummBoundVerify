@@ -1,0 +1,116 @@
+{
+  "test_1": {
+    "verdict": "mismatched",
+    "counts": {
+      "matched": 70,
+      "mismatched": 1,
+      "skipped": 12
+    },
+    "checked": 83,
+    "findings": [
+      {
+        "verdict": "mismatched",
+        "reason": "the summary does not accept this model",
+        "bindings": {
+          "offset": "0x2100",
+          "whence": "0x0",
+          "__fname_fd_0": "0xf0",
+          "__fname_fd_1": "0x7f",
+          "__data_fd_0": "0x0",
+          "__data_fd_1": "0x0",
+          "__data_fd_2": "0x0",
+          "__data_fd_3": "0x0",
+          "file_open_fds": "0x8",
+          "file_fd3_flags": "0x2",
+          "file_fd3_mode": "0x1a4",
+          "file_fd3_offset": "0x2100",
+          "file_fd3_size": "0x4",
+          "file_fd3_byte_0": "0x0",
+          "file_fd3_byte_1": "0x0",
+          "file_fd3_byte_2": "0x0",
+          "file_fd3_byte_3": "0x0",
+          "Ret": "0x2100"
+        },
+        "ignored": {
+          "__fname_fd_2": "0x0",
+          "__data_fd_4": "0x0"
+        },
+        "sample": {
+          "test": "test_1",
+          "tape": "0021000000000000f07f",
+          "rejected": false,
+          "inputs": {
+            "offset": {
+              "bits": 32,
+              "bytes": "00210000",
+              "value": 8448
+            },
+            "whence": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__fname_fd_0": {
+              "bits": 8,
+              "bytes": "f0",
+              "value": 240
+            },
+            "__fname_fd_1": {
+              "bits": 8,
+              "bytes": "7f",
+              "value": 127
+            },
+            "__fname_fd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_fd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_fd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_fd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_fd_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_fd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 8448,
+              "size": 4,
+              "bytes": "00000000"
+            }
+          },
+          "open_fds": 8,
+          "ret": {
+            "bits": 32,
+            "bytes": "00210000",
+            "value": 8448
+          },
+          "ret_is_pointer": false
+        }
+      }
+    ]
+  }
+}
