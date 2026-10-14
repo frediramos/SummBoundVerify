@@ -1,0 +1,6018 @@
+{
+  "test-concrete.test_1": {
+    "fuzz": {
+      "samples": [
+        {
+          "test": "",
+          "tape": "000000000000e03f000000000000e03f000000000000e03f000000000000e03f000000000000e03f000000000000e03f000000000000e03f000000000000e03f",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00e03f00",
+              "value": 4186112
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "000000000000f07f000000000000f07f000000000000f07f000000000000f07f000000000000f07f000000000000f07f000000000000f07f000000000000f07f",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00f07f00",
+              "value": 8384512
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "000000000000f87f000000000000f87f000000000000f87f000000000000f87f000000000000f87f000000000000f87f000000000000f87f000000000000f87f",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00f87f00",
+              "value": 8386560
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00f0ff00",
+              "value": 16773120
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00f0bf00",
+              "value": 12578816
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "00000000000000800000000000000080000000000000008000000000000000800000000000000080000000000000008000000000000000800000000000000080",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00008000",
+              "value": 8388608
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "000000000000f03f000000000000f03f000000000000f03f000000000000f03f000000000000f03f000000000000f03f000000000000f03f000000000000f03f",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00f03f00",
+              "value": 4190208
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "00000000000000400000000000000040000000000000004000000000000000400000000000000040000000000000004000000000000000400000000000000040",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00004000",
+              "value": 4194304
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "00000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": false,
+              "mode": 0,
+              "size": 0,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "00070e050c030a01080f060d040b020900070e050c030a01080f060d040b020900070e050c030a01080f060d040b020900070e050c030a01080f060d040b0209",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "07",
+              "value": 7
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "0e",
+              "value": 14
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "0c",
+              "value": 12
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "030a0108",
+              "value": 134285827
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "01020304050607010203040506070102030405060701020304050607010203040506070102030405060701020304050607010203040506070102030405060701020304050607",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "06070102",
+              "value": 33621766
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20212200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "00212200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": false,
+              "mode": 0,
+              "size": 0,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "01212200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "02212200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "03212200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "04212200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "05212200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "2d212200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "2e212200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30212200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30002200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30012200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30022200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30032200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30042200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30052200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "302d2200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "302e2200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30302200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "22",
+              "value": 34
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300000000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300100000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300200000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300300000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300400000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300500000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30302d00000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30302e00000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000000111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000001111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000002111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000003111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000004111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000005111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "3030300000000000002d111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "3030300000000000002e111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "3030300000000000002f111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "2f",
+              "value": 47
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030001213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030011213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030021213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030031213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030041213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030051213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "303030000000000000302d1213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "303030000000000000302e1213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "303030000000000000302f1213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "2f",
+              "value": 47
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030301213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030300013000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030300113000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030300213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030300313000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030300413000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030300513000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030302d13000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030302e13000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030302f13000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "2f",
+              "value": 47
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030303013000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030303000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030303001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030303002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030303003000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030303004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30303000000000000030303005000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "000000e3ff0000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "e3",
+              "value": 227
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "ff",
+              "value": 255
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": false,
+              "mode": 0,
+              "size": 0,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "00000000df00000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "df",
+              "value": 223
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": false,
+              "mode": 0,
+              "size": 0,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "0000001e400000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "1e",
+              "value": 30
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "40",
+              "value": 64
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": false,
+              "mode": 0,
+              "size": 0,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "ffffffe6000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "ff",
+              "value": 255
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "ff",
+              "value": 255
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "ff",
+              "value": 255
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "e6",
+              "value": 230
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "5d5d",
+          "rejected": false,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "5d",
+              "value": 93
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "5d",
+              "value": 93
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            },
+            "__data_pathname_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {
+            "pathname": {
+              "exists": true,
+              "mode": 0,
+              "size": 4,
+              "bytes": ""
+            }
+          },
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "00000000",
+            "value": 0
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "",
+          "tape": "2f12",
+          "rejected": true,
+          "inputs": {
+            "pathname_0": {
+              "bits": 8,
+              "bytes": "2f",
+              "value": 47
+            },
+            "pathname_1": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "pathname_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "pathname_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "mode": {
+              "bits": 32,
+              "bytes": "00000000",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": null,
+          "ret": null,
+          "ret_is_pointer": false
+        }
+      ],
+      "usable": 70,
+      "execs": 2000,
+      "rejection_rate": 0.324,
+      "sampled_execs": 1000,
+      "sampled_rejected": 324,
+      "sampled_exited": 0,
+      "crashes": []
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "duration_api_ms": 41793,
+  "stop_reason": "end_turn",
+  "session_id": "f603ebcf-c11f-411c-89ad-a4c3bae38459",
+  "total_cost_usd": 0.2248276,
+  "usage": {
+    "input_tokens": 14,
+    "cache_creation_input_tokens": 17407,
+    "cache_read_input_tokens": 100878,
+    "output_tokens": 3267,
+    "output_tokens_details": {
+      "thinking_tokens": 856
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 17407,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 723,
+        "cache_read_input_tokens": 21168,
+        "cache_creation_input_tokens": 1014,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1014
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 14,
+      "outputTokens": 3267,
+      "cacheReadInputTokens": 100878,
+      "cacheCreationInputTokens": 17407,
+      "webSearchRequests": 0,
+      "costUSD": 0.2248276,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 856,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [
+    {
+      "tool_name": "Bash",
+      "tool_use_id": "toolu_01LJPqQYYmJc1Ab1HHXX2XLZ",
+      "tool_input": {
+        "command": "cd /tmp/sbv-gen-chmod-l5vox3wj; for f in summaries/generation/context/templates/file/*; do echo \"=== $f\"; cat \"$f\"; done",
+        "description": "Read file templates"
+      }
+    }
+  ],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I wrote the summary to `summaries/obtained/chmod/chmod.c`. It compiles with the gcc command you gave; I haven't run it through the symbolic execution or fuzzing engines.\n\nHow it works:\n1. **NULL pathname** returns -1 (`EFAULT`). This branch is on the concrete pointer, so it doesn't split paths on a symbolic value.\n2. **Symbolic `mode`** is fixed to a single value with `__concretize` + `__assume`, because `__file_set_mode` needs a concrete mode. This follows the concretize template and adds no branches.\n3. **Main step:** the summary opens the file with `__file_open(pathname, \"r\")`, calls `__file_set_mode(fd, mode & 07777)` and returns `__file_close(fd)`. The `& 07777` keeps only the permission, set-user-ID, set-group-ID and sticky bits.\n\nThere's no branch for failure. If the file is missing or the name is invalid, `__file_open` returns -1, or `ite(valid, fd, -1)` for a symbolic name. Setting the mode and closing then fail on that same value, so `__file_close` returns 0 on success and -1 on failure, which is exactly what `chmod` returns.\n\nThree limits to be aware of:\n- **One mode value per run.** Concretizing a symbolic `mode` means each run checks only one of its possible values; `argspec.yaml` allows up to 511. To cover every value you could fork on it using the `fork_bounded` template instead, which adds up to 512 paths.\n- **Ownership isn't checked.** Errors that depend on the file's owner (`EPERM`), path search permissions (`EACCES`) or the filesystem aren't modelled, because the API doesn't expose them.\n- **Symbolic names are assumed to exist.** For a symbolic name, `__file_open` constrains it to an existing file whenever opening can succeed, so the path where the name matches no file (`ENOENT`) isn't explored.",
+  "ttft_ms": 4227,
+  "type": "result",
+  "duration_ms": 46344,
+  "uuid": "40fbfe4c-df48-4ff9-8d52-b4017f5c7242",
+  "ttft_stream_ms": 2673,
+  "time_to_request_ms": 589,
+  "first_content_frame_ms": 2673,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

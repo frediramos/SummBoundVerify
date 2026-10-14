@@ -1,0 +1,10 @@
+summ: chmod.c
+summname: chmod
+libc: chmod
+compile: x86
+argspec: argspec.yaml
+engine: [fuzz]
+execs: 2000
+se_timeout: 60
+fuzz_timeout: 60
+timeout: 120

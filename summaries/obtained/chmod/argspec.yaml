@@ -1,0 +1,20 @@
+# int chmod(const char *pathname, mode_t mode)
+
+pathname:
+  type: char*
+  semantic: file
+  file:
+    type: name
+    fname:
+      symbolic: true
+      size: 3
+    data:
+      symbolic: true
+      size: 4
+
+# Permission bits
+mode:
+  type: mode_t
+  semantic: scalar
+  scalar:
+    maxvalue: 511

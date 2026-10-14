@@ -1,0 +1,20 @@
+{
+  "function": "chmod",
+  "passed": true,
+  "iterations": 1,
+  "totals": {
+    "wall_s": 50.229,
+    "duration_ms": 46344,
+    "duration_api_ms": 41793,
+    "num_turns": 9,
+    "cost_usd": 0.2248276,
+    "input_tokens": 14,
+    "cache_creation_input_tokens": 17407,
+    "cache_read_input_tokens": 100878,
+    "output_tokens": 3267,
+    "permission_denials": 1,
+    "fuzzer_time_s": 24.213,
+    "time_s": 74.445
+  },
+  "finished_at": "2026-10-14T21:20:08.806803+00:00"
+}
