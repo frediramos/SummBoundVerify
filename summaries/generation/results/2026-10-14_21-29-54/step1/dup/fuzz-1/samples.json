@@ -1,0 +1,5250 @@
+{
+  "test-concrete.test_1": {
+    "fuzz": {
+      "samples": [
+        {
+          "test": "test_1",
+          "tape": "000000000000e03f000000000000e03f000000000000e03f000000000000e03f000000000000e03f000000000000e03f000000000000e03f000000000000e03f",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "e0",
+              "value": 224
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "3f",
+              "value": 63
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "000000000000f07f000000000000f07f000000000000f07f000000000000f07f000000000000f07f000000000000f07f000000000000f07f000000000000f07f",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "f0",
+              "value": 240
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "7f",
+              "value": 127
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "000000000000f87f000000000000f87f000000000000f87f000000000000f87f000000000000f87f000000000000f87f000000000000f87f000000000000f87f",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "f8",
+              "value": 248
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "7f",
+              "value": 127
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff000000000000f0ff",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "f0",
+              "value": 240
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "ff",
+              "value": 255
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf000000000000f0bf",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "f0",
+              "value": 240
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "bf",
+              "value": 191
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "00000000000000800000000000000080000000000000008000000000000000800000000000000080000000000000008000000000000000800000000000000080",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "80",
+              "value": 128
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "000000000000f03f000000000000f03f000000000000f03f000000000000f03f000000000000f03f000000000000f03f000000000000f03f000000000000f03f",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "f0",
+              "value": 240
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "3f",
+              "value": 63
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "00000000000000400000000000000040000000000000004000000000000000400000000000000040000000000000004000000000000000400000000000000040",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "40",
+              "value": 64
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "00070e050c030a01080f060d040b020900070e050c030a01080f060d040b020900070e050c030a01080f060d040b020900070e050c030a01080f060d040b0209",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "07",
+              "value": 7
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "0e",
+              "value": 14
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "0c",
+              "value": 12
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "0a",
+              "value": 10
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "01020304050607010203040506070102030405060701020304050607010203040506070102030405060701020304050607010203040506070102030405060701020304050607",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "06",
+              "value": 6
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "07",
+              "value": 7
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "04050607"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "04050607"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "00210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {},
+          "open_fds": 0,
+          "ret": {
+            "bits": 32,
+            "bytes": "ffffffff",
+            "value": 4294967295
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "01210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "02210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "03210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "04210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "05210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "07210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "07",
+              "value": 7
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "08210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "08",
+              "value": 8
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "09210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "09",
+              "value": 9
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "0f210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "0f",
+              "value": 15
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "10210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "11210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "2d210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "2e210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30210010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30000010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30010010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30020010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30030010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30040010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30050010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30070010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "07",
+              "value": 7
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30080010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "08",
+              "value": 8
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30090010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "09",
+              "value": 9
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "300f0010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "0f",
+              "value": 15
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30100010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30110010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "302d0010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "302e0010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300010111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300000111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "00111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "00111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300001111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "01111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "01111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300002111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "02111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "02111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300003111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "03111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "03111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300004111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "04111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "04111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300005111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "05111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "05111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300007111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "07",
+              "value": 7
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "07111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "07111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300008111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "08",
+              "value": 8
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "08111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "08111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "30300009111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "09",
+              "value": 9
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "09111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "09111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "3030000f111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "0f",
+              "value": 15
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "0f111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "0f111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210011111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "11111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "11111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "2021002d111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "2d111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "2d111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "2021002e111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "2e111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "2e111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "2021002f111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "2f",
+              "value": 47
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "2f111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "2f111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030111213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "11",
+              "value": 17
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30111213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30111213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030001213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30001213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30001213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030011213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30011213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30011213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030021213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30021213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30021213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030031213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "03",
+              "value": 3
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30031213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30031213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030041213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "04",
+              "value": 4
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30041213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30041213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030051213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "05",
+              "value": 5
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30051213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30051213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030071213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "07",
+              "value": 7
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30071213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30071213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030081213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "08",
+              "value": 8
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30081213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30081213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030091213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "09",
+              "value": 9
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30091213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30091213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "202100300f1213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "0f",
+              "value": 15
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "300f1213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "300f1213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210030101213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30101213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "30101213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "202100102d1213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "2d",
+              "value": 45
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "102d1213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "102d1213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "202100102e1213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "2e",
+              "value": 46
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "102e1213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "102e1213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "202100102f1213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "2f",
+              "value": 47
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "102f1213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "102f1213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210010301213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "12",
+              "value": 18
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10301213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10301213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210010300013000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10300013"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10300013"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210010300113000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "01",
+              "value": 1
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10300113"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10300113"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        },
+        {
+          "test": "test_1",
+          "tape": "20210010300213000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "rejected": false,
+          "inputs": {
+            "__fname_oldfd_0": {
+              "bits": 8,
+              "bytes": "20",
+              "value": 32
+            },
+            "__fname_oldfd_1": {
+              "bits": 8,
+              "bytes": "21",
+              "value": 33
+            },
+            "__fname_oldfd_2": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            },
+            "__data_oldfd_0": {
+              "bits": 8,
+              "bytes": "10",
+              "value": 16
+            },
+            "__data_oldfd_1": {
+              "bits": 8,
+              "bytes": "30",
+              "value": 48
+            },
+            "__data_oldfd_2": {
+              "bits": 8,
+              "bytes": "02",
+              "value": 2
+            },
+            "__data_oldfd_3": {
+              "bits": 8,
+              "bytes": "13",
+              "value": 19
+            },
+            "__data_oldfd_4": {
+              "bits": 8,
+              "bytes": "00",
+              "value": 0
+            }
+          },
+          "memory": {},
+          "files": {},
+          "fds": {
+            "fd3": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10300213"
+            },
+            "fd4": {
+              "flags": 2,
+              "mode": 420,
+              "offset": 0,
+              "size": 4,
+              "bytes": "10300213"
+            }
+          },
+          "open_fds": 24,
+          "ret": {
+            "bits": 32,
+            "bytes": "04000000",
+            "value": 4
+          },
+          "ret_is_pointer": false
+        }
+      ],
+      "usable": 75,
+      "execs": 2382,
+      "rejection_rate": 0.0,
+      "sampled_execs": 1000,
+      "sampled_rejected": 0,
+      "sampled_exited": 0,
+      "crashes": []
+    }
+  }
+}

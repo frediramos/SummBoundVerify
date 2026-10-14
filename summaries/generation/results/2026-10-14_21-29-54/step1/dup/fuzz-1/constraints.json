@@ -1,0 +1,8 @@
+{
+  "test_1": [
+    {
+      "path": 1,
+      "formula": "And(Or(Not(And(__fname_oldfd_0 == 46, Extract(7, 7, __fname_oldfd_0) == 0)), Not(And(__fname_oldfd_1 == 0, Extract(7, 7, __fname_oldfd_1) == 0))), Or(Not(And(__fname_oldfd_0 == 46, Extract(7, 7, __fname_oldfd_0) == 0)), Not(And(__fname_oldfd_1 == 46, Extract(7, 7, __fname_oldfd_1) == 0))), Not(And(__fname_oldfd_0 == 47, Extract(7, 7, __fname_oldfd_0) == 0)), Not(And(__fname_oldfd_1 == 47, Extract(7, 7, __fname_oldfd_1) == 0)), Ret == If(__fname_oldfd_0 == 0, 4294967295, 4), file_open_fds == If(__fname_oldfd_0 == 0, 0, 8) + If(__fname_oldfd_0 == 0, 0, 16), Or(__fname_oldfd_0 == 0, And(file_fd3_flags == 2, file_fd3_mode == 420, file_fd3_offset == 0, file_fd3_size == 4, file_fd3_byte_0 == __data_oldfd_0, file_fd3_byte_1 == __data_oldfd_1, file_fd3_byte_2 == __data_oldfd_2, file_fd3_byte_3 == __data_oldfd_3)), Or(__fname_oldfd_0 == 0, And(file_fd4_flags == 2, file_fd4_mode == 420, file_fd4_offset == 0, file_fd4_size == 4, file_fd4_byte_0 == __data_oldfd_0, file_fd4_byte_1 == __data_oldfd_1, file_fd4_byte_2 == __data_oldfd_2, file_fd4_byte_3 == __data_oldfd_3)))"
+    }
+  ]
+}

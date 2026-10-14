@@ -1,0 +1,54 @@
+
+
+===================
+  Fuzzing (AFL++)
+===================
+
+(Info) Compiling:
+ gcc -Wall -O0 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-unused-variable -fno-builtin -m32 test-summary.c -o test-summary.test
+(Info) 
+==> Summary Constraints (test_1, 1 path(s)):
+
+	[1] And(Or(Not(And(__fname_oldfd_0 == 46,
+	                   Extract(7, 7, __fname_oldfd_0) == 0)),
+	           Not(And(__fname_oldfd_1 == 0,
+	                   Extract(7, 7, __fname_oldfd_1) == 0))),
+	        Or(Not(And(__fname_oldfd_0 == 46,
+	                   Extract(7, 7, __fname_oldfd_0) == 0)),
+	           Not(And(__fname_oldfd_1 == 46,
+	                   Extract(7, 7, __fname_oldfd_1) == 0))),
+	        Not(And(__fname_oldfd_0 == 47,
+	                Extract(7, 7, __fname_oldfd_0) == 0)),
+	        Not(And(__fname_oldfd_1 == 47,
+	                Extract(7, 7, __fname_oldfd_1) == 0)),
+	        Ret == If(__fname_oldfd_0 == 0, 4294967295, 4),
+	        file_open_fds ==
+	        If(__fname_oldfd_0 == 0, 0, 8) +
+	        If(__fname_oldfd_0 == 0, 0, 16),
+	        Or(__fname_oldfd_0 == 0,
+	           And(file_fd3_flags == 2,
+	               file_fd3_mode == 420,
+	               file_fd3_offset == 0,
+	               file_fd3_size == 4,
+	               file_fd3_byte_0 == __data_oldfd_0,
+	               file_fd3_byte_1 == __data_oldfd_1,
+	               file_fd3_byte_2 == __data_oldfd_2,
+	               file_fd3_byte_3 == __data_oldfd_3)),
+	        Or(__fname_oldfd_0 == 0,
+	           And(file_fd4_flags == 2,
+	               file_fd4_mode == 420,
+	               file_fd4_offset == 0,
+	               file_fd4_size == 4,
+	               file_fd4_byte_0 == __data_oldfd_0,
+	               file_fd4_byte_1 == __data_oldfd_1,
+	               file_fd4_byte_2 == __data_oldfd_2,
+	               file_fd4_byte_3 == __data_oldfd_3)))
+(Info) Summary constraints written to test-summary_constraints.json
+(Info) Compiling sampling harness:
+ afl-clang-fast -O1 -g -I /tmp/sbv-gen-dup-k12v0akq/src/summboundverify/validation_tool/fuzzing/afl -include /tmp/sbv-gen-dup-k12v0akq/src/summboundverify/validation_tool/fuzzing/afl/sbv_sample.h -Dmain=sbv_run_tests -Dexit=sbv_exit -Dopen=sbv_open -Dcreat=sbv_creat -Dopenat=sbv_openat -Ddup=sbv_dup -Ddup2=sbv_dup2 -Dclose=sbv_close -Dfclose=sbv_fclose -Wno-int-conversion -Wno-unused-variable -fno-builtin -m32 -Wno-error=implicit-function-declaration test-concrete.c /tmp/sbv-gen-dup-k12v0akq/src/summboundverify/validation_tool/fuzzing/afl/sbv_sample.c /tmp/sbv-gen-dup-k12v0akq/src/summboundverify/validation_tool/fuzzing/afl/driver.c -o test-concrete.fuzz
+(Info) Seeded 64 input(s) from the summary's path conditions
+(Info) Running AFL++:
+ afl-fuzz -i /tmp/test-concrete_afl_p096no8f/seeds -o /tmp/test-concrete_afl_p096no8f/out -E 2000 -- /tmp/sbv-gen-dup-k12v0akq/summaries/obtained/dup/test-concrete.fuzz
+(Info) Recorded 75 sample(s), 75 usable, from 2382 execs -> test-concrete.fuzz_result.json
+(Info) test_1: 75 sample(s) admitted by the summary. Sampling cannot certify -- this says no sampled input contradicted it.
+(Info) Sample check written to test-concrete_check.json

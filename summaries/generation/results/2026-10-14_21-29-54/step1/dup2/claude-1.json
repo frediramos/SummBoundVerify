@@ -1,0 +1,108 @@
+{
+  "duration_api_ms": 36647,
+  "stop_reason": "end_turn",
+  "session_id": "665a0356-3100-477b-a13c-5ee33682b9ee",
+  "total_cost_usd": 0.23278060000000003,
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 17485,
+    "cache_read_input_tokens": 123383,
+    "output_tokens": 3408,
+    "output_tokens_details": {
+      "thinking_tokens": 1309
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 17485,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 503,
+        "cache_read_input_tokens": 22068,
+        "cache_creation_input_tokens": 192,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 192
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 16,
+      "outputTokens": 3408,
+      "cacheReadInputTokens": 123383,
+      "cacheCreationInputTokens": 17485,
+      "webSearchRequests": 0,
+      "costUSD": 0.23278060000000003,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1309,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [
+    {
+      "tool_name": "Bash",
+      "tool_use_id": "toolu_01DC7ciHa8qyAXq1xmtkDSLR",
+      "tool_input": {
+        "command": "cd /tmp/sbv-gen-dup2-a_lbtwoh; for f in summaries/generation/context/templates/file/*; do echo \"== $f\"; cat $f; echo; done; ls -la summaries/obtained/dup2; grep -rn \"errno\\|INT_SIZE\" tests/files/testsuite/lib/sra.h | head",
+        "description": "Read file templates and obtained dir"
+      }
+    }
+  ],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 8,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I wrote the `dup2` summary to `summaries/obtained/dup2/dup2.c`. It compiles cleanly with the gcc command you gave; I haven't run it under the symbolic or fuzz engine.\n\nMost of the work is done by `__file_dup2`. It fails when `oldfd` isn't open and leaves `newfd` alone, does nothing when the two are equal, quietly closes `newfd` if it's open, and fails when `newfd` is at or above the descriptor limit. `oldfd` is passed straight through, including the `ite(cond, fd, -1)` form, so its failure case needs no branch.\n\nThe summary only branches on `newfd`:\n- **Negative `newfd`:** returns -1 (EBADF) straight away. The API only checks `newfd` against the upper limit, and returning early is safe because nothing changes when the call fails.\n- **Concrete `newfd`:** calls `__file_dup2(oldfd, newfd)` directly.\n- **Symbolic `newfd`:** the API needs a concrete value, and each value reuses a different descriptor. So it forks once per possible value in the range from the larger of 0 and the minimum up to the maximum, following the `fork_bounded` template. Your `argspec.yaml` caps `newfd` at 6, which keeps this to at most 7 paths.\n\nThe EBUSY and EINTR errors are left out, because they come from race conditions and signals that the file API doesn't model.",
+  "ttft_ms": 2687,
+  "type": "result",
+  "duration_ms": 39346,
+  "uuid": "257d6f86-5fe8-4b97-8d78-4aa0e08c4019",
+  "ttft_stream_ms": 1638,
+  "time_to_request_ms": 399,
+  "first_content_frame_ms": 1639,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

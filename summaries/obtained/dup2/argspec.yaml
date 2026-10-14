@@ -1,0 +1,19 @@
+# int dup2(int oldfd, int newfd)
+oldfd:
+  type: int
+  semantic: file
+  file:
+    type: descriptor
+    fname:
+      symbolic: true
+      size: 3
+    data:
+      symbolic: true
+      size: 4
+
+# Up to a few past the descriptors the test opens (oldfd is 3)
+newfd:
+  type: int
+  semantic: scalar
+  scalar:
+    maxvalue: 6

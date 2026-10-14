@@ -1,0 +1,11 @@
+{
+  "run_id": "2026-10-14_21-29-54",
+  "step1": {
+    "dup": true,
+    "dup2": true
+  },
+  "step2": null,
+  "passed": false,
+  "error": null,
+  "finished_at": "2026-10-14T21:32:33.741552+00:00"
+}

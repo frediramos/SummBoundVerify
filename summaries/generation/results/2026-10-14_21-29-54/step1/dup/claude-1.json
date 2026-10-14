@@ -1,0 +1,108 @@
+{
+  "duration_api_ms": 28983,
+  "stop_reason": "end_turn",
+  "session_id": "32f635c4-8ed7-47a7-8093-3ebac509a4a9",
+  "total_cost_usd": 0.20765640000000002,
+  "usage": {
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 16234,
+    "cache_read_input_tokens": 128062,
+    "output_tokens": 2605,
+    "output_tokens_details": {
+      "thinking_tokens": 358
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 16234,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 521,
+        "cache_read_input_tokens": 20819,
+        "cache_creation_input_tokens": 190,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 190
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 18,
+      "outputTokens": 2605,
+      "cacheReadInputTokens": 128062,
+      "cacheCreationInputTokens": 16234,
+      "webSearchRequests": 0,
+      "costUSD": 0.20765640000000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 358,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [
+    {
+      "tool_name": "Bash",
+      "tool_use_id": "toolu_01JzNu5r6nC9BwrCFYRSXFt7",
+      "tool_input": {
+        "command": "cd /tmp/sbv-gen-dup-k12v0akq; ls -R summaries/generation/context/templates/file summaries/obtained/dup; for f in summaries/generation/context/examples/*.c summaries/generation/context/templates/*.md; do echo \"=== $f\"; cat $f; done; find summaries/generation/context/templates/file -type f | while read f; do echo \"=== $f\"; cat \"$f\"; done",
+        "description": "Read examples and templates"
+      }
+    }
+  ],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 10,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I wrote the `dup` summary to `summaries/obtained/dup/dup.c`. It compiles cleanly with the gcc command you gave, but I haven't run it through the fuzz engine set up in `config.yaml`, so it's untested.\n\n```c\nint dup(int oldfd)\n{\n    return __file_dup(oldfd);\n}\n```\n\nThe summary has no branches because the API's `__file_dup` already covers everything the man page asks of `dup`:\n- **Success:** it returns a new descriptor that shares the offset, mode and flags of `oldfd`.\n- **EBADF:** it returns -1 when `oldfd` isn't open.\n- **EMFILE:** it returns -1 when the descriptor limit set by `__file_set_max_fds` is reached.\n- **Symbolic file names:** `argspec.yaml` says `oldfd` comes from a symbolic file name, so it may be `ite(cond, fd, -1)`. Passing it straight through gives `ite(cond, <new fd>, -1)` without forking, as the `ite_fd` template recommends.\n\nThere are three gaps against the man page:\n- **Lowest-numbered descriptor:** the man page guarantees `dup` returns the lowest unused number. The API documentation doesn't say whether `__file_dup` does.\n- **Close-on-exec flag:** the API doesn't model it, so the summary can't show that it's off on the new descriptor.\n- **`errno`:** the summary doesn't set it. Neither do the example summaries.",
+  "ttft_ms": 3089,
+  "type": "result",
+  "duration_ms": 33101,
+  "uuid": "bd548296-296b-4aa9-b564-ecd32e0ac663",
+  "ttft_stream_ms": 1958,
+  "time_to_request_ms": 718,
+  "first_content_frame_ms": 1959,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

@@ -1,0 +1,20 @@
+{
+  "function": "dup",
+  "passed": true,
+  "iterations": 1,
+  "totals": {
+    "wall_s": 37.166,
+    "duration_ms": 33101,
+    "duration_api_ms": 28983,
+    "num_turns": 10,
+    "cost_usd": 0.20765640000000002,
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 16234,
+    "cache_read_input_tokens": 128062,
+    "output_tokens": 2605,
+    "permission_denials": 1,
+    "fuzzer_time_s": 17.485,
+    "time_s": 54.656
+  },
+  "finished_at": "2026-10-14T21:30:50.135373+00:00"
+}

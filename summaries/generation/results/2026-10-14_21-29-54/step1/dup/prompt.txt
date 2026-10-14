@@ -1,0 +1,8 @@
+Write a summary of the libc function `dup`. Its manual page is `summaries/generation/targets/dup/man.txt`.
+
+Previous summaries can be found in `summaries/generation/context/examples`, and summarization templates in `summaries/generation/context/templates`. The Symbolic Reflection API that a summary may use is documented in `src/summboundverify/api/sra.h`. A summary aims to minimise branching when possible.
+
+The summary includes the API's header, `#include "sra.h"`, which also declares the libc types. To compile it yourself: `gcc -m32 -Wno-int-conversion -c -I tests/files/testsuite/lib summaries/obtained/dup/dup.c -o /dev/null`.
+
+Write the summary to `summaries/obtained/dup/dup.c`, as a C function named `dup` with
+the same signature as `dup`.

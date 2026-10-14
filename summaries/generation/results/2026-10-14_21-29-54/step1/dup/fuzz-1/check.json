@@ -1,0 +1,12 @@
+{
+  "test_1": {
+    "verdict": "passed",
+    "counts": {
+      "matched": 75,
+      "mismatched": 0,
+      "skipped": 0
+    },
+    "checked": 75,
+    "findings": []
+  }
+}
